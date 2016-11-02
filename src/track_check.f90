@@ -22,7 +22,7 @@ subroutine track_check2(vortex,vortex_flag,nt,period_min)
   vor_movement=0.
 
   do kt=1,nt
-    if(vortex(kt,3)>0.01)then
+    if(vortex(kt,3)>0.00001)then
       vor_period=vor_period+1
 
 !      if(vortex(kt,3)>=vor_max_track0)vor_period_st=vor_period_st+1
@@ -34,7 +34,7 @@ subroutine track_check2(vortex,vortex_flag,nt,period_min)
 
   
 
-  if(vor_period<period_min)vortex_flag=1
+  if(vor_period>=period_min)vortex_flag=1
     
   return
 end subroutine track_check2

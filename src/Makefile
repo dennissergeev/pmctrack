@@ -1,7 +1,7 @@
-#F90    = ifort
-#FFLAGS =  -convert little_endian -assume byterecl 
-F90    = gfortran
-FFLAGS = -O3 -frecord-marker=4 
+F90    = ifort
+FFLAGS =  -convert little_endian -assume byterecl 
+#F90    = gfortran
+#FFLAGS = -O3 -frecord-marker=4 
 
 
 .SUFFIXES: .o .c .f .f90

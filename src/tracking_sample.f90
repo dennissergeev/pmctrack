@@ -54,7 +54,7 @@ program main
 
   nx=240
   ny=252  
-  nt=248
+  nt=17
   nz=8
 
   nx1=60
