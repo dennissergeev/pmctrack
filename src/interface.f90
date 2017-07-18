@@ -52,8 +52,8 @@ program main
   proj=1
   vert_grid=1
 
-  nx=301
-  ny=95
+  nx=300
+  ny=94
   nt=24
   nz=10
 
@@ -122,7 +122,7 @@ program main
   allocate (yyyy(nt),mm(nt),dd(nt),hh(nt),mn(nt))
 
   write (*,*)"Read timecard"
-  open (40,file='timecard',form='formatted')
+  open (40,file='/home/denis/phd/reanalysis/ERA5/track/timecard',form='formatted')
   do kt=1,nt
     read(40,*)yyyy(kt),mm(kt),dd(kt),hh(kt),mn(kt)
   end do
@@ -155,11 +155,12 @@ program main
            &'Reading data at ',yyyy(kt),' ',mm(kt),' ',dd(kt),' ',hh(kt),' ',mn(kt)
       
       read(11,rec=i_rec) psea(0:nx,0:ny,kt)
+      print *, 'slp read'  
 
       i_rec=i_rec+1
-      do k=1,nz
-        i_rec=i_rec+1
-      end do
+      !do k=1,nz
+      !  i_rec=i_rec+1
+      !end do
 
       do k=1,nz
         if(k<=nz)read(11,rec=i_rec) u(0:nx,0:ny,k,kt)
