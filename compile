@@ -1,0 +1,102 @@
+#!/bin/bash
+# Compile script
+#
+# 0. User-editable configuration 
+
+# Define compile mode:
+#   Possible values: "productive" or "debug". 
+#   The debug mode includes array boundary checks, warnings for floating point exceptions
+#   and helpful error messages in case of such errors, but slows down execution considerably.
+COMPILE_OPTS="productive"
+
+#######################################################################
+# Obs: The order of the files in $files has to reflect the interdepencies!
+base=`pwd`
+baselib="$base/lib"
+src="$baselib/src"
+precc="$src/_precc"
+
+files="calc_module.f90 vor_partition.f90 cf_synop_check.f90 synop_check.f90"
+files+="min_z.f90 steering_wind.f90 link2.f90 link.f90 track_check.f90" 
+files+="smth.f90 tracking_main.f90"
+filec="const.f90"
+filek="kind.f90"
+
+python_library="core"
+fortran_library="lib"$python_library
+pysig="${precc}/$python_library.pyf"
+EXT_SUFFIX=$(python3-config --extension-suffix)
+
+# TODO: Make code ready for -pedantic
+if [ "$COMPILE_OPTS" == 'productive' ]; then
+	OPTS="-fPIC -O3 -fno-range-check"
+	F2PY_OPTS=""
+	flagset="\e[0;32mproductive\e[0m";
+elif [ "$COMPILE_OPTS" == 'debug' ]; then
+	OPTS="-fPIC -fcheck=all -ffpe-trap=invalid,zero,overflow -fbacktrace -g -fno-range-check"
+	F2PY_OPTS="--debug-capi --debug"
+	flagset="\e[0;31mdebug\e[0m";
+else
+	echo "Configuration error: COMPILE_OPTS must be one of ('productive', 'debug')"
+	exit 1
+fi
+
+# Empty precompiler directory
+mkdir -p $precc
+rm -rf ${precc}/*
+
+# Anticipate compiled object file names
+fileso=""
+for file in $files
+	do fileso="$fileso ${file%.*}.o"
+done
+fileco="${filec%.*}.o"
+fileko="${filek%.*}.o"
+
+
+# 1. Simple sed precompiler
+echo "Stage 1: Precompiling the Fortran code"
+
+cd $src
+
+# Marker one of the source files have been changes since last commit
+# [[ `git diff $files $filec $filek |  wc -l` > 0 ]] && { change=+; } || { change=; };
+VERSION="A" # `git describe --tags --abbrev=0`
+VERREVI="B" # `git describe --tags`$change
+VERDATE="C" # `git log --format="%ai" --no-walk $VERSION`
+
+sed -e "s/####VERREVI####/$VERREVI/g" $filec |
+sed -e "s/####VERDATE####/$VERDATE/g" | 
+sed -e "s/####FCOMPIL####/f2py version `f2py -v`/g" | 
+sed -e "s/####FCOMTIM####/`date +'%Y-%m-%d %H:%M:%S %z'`/g" |
+sed -e "s/####FCOMHOS####/`hostname -f`/g" > $precc/$filec
+cp $filek $files $precc
+
+
+# 2. Creating new python signature file
+echo "Stage 2: Creating python signature file"
+
+cd $precc
+
+echo $(ls)
+
+f2py -m $python_library -h $pysig $filec $files > /dev/null
+sed "s/kind=nc/kind=16/g" $pysig | sed "s/_nc//g" |
+sed "s/kind=nr/kind=8/g" | sed "s/_nr//g" |
+sed "s/kind=ni/kind=4/g" | sed "s/_ni//g" |
+grep -v "nan=" > ${pysig}_tmp
+mv ${pysig}_tmp $pysig
+
+
+# 3. Compiling the fortran modules 
+echo -e "Stage 3: Compiling Fortran shared object using $flagset options."
+gfortran $OPTS -c $filek $filec $files 
+gfortran -shared $fileko $fileco $fileso $OPTS -o $fortran_library.so 
+mv $fortran_library.so $baselib
+
+
+# 4. Compiling the shared object usable from within python
+echo -e "Stage 4: Compiling the python module using $flagset options."
+# echo "f2py -c --fcompiler=gfortran $F2PY_OPTS --opt="\"$OPTS\"" $pysig $files $filec $filek"
+f2py -c --fcompiler=gfortran $F2PY_OPTS --opt="\"$OPTS\"" $pysig $files $filec $filek > /dev/null
+mv $python_library$EXT_SUFFIX $baselib/$python_library.so

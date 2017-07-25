@@ -1,0 +1,12 @@
+include LICENSE
+include README.md
+
+include compile
+include lib/src/*.f90
+
+recursive-include lib/tests *
+recursive-exclude * __pycache__
+recursive-exclude * .cache
+recursive-exclude * *.py[co]
+
+recursive-include docs *.rst conf.py Makefile make.bat *.jpg *.png *.gif
