@@ -21,7 +21,7 @@ program main
   integer ::kt
 
   character (50)::fname
-  character (50)::fname_in="msm_pv_slp_"
+  character (50)::fname_in="../../sample_data/msm_pv_slp_"
   
  
 ! parameter for smoothing of vorticity
@@ -122,7 +122,7 @@ program main
   allocate (yyyy(nt),mm(nt),dd(nt),hh(nt),mn(nt))
 
   write (*,*)"Read timecard"
-  open (40,file='timecard',form='formatted')
+  open (40,file='../../sample_data/timecard',form='formatted')
   do kt=1,nt
     read(40,*)yyyy(kt),mm(kt),dd(kt),hh(kt),mn(kt)
   end do

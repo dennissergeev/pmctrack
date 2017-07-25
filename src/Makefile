@@ -3,7 +3,6 @@
 F90    = gfortran
 FFLAGS = -O3 -frecord-marker=4 
 
-
 .SUFFIXES: .o .c .f90 # .f
 
 TARGET = track
@@ -34,6 +33,7 @@ $(TARGET) : $(OBJ)
 	$(F90) $(FFLAGS) -o $@ $(OBJ)
 
 $(OBJDIR)/%.o : %.f90
+	mkdir -p $(OBJDIR)
 	$(F90) $(FFLAGS) -c $< -o $@ 
 
 #.f.o :

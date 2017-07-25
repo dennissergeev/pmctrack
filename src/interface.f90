@@ -4,6 +4,7 @@ program main
   real(4),allocatable::levs(:),lon(:),lat(:)
   real(4),allocatable::vor(:,:,:),psea(:,:,:),vor_in(:,:,:)
   real(4),allocatable::u(:,:,:,:),v(:,:,:,:)
+  logical,allocatable::land_mask(:,:)
 
   integer (4)::i_rec
 
@@ -21,7 +22,7 @@ program main
   integer ::kt
 
   character (80)::fname
-  character (80)::fname_in="/home/denis/phd/reanalysis/ERA5/track/era5_slp_u_v_vo_"
+  character (80)::fname_in="../../../reanalysis/ERA5/track/era5_slp_u_v_vo_"
   
  
 ! parameter for smoothing of vorticity
@@ -46,8 +47,6 @@ program main
 
 ! parameter for checking the track
   integer::period_min
-
-
 
   proj=1
   vert_grid=1
@@ -122,7 +121,7 @@ program main
   allocate (yyyy(nt),mm(nt),dd(nt),hh(nt),mn(nt))
 
   write (*,*)"Read timecard"
-  open (40,file='/home/denis/phd/reanalysis/ERA5/track/timecard',form='formatted')
+  open (40, file='../../../reanalysis/ERA5/track/timecard',form='formatted')
   do kt=1,nt
     read(40,*)yyyy(kt),mm(kt),dd(kt),hh(kt),mn(kt)
   end do
@@ -136,6 +135,7 @@ program main
   allocate(u(0:nx,0:ny,nz,nt))
   allocate(v(0:nx,0:ny,nz,nt))
   allocate(psea(0:nx,0:ny,nt))
+  allocate(land_mask(0:nx,0:ny))
 
 
 
@@ -153,6 +153,11 @@ program main
 
       write (0,'(A,I4.4,A,I2.2,A,I2.2,A,I2.2,A,I2.2)')&
            &'Reading data at ',yyyy(kt),' ',mm(kt),' ',dd(kt),' ',hh(kt),' ',mn(kt)
+
+      read(11,rec=i_rec) land_mask(0:nx,0:ny)
+      print *, 'land mask read'  
+
+      i_rec=i_rec+1
       
       read(11,rec=i_rec) psea(0:nx,0:ny,kt)
       print *, 'slp read'  
@@ -218,145 +223,143 @@ program main
   stop
 end program main
 
-subroutine land(var,nx,ny,land_flag,sl,sl_land)
-  implicit none 
-  integer ,intent (in)::nx,ny
-  real (4),intent (in)::var(0:nx,0:ny)
-  real (4),intent (in)::sl(0:nx,0:ny)  
-  real(4),intent (in)::sl_land
-  logical,intent (out)::land_flag(0:nx,0:ny)
-  real(4)::sl_tmp
-  
-
-  integer ::i,j,ii,jj
-  real (4),parameter ::undef=9.99e20
-
-  land_flag=.false.
-
-  do j=0,ny
-    do i=0,nx
-      !        sl_tmp=0.
-      !        do ii=-2,2
-      !           do  jj=-2,2
-      !              sl_tmp=sl_tmp+sl(i+ii,j+jj)
-      !           end do
-      !        end do
-      !        if(sl_tmp>0.0001)then
-
-      if(sl(i,j)>sl_land)then
-        land_flag(i,j)=.true.
-!        var(i,j)=undef
-      end if
-
-    end do
-  end do
-
-  return
-end subroutine land
-
-subroutine japan_sea(var,nx,ny,land_flag,lon,lat)
-  implicit none 
-  integer ,intent (in)::nx,ny
-  real (4),intent (in)::var(0:nx,0:ny)
-  real (4),intent (in)::lon(0:nx),lat(0:ny)  
-  logical,intent (out)::land_flag(0:nx,0:ny)
-  real(4)::sl_tmp
-
-  integer ::i,j,ii,jj
-  real (4),parameter ::undef=9.99e20
-
-  !  land_flag=.false.
-
-  do j=0,ny
-    do i=0,nx
-
-      if(lon(i)>=132..and.lat(j)<=34)then
-        land_flag(i,j)=.true.
-!        var(i,j)=undef
-      elseif(lon(i)>=136..and.lat(j)<=35)then
-        land_flag(i,j)=.true.
-!        var(i,j)=undef
-      elseif(lon(i)>=141..and.lat(j)<=42)then
-        land_flag(i,j)=.true.
-!        var(i,j)=undef
-      elseif(lon(i)>=138..and.lat(j)<=36.9)then
-        land_flag(i,j)=.true.
-!        var(i,j)=undef
-      elseif(lon(i)>=140..and.lat(j)>=42.and.lat(j)<=42.5)then
-        land_flag(i,j)=.true.
-!        var(i,j)=undef
-      elseif(lon(i)>=131..and.lat(j)<=34)then
-        land_flag(i,j)=.true.
-!        var(i,j)=undef
-      elseif(lon(i)>=133..and.lat(j)<=35)then
-        land_flag(i,j)=.true.
-
-      elseif(lon(i)>=140.2.and.lat(j)<=42)then
-        land_flag(i,j)=.true.
-
-      elseif(lon(i)>=130..and.lon(i)<=135.and.lat(j)>=44)then
-        land_flag(i,j)=.true.
-
-      elseif(lon(i)<129..and.lat(j)<=35)then
-        land_flag(i,j)=.true.
-
-      elseif(lat(j)<33.5)then
-        land_flag(i,j)=.true.
-
-        
-
-
-
-!        var(i,j)=undef
-
-
-
-      end if
-
-      if(lon(i)>=130.0.and.lon(i)<=132.0.and.lat(j)>=37.0.and.lat(j)<=38.)then
-        land_flag(i,j)=.false.
-      elseif(lon(i)>=132.5.and.lon(i)<=134.0.and.lat(j)>=35.8.and.lat(j)<=37.)then
-        land_flag(i,j)=.false.
-      elseif(lon(i)>=129.6.and.lon(i)<=129.9.and.lat(j)>=33.58.and.lat(j)<=34.)then
-        land_flag(i,j)=.false.
-      elseif(lon(i)>=128.95.and.lon(i)<=130.0.and.lat(j)>=33.9.and.lat(j)<=34.8)then
-        land_flag(i,j)=.false.
-      elseif(lon(i)>=136.6.and.lon(i)<=137.4.and.lat(j)>=36.8.and.lat(j)<=38.0)then
-        land_flag(i,j)=.false.
-      elseif(lon(i)>=138.0.and.lon(i)<=138.65.and.lat(j)>=37.75.and.lat(j)<=38.4)then
-        land_flag(i,j)=.false.
-      elseif(lon(i)>=139.and.lon(i)<=139.8.and.lat(j)>=41.95.and.lat(j)<=42.5)then
-        land_flag(i,j)=.false.
-      elseif(lon(i)>=140.5.and.lon(i)<=141.5.and.lat(j)>=44.9.and.lat(j)<=45.6)then
-        land_flag(i,j)=.false.
-      end if
-
-    end do
-  end do
-
-  return
-end subroutine japan_sea
-
-
-
-subroutine undef_in(var,nx,ny,land_flag)
-  implicit none 
-  integer ,intent (in)::nx,ny
-  real (4),intent (inout)::var(0:nx,0:ny)
-  logical,intent (in)::land_flag(0:nx,0:ny)
-  
-  integer (4)::i,j
-
-  real (4),parameter ::undef=-100.0
-
-
-  do j=0,ny
-    do i=0,nx
-      if(land_flag(i,j))var(i,j)=undef
-    end do
-  end do
-
-  return
-end subroutine undef_in
-
-
+! subroutine land(var,nx,ny,land_flag,sl,sl_land)
+!   implicit none 
+!   integer ,intent (in)::nx,ny
+!   real (4),intent (in)::var(0:nx,0:ny)
+!   real (4),intent (in)::sl(0:nx,0:ny)  
+!   real(4),intent (in)::sl_land
+!   logical,intent (out)::land_flag(0:nx,0:ny)
+!   real(4)::sl_tmp
+!   
+! 
+!   integer ::i,j,ii,jj
+!   real (4),parameter ::undef=9.99e20
+! 
+!   land_flag=.false.
+! 
+!   do j=0,ny
+!     do i=0,nx
+!       !        sl_tmp=0.
+!       !        do ii=-2,2
+!       !           do  jj=-2,2
+!       !              sl_tmp=sl_tmp+sl(i+ii,j+jj)
+!       !           end do
+!       !        end do
+!       !        if(sl_tmp>0.0001)then
+! 
+!       if(sl(i,j)>sl_land)then
+!         land_flag(i,j)=.true.
+! !        var(i,j)=undef
+!       end if
+! 
+!     end do
+!   end do
+! 
+!   return
+! end subroutine land
+! 
+! subroutine japan_sea(var,nx,ny,land_flag,lon,lat)
+!   implicit none 
+!   integer ,intent (in)::nx,ny
+!   real (4),intent (in)::var(0:nx,0:ny)
+!   real (4),intent (in)::lon(0:nx),lat(0:ny)  
+!   logical,intent (out)::land_flag(0:nx,0:ny)
+!   real(4)::sl_tmp
+! 
+!   integer ::i,j,ii,jj
+!   real (4),parameter ::undef=9.99e20
+! 
+!   !  land_flag=.false.
+! 
+!   do j=0,ny
+!     do i=0,nx
+! 
+!       if(lon(i)>=132..and.lat(j)<=34)then
+!         land_flag(i,j)=.true.
+! !        var(i,j)=undef
+!       elseif(lon(i)>=136..and.lat(j)<=35)then
+!         land_flag(i,j)=.true.
+! !        var(i,j)=undef
+!       elseif(lon(i)>=141..and.lat(j)<=42)then
+!         land_flag(i,j)=.true.
+! !        var(i,j)=undef
+!       elseif(lon(i)>=138..and.lat(j)<=36.9)then
+!         land_flag(i,j)=.true.
+! !        var(i,j)=undef
+!       elseif(lon(i)>=140..and.lat(j)>=42.and.lat(j)<=42.5)then
+!         land_flag(i,j)=.true.
+! !        var(i,j)=undef
+!       elseif(lon(i)>=131..and.lat(j)<=34)then
+!         land_flag(i,j)=.true.
+! !        var(i,j)=undef
+!       elseif(lon(i)>=133..and.lat(j)<=35)then
+!         land_flag(i,j)=.true.
+! 
+!       elseif(lon(i)>=140.2.and.lat(j)<=42)then
+!         land_flag(i,j)=.true.
+! 
+!       elseif(lon(i)>=130..and.lon(i)<=135.and.lat(j)>=44)then
+!         land_flag(i,j)=.true.
+! 
+!       elseif(lon(i)<129..and.lat(j)<=35)then
+!         land_flag(i,j)=.true.
+! 
+!       elseif(lat(j)<33.5)then
+!         land_flag(i,j)=.true.
+! 
+!         
+! 
+! 
+! 
+! !        var(i,j)=undef
+! 
+! 
+! 
+!       end if
+! 
+!       if(lon(i)>=130.0.and.lon(i)<=132.0.and.lat(j)>=37.0.and.lat(j)<=38.)then
+!         land_flag(i,j)=.false.
+!       elseif(lon(i)>=132.5.and.lon(i)<=134.0.and.lat(j)>=35.8.and.lat(j)<=37.)then
+!         land_flag(i,j)=.false.
+!       elseif(lon(i)>=129.6.and.lon(i)<=129.9.and.lat(j)>=33.58.and.lat(j)<=34.)then
+!         land_flag(i,j)=.false.
+!       elseif(lon(i)>=128.95.and.lon(i)<=130.0.and.lat(j)>=33.9.and.lat(j)<=34.8)then
+!         land_flag(i,j)=.false.
+!       elseif(lon(i)>=136.6.and.lon(i)<=137.4.and.lat(j)>=36.8.and.lat(j)<=38.0)then
+!         land_flag(i,j)=.false.
+!       elseif(lon(i)>=138.0.and.lon(i)<=138.65.and.lat(j)>=37.75.and.lat(j)<=38.4)then
+!         land_flag(i,j)=.false.
+!       elseif(lon(i)>=139.and.lon(i)<=139.8.and.lat(j)>=41.95.and.lat(j)<=42.5)then
+!         land_flag(i,j)=.false.
+!       elseif(lon(i)>=140.5.and.lon(i)<=141.5.and.lat(j)>=44.9.and.lat(j)<=45.6)then
+!         land_flag(i,j)=.false.
+!       end if
+! 
+!     end do
+!   end do
+! 
+!   return
+! end subroutine japan_sea
+! 
+! 
+! 
+! subroutine undef_in(var,nx,ny,land_flag)
+!   implicit none 
+!   integer ,intent (in)::nx,ny
+!   real (4),intent (inout)::var(0:nx,0:ny)
+!   logical,intent (in)::land_flag(0:nx,0:ny)
+!   
+!   integer (4)::i,j
+! 
+!   real (4),parameter ::undef=-100.0
+! 
+! 
+!   do j=0,ny
+!     do i=0,nx
+!       if(land_flag(i,j))var(i,j)=undef
+!     end do
+!   end do
+! 
+!   return
+! end subroutine undef_in
