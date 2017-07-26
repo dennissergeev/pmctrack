@@ -1,5 +1,5 @@
 subroutine synop_check(mlon,mlat,n_max,minlon,minlat,n_min,mtype,proj,d_min)
-  use const
+  use constants
   implicit none 
   integer (4),intent (in)::n_max,n_min
   real(4),intent (in)::mlon(n_max),mlat(n_max)

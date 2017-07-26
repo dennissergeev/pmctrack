@@ -7,18 +7,18 @@
 #   Possible values: "productive" or "debug". 
 #   The debug mode includes array boundary checks, warnings for floating point exceptions
 #   and helpful error messages in case of such errors, but slows down execution considerably.
-COMPILE_OPTS="productive"
+COMPILE_OPTS="debug"
 
 #######################################################################
 # Obs: The order of the files in $files has to reflect the interdepencies!
 base=`pwd`
-baselib="$base/lib"
+baselib="$base/pmctrack"
 src="$baselib/src"
 precc="$src/_precc"
 
-files="calc_module.f90 vor_partition.f90 cf_synop_check.f90 synop_check.f90"
-files+="min_z.f90 steering_wind.f90 link2.f90 link.f90 track_check.f90" 
-files+="smth.f90 tracking_main.f90"
+files="vor_partition.f90 cf_synop_check.f90 synop_check.f90"
+files+=" min_z.f90 steering_wind.f90 link2.f90 link.f90 track_check.f90" 
+files+=" smth.f90 tracking_main.f90"
 filec="const.f90"
 filek="kind.f90"
 
@@ -29,11 +29,11 @@ EXT_SUFFIX=$(python3-config --extension-suffix)
 
 # TODO: Make code ready for -pedantic
 if [ "$COMPILE_OPTS" == 'productive' ]; then
-	OPTS="-fPIC -O3 -fno-range-check"
+	OPTS="-fPIC -O3 -frecord-marker=4"
 	F2PY_OPTS=""
 	flagset="\e[0;32mproductive\e[0m";
 elif [ "$COMPILE_OPTS" == 'debug' ]; then
-	OPTS="-fPIC -fcheck=all -ffpe-trap=invalid,zero,overflow -fbacktrace -g -fno-range-check"
+	OPTS="-fPIC -fcheck=all -ffpe-trap=invalid,zero,overflow -fbacktrace -g -frecord-marker=4"
 	F2PY_OPTS="--debug-capi --debug"
 	flagset="\e[0;31mdebug\e[0m";
 else

@@ -1,5 +1,5 @@
 subroutine track_check2(vortex,vortex_flag,nt,period_min)
-  use const
+  use constants
   implicit none 
   integer(4),intent (in)::nt
   integer(4),intent (in)::period_min

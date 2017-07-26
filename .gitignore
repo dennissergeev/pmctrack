@@ -9,6 +9,12 @@ Thumbs.db
 *.*~
 ._*
 
+###########
+# FORTRAN #
+###########
+*.mod
+*.so
+
 ##########
 # python #
 ##########
@@ -16,9 +22,6 @@ Thumbs.db
 .ipynb_checkpoints/
 Untitled*ipynb
 fontconfig
-
-# C extensions
-*.so
 
 # Packages
 *.egg
@@ -36,4 +39,4 @@ __pycache__
 .cache
 
 # Package-specific
-.precc/
+_precc/

@@ -1,7 +1,7 @@
 module calc_module
 
 use kind
-use constants
+use constantsants
 
 implicit none
 

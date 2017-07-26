@@ -2,7 +2,7 @@ subroutine vor_partition(vor_in,nx,ny,proj,&
      &mlat_out,mlon_out,vor_max_out,mtype_out,&
      &n_max_out,lat,lon,vor_part_max,s_part_out,&
      &vor_min,vor_part_min,del_vor_min,del_vor_max_coeff,d_cf_min,size_synop)
-  use const
+  use constants
   implicit none 
   integer(4),intent (in)::nx,ny
   integer(4),intent (in)::proj

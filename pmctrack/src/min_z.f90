@@ -1,6 +1,6 @@
 subroutine min_z(z,nx,ny,proj,minlat,minlon,z_min,n_min,lat,lon,type_min,del_z_min)
  
-  use const
+  use constants
   implicit none 
   integer(4),intent (in)::nx,ny
   integer(4),intent (in)::proj
