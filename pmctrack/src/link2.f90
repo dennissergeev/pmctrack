@@ -61,6 +61,7 @@ subroutine tracking2(mlon,mlat,max_vor,mtype,u_vor_f,v_vor_f,u_vor_b,v_vor_b,nt,
 
 
   do kt=1,nt-1
+  print*, 'in tracking2', kt
 
 
   do i_max=1,n_max(kt)

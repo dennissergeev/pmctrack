@@ -59,8 +59,8 @@ subroutine cf_synop_check(vor_in,vor_part,n_part,nx,ny,proj,lon,lat,mtype_part,d
     one_num=0
     one(:,:)=0
 
-    do j=0,ny
-      do i=0,nx
+    do j=1,ny-1
+      do i=1,nx-1
         
 
         if(vor_part(i,j)==n_part)then

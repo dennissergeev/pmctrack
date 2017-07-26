@@ -7,7 +7,7 @@
 #   Possible values: "productive" or "debug". 
 #   The debug mode includes array boundary checks, warnings for floating point exceptions
 #   and helpful error messages in case of such errors, but slows down execution considerably.
-COMPILE_OPTS="debug"
+COMPILE_OPTS="productive"
 
 #######################################################################
 # Obs: The order of the files in $files has to reflect the interdepencies!

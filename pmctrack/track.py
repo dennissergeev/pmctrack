@@ -19,11 +19,13 @@ dirname = Path(getenv('HOME')) / 'phd' / 'reanalysis' / 'ERA5'
 
 cl = iris.load(dirname.listdir('*.nc'))
 
-slp = cl.extract_strict('air_pressure_at_sea_level')[..., ::-1, :]
-vo = cl.extract_strict('atmosphere_relative_vorticity')[..., ::-1, :]
-u = cl.extract_strict('eastward_wind')[..., ::-1, :]
-v = cl.extract_strict('northward_wind')[..., ::-1, :]
-lsm = cl.extract_strict('land_binary_mask')[..., ::-1, :]
+t1 = 24
+
+slp = cl.extract_strict('air_pressure_at_sea_level')[:t1, ::-1, :]
+vo = cl.extract_strict('atmosphere_relative_vorticity')[:t1, ::-1, ::-1, :]
+u = cl.extract_strict('eastward_wind')[:t1, ::-1, ::-1, :]
+v = cl.extract_strict('northward_wind')[:t1, ::-1, ::-1, :]
+lsm = cl.extract_strict('land_binary_mask')[:t1, ::-1, :]
 
 proj = 1
 vert_grid = 1
@@ -48,7 +50,7 @@ lats = lat.points[0]
 lonin = (np.diff(lon.points)).mean()
 latin = (np.diff(lat.points)).mean()
 
-levs = plev.points[::-1]
+levs = plev.points
 
 del_t = np.diff(tcoord.units.num2date(tcoord.points))[0].total_seconds()
 
@@ -97,11 +99,8 @@ vo_data = vo.extract(iris.Constraint(pressure_level=950)).transpose()
 
 slp_data = slp.data * 1e-2
 vo_data = vo.extract(iris.Constraint(pressure_level=950)).data
-u_data = u.data[:, ::-1, ...]
-v_data = v.data[:, ::-1, ...]
-
-print(u_data.shape)
-print(vo_data.shape)
+u_data = u.data
+v_data = v.data
 
 tracking_main(vo_data, u_data, v_data, slp_data,
               proj, vert_grid,

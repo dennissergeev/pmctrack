@@ -369,6 +369,8 @@ subroutine tracking_main(vor, u, v, psea, &
          &nt,n_max,vor_index,vor_num,vor_merge,&
          &vor_part(nx1:nx2,ny1:ny2,1:nt),nx12,ny12,proj,lon(nx1:nx2),lat(ny1:ny2),&
          &del_r,del_t)
+  else
+    print*, 'track_type must be 1 or 2,', track_type, 'is given'
   end if
     
 
