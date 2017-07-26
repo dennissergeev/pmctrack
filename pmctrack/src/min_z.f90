@@ -20,7 +20,7 @@ subroutine min_z(z,nx,ny,proj,minlat,minlon,z_min,n_min,lat,lon,type_min,del_z_m
   real(4)::r,theta
   integer (4)::mi,mj,mij(2),mi_tmp,mj_tmp
 
-  real(4)::min,min0,max
+  real(4)::min_value,min0,max_value
 
   real(4)::zmin_tmp
   
@@ -66,12 +66,12 @@ subroutine min_z(z,nx,ny,proj,minlat,minlon,z_min,n_min,lat,lon,type_min,del_z_m
     end do
   end do
 
-  max=maxval(z)
+  max_value=maxval(z)
   min0=minval(z)
 
-  write (*,*)'psea max min0',max,min0
+  write (*,*)'psea max_value min0',max_value,min0
 
-  zmin_tmp=max
+  zmin_tmp=max_value
 
   do
     zmin_tmp=zmin_tmp-0.1
@@ -80,12 +80,12 @@ subroutine min_z(z,nx,ny,proj,minlat,minlon,z_min,n_min,lat,lon,type_min,del_z_m
       s_part=0
 
       p=0
-      min=minval(z_tmp)
+      min_value=minval(z_tmp)
       mij=minloc(z_tmp)
       mi=mij(1)-1
       mj=mij(2)-1
       
-      if(min>=zmin_tmp)exit
+      if(min_value>=zmin_tmp)exit
 
       n_part=n_part+1
       z_part_tmp(mi,mj)=n_part
@@ -152,7 +152,7 @@ subroutine min_z(z,nx,ny,proj,minlat,minlon,z_min,n_min,lat,lon,type_min,del_z_m
       end do
       
       if(mij_flag)then
-        if(zmin_tmp-min>del_z_min)then
+        if(zmin_tmp-min_value>del_z_min)then
           
 
           do j=0,ny
@@ -168,14 +168,14 @@ subroutine min_z(z,nx,ny,proj,minlat,minlon,z_min,n_min,lat,lon,type_min,del_z_m
 
           minlon(n_min)=lon(mi)
           minlat(n_min)=lat(mj)
-          z_min(n_min)=min
+          z_min(n_min)=min_value
           type_min(n_min)=s_part
 
 
           !      write (*,*)(var_part(ii,1,n_min),ii=-l,l),(var_part(ii,2,n_min),ii=-l,l)
-          !     write (*,*)n_min,max,mlon(n_min),mlat(n_min)
+          !     write (*,*)n_min,max_value,mlon(n_min),mlat(n_min)
 !          write (99,*)minlon(n_min),minlat(n_min),z_min(n_min)
-       !   write (*,*)minlon(n_min),minlat(n_min),z_min(n_min),zmin_tmp,min,del_z_min
+       !   write (*,*)minlon(n_min),minlat(n_min),z_min(n_min),zmin_tmp,min_value,del_z_min
 
 !          write (*,*)n_min,minlon(n_min),minlat(n_min)
           n_min=n_min+1         
@@ -235,7 +235,7 @@ subroutine min_z(z,nx,ny,proj,minlat,minlon,z_min,n_min,lat,lon,type_min,del_z_m
 
     zmin_tmp=zmin_tmp+1.
 
-    if(zmin_tmp>max)exit
+    if(zmin_tmp>max_value)exit
 
 !    write (*,*)zmin_tmp
 
@@ -245,13 +245,13 @@ subroutine min_z(z,nx,ny,proj,minlat,minlon,z_min,n_min,lat,lon,type_min,del_z_m
     s_part=0
 
     p=0
-    min=z_min(1)
+    min_value=z_min(1)
     mi=buf_mij(1,1)
     mj=buf_mij(2,1)
     
 !    write (*,*)minlon(1),minlat(1),z_min(1)
 !    write (*,*)lon(mi),lat(mj),z_tmp(mi,mj)
-    !      if(min>=zmin_tmp)exit
+    !      if(min_value>=zmin_tmp)exit
     
     n_part=1
     z_part_tmp(mi,mj)=n_part

@@ -9,7 +9,7 @@ subroutine tracking_main(vor, u, v, psea, &
     & period_min, d_cf_min, size_synop, del_psea_min, distance_ec, &
     & nx, ny, nz, nt)
    
-  use kind 
+  !use kind 
 
   implicit none
 

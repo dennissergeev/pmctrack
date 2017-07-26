@@ -78,7 +78,7 @@ echo "Stage 2: Creating python signature file"
 
 cd $precc
 
-echo $(ls)
+# echo $(ls)
 
 f2py -m $python_library -h $pysig $filec $files > /dev/null
 sed "s/kind=nc/kind=16/g" $pysig | sed "s/_nc//g" |

@@ -183,23 +183,20 @@ subroutine steering_wind_r(u,v,p,lon,lat,proj,nx,ny,nz,nt,kt1,kt2,mi,mj,&
 end subroutine steering_wind_r
 
 
-
-subroutine integral_p(var,int,nz,p)
+subroutine integral_p(var,int_sum,nz,p)
   implicit none 
   integer ,intent (in)::nz
   real (4),intent (in)::var(nz)
   real (4),intent (in)::p(nz)
-  real (4),intent (out)::int
+  real (4),intent (out)::int_sum
   integer ::k
   
-  int=0.
+  int_sum=0.
 
   do k=1,nz-1
-     int=int+0.5*(var(k)+var(k+1))*(p(k)-p(k+1))
+     int_sum = int_sum + 0.5 * (var(k) + var(k+1)) * (p(k) - p(k+1))
   end do
-  int=int/(p(1)-p(nz))
+  int_sum = int_sum / (p(1) - p(nz))
 
   return
 end subroutine integral_p
-
-
