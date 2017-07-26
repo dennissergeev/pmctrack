@@ -121,8 +121,9 @@ subroutine vor_partition(vor_in,nx,ny,proj,&
     p=0
    
 
-    max_tmp=maxval(vor)
-    mij=maxloc(vor)
+    max_tmp=maxval(vor) !(1:nx-1, 1:ny-1))
+    mij=maxloc(vor) !(1:nx-1, 1:ny-1))
+    !print*, mij
     mi=mij(1)-1
     mj=mij(2)-1
     if(max_tmp<=vor_min)exit
@@ -154,6 +155,7 @@ subroutine vor_partition(vor_in,nx,ny,proj,&
       p=p-1
 
       do m=1,8
+        ! print*, m, mi_tmp, mx(m), mj_tmp, my(m)
         if(vor(mi_tmp+mx(m),mj_tmp+my(m))>vor_part_min)then
           if(vor_part(mi_tmp+mx(m),mj_tmp+my(m))==0)then
             vor_part(mi_tmp+mx(m),mj_tmp+my(m))=n_part
@@ -213,8 +215,8 @@ subroutine vor_partition(vor_in,nx,ny,proj,&
     do
       p=0
 
-      max_tmp=maxval(vor)
-      mij=maxloc(vor)
+      max_tmp=maxval(vor) !(1:nx-1, 1:ny-1))
+      mij=maxloc(vor) !(1:nx-1, 1:ny-1))
       mi=mij(1)-1
       mj=mij(2)-1
       if(max_tmp<=vor_min)exit

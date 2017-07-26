@@ -15,11 +15,9 @@ from core import tracking_main
 iris.FUTURE.netcdf_promote = True
 iris.FUTURE.cell_datetime_objects = True
 
-dirname = Path(getenv('HOME') / 'phd' / 'reanalysis' / 'ERA5'
+dirname = Path(getenv('HOME')) / 'phd' / 'reanalysis' / 'ERA5'
 
 cl = iris.load(dirname.listdir('*.nc'))
-
-cl
 
 slp = cl.extract_strict('air_pressure_at_sea_level')[..., ::-1, :]
 vo = cl.extract_strict('atmosphere_relative_vorticity')[..., ::-1, :]
@@ -97,7 +95,7 @@ lsm.transpose((2, 1, 0))
 
 vo_data = vo.extract(iris.Constraint(pressure_level=950)).transpose()
 
-slp_data = slp.data * 1e2
+slp_data = slp.data * 1e-2
 vo_data = vo.extract(iris.Constraint(pressure_level=950)).data
 u_data = u.data[:, ::-1, ...]
 v_data = v.data[:, ::-1, ...]
