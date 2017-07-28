@@ -156,12 +156,10 @@ program main
            &'Reading data at ',yyyy(kt),' ',mm(kt),' ',dd(kt),' ',hh(kt),' ',mn(kt)
 
       read(11,rec=i_rec) land_mask(0:nx,0:ny)
-      print *, 'land mask read'  
 
       i_rec=i_rec+1
       
       read(11,rec=i_rec) psea(0:nx,0:ny,kt)
-      print *, 'slp read'  
 
       i_rec=i_rec+1
       !do k=1,nz
