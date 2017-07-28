@@ -4,7 +4,7 @@ F90    = gfortran
 FFLAGS = -O3 -frecord-marker=4 
 
 .SUFFIXES: .o .c .f90 # .f
-.PHONY: all clean
+.PHONY: all debug clean
 
 PROJNAME = pmctrack
 TARGET = track.exe
@@ -27,6 +27,9 @@ $(OBJDIR)/interface.o
 
 all: $(TARGET)
 
+debug: FFLAGS += -fcheck=all -fbacktrace -g
+debug: $(TARGET)
+
 help:
 	@echo 'Makefile for the tracking code                '
 	@echo '                                              '
@@ -36,6 +39,7 @@ help:
 	@echo '                                              '
 
 $(TARGET) : $(OBJ)
+	@mkdir -p $(OUTDIR)
 	$(F90) $(FFLAGS) -o $@ $(OBJ)
 
 $(OBJDIR)/%.o : $(SRCDIR)/%.f90

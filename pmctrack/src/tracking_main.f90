@@ -6,7 +6,8 @@ subroutine tracking_main(vor,u,v,psea,&
      &zeta_max0,zeta_min0,int_zeta_min0,gamma,&
      &n_steering_x,n_steering_y,r_steering,steering_type,&
      &del_lon,del_lat,del_r,track_type,&
-     &period_min,d_cf_min,size_synop,del_psea_min,distance_ec)
+     &period_min,d_cf_min,size_synop,del_psea_min,distance_ec,&
+     &outdir)
     
   implicit none   
   integer,intent (in) ::nx,ny,nx1,nx2,ny1,ny2,nz,nt
@@ -40,8 +41,11 @@ subroutine tracking_main(vor,u,v,psea,&
 ! parameter for checking the track
   integer,intent (in)::period_min
 
+! output directory
+  character (50), intent(in) :: outdir
+
+! LOCAL VARIABLES
   real(4),allocatable::lon(:),lat(:)
-  
 
   real(4),allocatable::vor_smth(:,:,:)
   real(4),allocatable::dummy(:,:)
@@ -84,7 +88,7 @@ subroutine tracking_main(vor,u,v,psea,&
   integer (4),allocatable::vortex_type(:,:)
   integer (4),allocatable::vortex_flag(:)
 
-  character (50)::fname_out,fname_loc,fname_track,fname_in
+  character (100) :: fname_out, fname_loc, fname_track, fname_in
 
 
 
@@ -181,7 +185,7 @@ subroutine tracking_main(vor,u,v,psea,&
     end if
 
 
-    write (fname_out,'(A,I4.4,A)')'vor_out_',kt,'.dat'
+    write (fname_out,'(A,A,A,I4.4,A)')trim(outdir),'/','vor_out_',kt,'.dat'
     open(12,file=fname_out,form='unformatted',access='sequential')    
     write (12)vor(nx1:nx2,ny1:ny2,kt)
     write (12)vor_smth(nx1:nx2,ny1:ny2,kt)
@@ -228,7 +232,7 @@ subroutine tracking_main(vor,u,v,psea,&
 
     write (12)vor_part_r(nx1:nx2,ny1:ny2)
 
-    write (fname_loc,'(A,I4.4,A)')'vormax_loc_',kt,'.txt'
+    write (fname_loc,'(A,A,A,I4.4,A)')trim(outdir),'/','vormax_loc_',kt,'.txt'
     open(82,file=fname_loc,form='formatted')    
 
 
@@ -398,7 +402,7 @@ subroutine tracking_main(vor,u,v,psea,&
         
         if(vor_merge(i_vor_num)==0)then
           !        write (fname_track,'(A,I4.4,A)')'vortrack_',vor_num_out,'.txt'
-          write (fname_track,'(A,I4.4,A,I4.4,A)')'vortrack_',i_vor_num,&
+          write (fname_track,'(A,A,A,I4.4,A,I4.4,A)')trim(outdir),'/','vortrack_',i_vor_num,&
              &'_',1,'.txt'
           !          if(vor_merge_num(i_vor_num)==1)then
           !            vor_merge_num(i_vor_num)=vor_merge_num(i_vor_num)+1          
@@ -408,7 +412,7 @@ subroutine tracking_main(vor,u,v,psea,&
           vor_merge_num(vor_merge(i_vor_num))=&
                &vor_merge_num(vor_merge(i_vor_num))+1          
           
-          write (fname_track,'(A,I4.4,A,I4.4,A)')'vortrack_',&
+          write (fname_track,'(A,A,A,I4.4,A,I4.4,A)')trim(outdir),'/','vortrack_',&
                &vor_merge(i_vor_num),'_'&
                &,vor_merge_num(vor_merge(i_vor_num)),'.txt'
           !          write (*,*)vor_merge(i_vor_num),vor_merge_num(vor_merge(i_vor_num))                    

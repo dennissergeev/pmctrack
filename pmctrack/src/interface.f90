@@ -22,7 +22,8 @@ program main
   integer ::kt
 
   character (80)::fname
-  character (80)::fname_in="../../../reanalysis/ERA5/track/era5_slp_u_v_vo_"
+  character (80)::fname_in="../../reanalysis/ERA5/track/era5_slp_u_v_vo_"
+  character (80) :: outdir="output"
   
  
 ! parameter for smoothing of vorticity
@@ -121,7 +122,7 @@ program main
   allocate (yyyy(nt),mm(nt),dd(nt),hh(nt),mn(nt))
 
   write (*,*)"Read timecard"
-  open (40, file='../../../reanalysis/ERA5/track/timecard',form='formatted')
+  open (40, file='../../reanalysis/ERA5/track/timecard',form='formatted')
   do kt=1,nt
     read(40,*)yyyy(kt),mm(kt),dd(kt),hh(kt),mn(kt)
   end do
@@ -216,7 +217,7 @@ program main
      &zeta_max0,zeta_min0,int_zeta_min0,gamma,&
      &n_steering_x,n_steering_y,r_steering,steering_type,&
      &del_lon,del_lat,del_r,track_type,&
-     &period_min,d_cf_min,size_synop,del_psea_min,distance_ec)
+     &period_min,d_cf_min,size_synop,del_psea_min,distance_ec,outdir)
 
 
 
