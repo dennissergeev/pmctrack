@@ -4,9 +4,13 @@ F90    = gfortran
 FFLAGS = -O3 -frecord-marker=4 
 
 .SUFFIXES: .o .c .f90 # .f
+.PHONY: all clean
 
-TARGET = track
-OBJDIR = objfiles
+PROJNAME = pmctrack
+TARGET = track.exe
+OUTDIR = output
+SRCDIR = $(PROJNAME)/src
+OBJDIR = $(PROJNAME)/src/_precc
 OBJ = \
 $(OBJDIR)/const.o \
 $(OBJDIR)/vor_partition.o \
@@ -21,19 +25,21 @@ $(OBJDIR)/smth.o \
 $(OBJDIR)/tracking_main.o \
 $(OBJDIR)/interface.o
 
+all: $(TARGET)
+
 help:
 	@echo 'Makefile for the tracking code                '
 	@echo '                                              '
 	@echo 'Usage:                                        '
-	@echo '    make tracking	Compile tracking code'
+	@echo '    make all     	Compile tracking code'
 	@echo '    make clean	        Clean the directory  '
 	@echo '                                              '
 
 $(TARGET) : $(OBJ)
 	$(F90) $(FFLAGS) -o $@ $(OBJ)
 
-$(OBJDIR)/%.o : %.f90
-	mkdir -p $(OBJDIR)
+$(OBJDIR)/%.o : $(SRCDIR)/%.f90
+	@mkdir -p $(OBJDIR)
 	$(F90) $(FFLAGS) -c $< -o $@ 
 
 #.f.o :
@@ -41,5 +47,6 @@ $(OBJDIR)/%.o : %.f90
 
 
 clean :
-	-rm -f $(OBJDIR)/*.o *.mod $(TARGET)
-	-rm vor*.txt vor*.dat
+	-rm -f $(OBJDIR)/*[.o,.mod]
+	-rm -f $(TARGET)
+	-rm -f $(OUTDIR)/vor*[.txt,.dat]
