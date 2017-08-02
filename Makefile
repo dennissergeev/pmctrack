@@ -14,6 +14,7 @@ OBJDIR = $(PROJNAME)/src/_precc
 OBJ = \
 $(OBJDIR)/const.o \
 $(OBJDIR)/params.o \
+$(OBJDIR)/util.o \
 $(OBJDIR)/vor_partition.o \
 $(OBJDIR)/cf_synop_check.o \
 $(OBJDIR)/synop_check.o \

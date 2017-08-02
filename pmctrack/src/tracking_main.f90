@@ -94,8 +94,6 @@ subroutine tracking_main(vor,u,v,psea,&
   character (100) :: fname_out, fname_loc, fname_track, fname_in
 
 
-
-
   write (*,*)'nx=',nx,'ny=',ny,'nt=',nt,'nz=',nz
   write (*,*)'nx1=',nx1,'nx2=',nx2,'ny1=',ny1,'ny2=',ny2
 

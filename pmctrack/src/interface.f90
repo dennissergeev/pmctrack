@@ -1,10 +1,14 @@
 program main
+
+  use util
+
   implicit none   
+
   real(4)::p0(100)
   real(4),allocatable::levs(:),lon(:),lat(:)
   real(4),allocatable::vor(:,:,:),psea(:,:,:),vor_in(:,:,:)
   real(4),allocatable::u(:,:,:,:),v(:,:,:,:)
-  logical,allocatable::land_mask(:,:)
+  real(4),allocatable::land_mask(:,:)
 
   integer (4)::i_rec
 
@@ -142,13 +146,13 @@ program main
 
   write (*,*)'Read ERA5 data',nt
 
-  do kt=1,nt
+  do kt=1, nt
     i_rec=1
 
     write (fname,'(A,I4.4,I2.2,I2.2,I2.2,I2.2,A)')trim(fname_in),yyyy(kt),mm(kt),dd(kt),hh(kt),mn(kt),'.dat'
 
 
-    open(11,file=fname,form='unformatted',access='direct',status='old',iostat=ios,recl=4*(nx+1)*(ny+1))    
+    open(11, file=fname, form='unformatted', access='direct', status='old', iostat=ios, recl=4*(nx+1)*(ny+1))    
 
     if(ios==0)then
 
@@ -160,6 +164,7 @@ program main
       i_rec=i_rec+1
       
       read(11,rec=i_rec) psea(0:nx,0:ny,kt)
+      call apply_mask_2d(psea(0:nx, 0:ny,kt), nx, ny, land_mask)
 
       i_rec=i_rec+1
       !do k=1,nz
@@ -169,10 +174,12 @@ program main
       do k=1,nz
         if(k<=nz)read(11,rec=i_rec) u(0:nx,0:ny,k,kt)
         i_rec=i_rec+1
+        call apply_mask_2d(u(0:nx, 0:ny, k, kt), nx, ny, land_mask)
       end do
       do k=1,nz
         if(k<=nz)read(11,rec=i_rec) v(0:nx,0:ny,k,kt)
         i_rec=i_rec+1
+        call apply_mask_2d(v(0:nx, 0:ny, k, kt), nx, ny, land_mask)
       end do
       !!        write (0,*)'Read v  '
 
@@ -195,13 +202,15 @@ program main
       do k=1,nz
         if(k==3)read(11,rec=i_rec) vor(0:nx,0:ny,kt)
         i_rec=i_rec+1
+        call apply_mask_2d(vor(0:nx, 0:ny, kt), nx, ny, land_mask)
       end do
       !        write (0,*)'Read vor  '
-
 
       close(11)    
 
     end if
+
+
   end do
 
 
@@ -340,25 +349,3 @@ end program main
 ! 
 !   return
 ! end subroutine japan_sea
-! 
-! 
-! 
-! subroutine undef_in(var,nx,ny,land_flag)
-!   implicit none 
-!   integer ,intent (in)::nx,ny
-!   real (4),intent (inout)::var(0:nx,0:ny)
-!   logical,intent (in)::land_flag(0:nx,0:ny)
-!   
-!   integer (4)::i,j
-! 
-!   real (4),parameter ::undef=-100.0
-! 
-! 
-!   do j=0,ny
-!     do i=0,nx
-!       if(land_flag(i,j))var(i,j)=undef
-!     end do
-!   end do
-! 
-!   return
-! end subroutine undef_in
