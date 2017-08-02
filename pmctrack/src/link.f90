@@ -1,17 +1,17 @@
-subroutine tracking(mlon,mlat,max_vor,mtype,u_vor_f,v_vor_f,u_vor_b,v_vor_b,nt,&
-     &n_max,vor_index,vor_num,vor_merge,vor_part,nx,ny,proj,lon,lat,del_lon,del_lat,del_t)
+subroutine tracking(mlon,mlat,mtype,u_vor_f,v_vor_f,nt,&
+  &                 n_max,vor_index,vor_num,vor_merge,vor_part,&
+  &                 nx,ny,proj,lon,lat,del_lon,del_lat,del_t)
 
-  use constants
-  use params  
+  use constants, only: pi, ra
+  use params, only: nmax, pmax
 
   implicit none 
   integer ,intent (in)::nt,nx,ny
   integer ,intent (in)::proj
   integer ,intent (in)::n_max(nt)
-  real (4),intent (in)::mlon(nmax,nt),mlat(nmax,nt),max_vor(nmax,nt)
+  real (4),intent (in)::mlon(nmax,nt),mlat(nmax,nt)
   integer ,intent (in)::mtype(nmax,nt)
   real (4),intent (in)::u_vor_f(nmax,nt),v_vor_f(nmax,nt)
-  real (4),intent (in)::u_vor_b(nmax,nt),v_vor_b(nmax,nt)
   real(4),intent (in)::lon(0:nx),lat(0:ny)
   real(4),intent (in)::del_lon,del_lat,del_t
   integer (4),intent (in)::vor_part(0:nx,0:ny,nt)

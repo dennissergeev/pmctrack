@@ -9,10 +9,11 @@ subroutine tracking_main(vor,u,v,psea,&
      &period_min,d_cf_min,size_synop,del_psea_min,distance_ec,&
      &outdir)
     
-  use constants
-  use params
+  use constants, only: ikilo, rkilo 
+  use params, only: fillval, nmax, kmax, pmax
 
-  implicit none   
+  implicit none
+ 
   integer,intent (in) ::nx,ny,nx1,nx2,ny1,ny2,nz,nt
   real(4),intent (in)::vor(0:nx,0:ny,1:nt)
   real(4),intent (in)::u(0:nx,0:ny,1:nz,1:nt),v(0:nx,0:ny,1:nz,1:nt)
@@ -207,7 +208,7 @@ subroutine tracking_main(vor,u,v,psea,&
 
     if(n_max(kt)>=1)then
       call min_z(psea(nx1:nx2,ny1:ny2,kt),&
-           &nx12,ny12,proj,&
+           &nx12,ny12,&
            &minlat(:,kt),minlon(:,kt),&
            &z_min(:,kt),n_min(kt),lat(ny1:ny2),lon(nx1:nx2),&
            &z_min_size(:,kt),del_psea_min)
@@ -351,12 +352,12 @@ subroutine tracking_main(vor,u,v,psea,&
   write (*,*)'Tracking vortex'
   if(track_type==1)then
 
-    call tracking(mlon,mlat,max_vor,mtype,u_vor_f,v_vor_f,u_vor_f,v_vor_f,&
+    call tracking(mlon,mlat,mtype,u_vor_f,v_vor_f,&
          &nt,n_max,vor_index,vor_num,vor_merge,&
          &vor_part(nx1:nx2,ny1:ny2,1:nt),nx12,ny12,proj,lon(nx1:nx2),lat(ny1:ny2),&
          &del_lon,del_lat,del_t)
   elseif(track_type==2)then
-    call tracking2(mlon,mlat,max_vor,mtype,u_vor_f,v_vor_f,u_vor_f,v_vor_f,&
+    call tracking2(mlon,mlat,mtype,u_vor_f,v_vor_f,&
          &nt,n_max,vor_index,vor_num,vor_merge,&
          &vor_part(nx1:nx2,ny1:ny2,1:nt),nx12,ny12,proj,lon(nx1:nx2),lat(ny1:ny2),&
          &del_r,del_t)

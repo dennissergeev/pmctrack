@@ -49,8 +49,11 @@ end subroutine smth
 
 
 subroutine smth_r(var,nx,ny,lon,lat,var_smth,nx1,nx2,ny1,ny2,r_smth,proj)
-  use constants
-  implicit none 
+
+  use constants, only: pi, ra
+
+  implicit none
+
   integer ,intent (in)::nx,ny,nx1,nx2,ny1,ny2
   integer ,intent (in)::proj
   real (4),intent (in)::var(0:nx,0:ny)

@@ -1,6 +1,9 @@
 subroutine synop_check(mlon,mlat,n_max,minlon,minlat,n_min,mtype,proj,d_min)
-  use constants
-  implicit none 
+
+  use constants, only: pi, ra
+
+  implicit none
+
   integer (4),intent (in)::n_max,n_min
   real(4),intent (in)::mlon(n_max),mlat(n_max)
   real(4),intent (in)::minlon(n_min),minlat(n_min)

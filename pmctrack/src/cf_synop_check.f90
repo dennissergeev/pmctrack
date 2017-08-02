@@ -1,7 +1,7 @@
 subroutine cf_synop_check(vor_in,vor_part,n_part,nx,ny,proj,lon,lat,mtype_part,d_cf_min,size_synop)
 
-  use constants
-  use params
+  use constants, only: pi, ra, rkilo 
+  use params, only: pmax
 
   implicit none 
   integer (4),intent (in)::nx,ny
@@ -159,16 +159,13 @@ subroutine cf_synop_check(vor_in,vor_part,n_part,nx,ny,proj,lon,lat,mtype_part,d
 end subroutine cf_synop_check
 
 subroutine median_check(val,flag,pnum)
+
+  use params, only: mx, my
   implicit none 
   real (4),intent (in)::val(-1:1,-1:1)
   logical (4),intent (out)::flag
   integer (4),intent (out)::pnum
   integer (4)::m
-  integer (4)::mx(8),my(8)
-
-  mx(1:8)=(/ 1, 1, 0,-1,-1,-1, 0, 1/)
-  my(1:8)=(/ 0, 1, 1, 1, 0,-1,-1,-1/)
-
 
   flag=.false.
   pnum=0

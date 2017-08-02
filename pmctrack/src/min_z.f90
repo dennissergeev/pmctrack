@@ -1,11 +1,10 @@
-subroutine min_z(z,nx,ny,proj,minlat,minlon,z_min,n_min,lat,lon,type_min,del_z_min)
+subroutine min_z(z, nx, ny, minlat, minlon, &
+  &              z_min, n_min, lat, lon, type_min, del_z_min)
  
-  use constants
-  use params
+  use params, only: fillval, nmax, pmax4, mx, my
 
   implicit none 
   integer(4),intent (in)::nx,ny
-  integer(4),intent (in)::proj
   real(4),intent (in)::lon(0:nx),lat(0:ny)
   real(4),intent (in)::z(0:nx,0:ny)
   real(4),intent (out)::minlat(nmax),minlon(nmax),z_min(nmax)
@@ -30,7 +29,7 @@ subroutine min_z(z,nx,ny,proj,minlat,minlon,z_min,n_min,lat,lon,type_min,del_z_m
   integer (4)::s_part
 
 
-  integer (4)::var_part_tmp(1:2,1:pmax)
+  integer (4)::var_part_tmp(1:2,1:pmax4)
   integer (4)::p=0
   real(4)::surround8(8)
   integer (4)::buf_mij(2,nmax)
@@ -96,7 +95,7 @@ subroutine min_z(z,nx,ny,proj,minlat,minlon,z_min,n_min,lat,lon,type_min,del_z_m
             s_part=s_part+1
 
             
-            if (p < pmax) then
+            if (p < pmax4) then
               p = p + 1 
               var_part_tmp(1,p) = mi+mx(m)
               var_part_tmp(2,p) = mj+my(m)
@@ -123,7 +122,7 @@ subroutine min_z(z,nx,ny,proj,minlat,minlon,z_min,n_min,lat,lon,type_min,del_z_m
             s_part=s_part+1
 
                                
-                if (p < pmax) then
+                if (p < pmax4) then
                   p = p + 1 
                   var_part_tmp(1,p) = mi_tmp+mx(m)
                   var_part_tmp(2,p) = mj_tmp+my(m)
@@ -263,7 +262,7 @@ subroutine min_z(z,nx,ny,proj,minlat,minlon,z_min,n_min,lat,lon,type_min,del_z_m
           s_part=s_part+1
           
           
-          if (p < pmax) then
+          if (p < pmax4) then
             p = p + 1 
             var_part_tmp(1,p) = mi+mx(m)
             var_part_tmp(2,p) = mj+my(m)
@@ -290,7 +289,7 @@ subroutine min_z(z,nx,ny,proj,minlat,minlon,z_min,n_min,lat,lon,type_min,del_z_m
               s_part=s_part+1
               
               
-              if (p < pmax) then
+              if (p < pmax4) then
                 p = p + 1 
                 var_part_tmp(1,p) = mi_tmp+mx(m)
                 var_part_tmp(2,p) = mj_tmp+my(m)

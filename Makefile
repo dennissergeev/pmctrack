@@ -28,7 +28,7 @@ $(OBJDIR)/interface.o
 
 all: $(TARGET)
 
-debug: FFLAGS += -fcheck=all -fbacktrace -g
+debug: FFLAGS += -g -fcheck=all -fbacktrace -Wuse-without-only -Wunused-dummy-argument -Wunused-parameter
 debug: $(TARGET)
 
 help:

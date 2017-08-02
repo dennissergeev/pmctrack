@@ -1,5 +1,7 @@
 subroutine steering_wind_f(u,v,p,nx,ny,nz,nt,kt,mi,mj,u_vor,v_vor,n_steering_x,n_steering_y)
-  implicit none 
+
+  implicit none
+
   integer ,intent (in)::nx,ny,nz,nt,kt
   integer ,intent (in)::n_steering_x,n_steering_y
   real(4) ,intent (in)::u(0:nx,0:ny,nz,nt),v(0:nx,0:ny,nz,nt)
@@ -14,9 +16,6 @@ subroutine steering_wind_f(u,v,p,nx,ny,nz,nt,kt,mi,mj,u_vor,v_vor,n_steering_x,n
   integer ::ii,jj,k
 
 
-   
-
-  
   u_vor=0.
   v_vor=0.
   n_steering_s=0
@@ -54,7 +53,9 @@ end subroutine steering_wind_f
 
 
 subroutine steering_wind_b(u,v,p,nx,ny,nz,nt,kt,mi,mj,u_vor,v_vor,n_steering_x,n_steering_y)
-  implicit none 
+
+  implicit none
+
   integer ,intent (in)::nx,ny,nz,nt,kt
   real(4) ,intent (in)::u(0:nx,0:ny,nz,nt),v(0:nx,0:ny,nz,nt)
   real(4) ,intent (in)::p(nz)
@@ -104,7 +105,9 @@ end subroutine steering_wind_b
 
 subroutine steering_wind_r(u,v,p,lon,lat,proj,nx,ny,nz,nt,kt1,kt2,mi,mj,&
      &u_vor,v_vor,r_steering)
-  use constants
+
+  use constants, only: pi, ra
+
   implicit none 
   integer ,intent (in)::nx,ny,nz,nt,kt1,kt2
   integer ,intent (in)::proj
@@ -131,7 +134,6 @@ subroutine steering_wind_r(u,v,p,lon,lat,proj,nx,ny,nz,nt,kt1,kt2,mi,mj,&
   n_steering_y=r_steering/nint(ra*latin*pi/180.0*1.0e-3)+5
 
  
-
   u_vor=0.
   v_vor=0.
   s_tot=0.0
@@ -181,7 +183,6 @@ subroutine steering_wind_r(u,v,p,lon,lat,proj,nx,ny,nz,nt,kt1,kt2,mi,mj,&
 
   return
 end subroutine steering_wind_r
-
 
 
 subroutine integral_p(var,int,nz,p)

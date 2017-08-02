@@ -1,5 +1,5 @@
 subroutine track_check2(vortex,vortex_flag,nt,period_min)
-  use constants
+
   implicit none 
   integer(4),intent (in)::nt
   integer(4),intent (in)::period_min
@@ -29,12 +29,12 @@ subroutine track_check2(vortex,vortex_flag,nt,period_min)
 !      if(vortex(kt,3)>vor_max_track) vor_max_track=vortex(kt,3)
 
       
-    end if
-  end do
+    endif
+  enddo
 
-  
-
-  if(vor_period>=period_min)vortex_flag=1
+  if (vor_period >= period_min) then
+      vortex_flag=1
+  endif
     
   return
 end subroutine track_check2

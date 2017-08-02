@@ -4,10 +4,11 @@ subroutine vor_partition(vor_in, nx, ny, proj, &
      & vor_min, vor_part_min, del_vor_min, del_vor_max_coeff, d_cf_min, &
      & size_synop)
 
-use constants
-use params
+use constants, only: pi, ra, rkilo
+use params, only: fillval, nmax, pmax, mx, my
 
 implicit none 
+
 integer(4), intent (in)  :: nx, ny
 integer(4), intent (in)  :: proj
 real   (4), intent (in)  :: lon(0:nx), lat(0:ny)
@@ -21,7 +22,7 @@ integer,    intent (out) :: mtype_out(nmax)
 real   (4), intent (in)  :: vor_min, vor_part_min, del_vor_min, del_vor_max_coeff
 real   (4), intent (in)  :: d_cf_min, size_synop
 
-
+! LOCAL VARIABLES
 real   (4) :: vor_out(0:nx, 0:ny)
 
 real   (4) :: mlat(nmax), mlon(nmax), vor_max(nmax)
@@ -60,15 +61,11 @@ real   (4) :: gradx, grady
 
 real   (4) :: max0_divide
 
-
 !----cold front
 integer(4) :: width, width_max, pnum
 integer(4) :: j_n, j_s, i_w, i_e, i_n, i_s
 logical    :: flag_coldfront
 logical    :: flag_one
-
-
-character (len=80) :: fname_one, fname_cf
 
 !----synoptic
 real   (4) :: size_vor
@@ -77,13 +74,12 @@ integer(4) :: surround8_buf(1:2, 1:pmax)
 integer(4) :: p=0
 
 
-lonin=lon(1)-lon(0)
-latin=lat(1)-lat(0)
+lonin = lon(1) - lon(0)
+latin = lat(1) - lat(0)
 
-
-n_max=0
-n_part=0
-max_tmp=0.
+n_max = 0
+n_part = 0
+max_tmp = 0
 
 buf_mij=-1
 
