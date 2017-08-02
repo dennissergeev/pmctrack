@@ -1,6 +1,6 @@
 subroutine tracking(mlon,mlat,max_vor,mtype,u_vor_f,v_vor_f,u_vor_b,v_vor_b,nt,&
      &n_max,vor_index,vor_num,vor_merge,vor_part,nx,ny,proj,lon,lat,del_lon,del_lat,del_t)
-  use const
+  use constants
   implicit none 
   integer ,intent (in)::nt,nx,ny
   integer ,intent (in)::proj

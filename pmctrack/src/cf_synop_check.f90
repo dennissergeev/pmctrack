@@ -1,5 +1,5 @@
 subroutine cf_synop_check(vor_in,vor_part,n_part,nx,ny,proj,lon,lat,mtype_part,d_cf_min,size_synop)
-  use const
+  use constants
   implicit none 
   integer (4),intent (in)::nx,ny
   integer (4),intent (in)::proj

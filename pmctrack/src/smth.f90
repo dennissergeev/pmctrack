@@ -49,7 +49,7 @@ end subroutine smth
 
 
 subroutine smth_r(var,nx,ny,lon,lat,var_smth,nx1,nx2,ny1,ny2,r_smth,proj)
-  use const
+  use constants
   implicit none 
   integer ,intent (in)::nx,ny,nx1,nx2,ny1,ny2
   integer ,intent (in)::proj

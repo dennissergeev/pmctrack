@@ -104,7 +104,7 @@ end subroutine steering_wind_b
 
 subroutine steering_wind_r(u,v,p,lon,lat,proj,nx,ny,nz,nt,kt1,kt2,mi,mj,&
      &u_vor,v_vor,r_steering)
-  use const
+  use constants
   implicit none 
   integer ,intent (in)::nx,ny,nz,nt,kt1,kt2
   integer ,intent (in)::proj
