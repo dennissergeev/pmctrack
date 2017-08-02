@@ -233,7 +233,7 @@ end program main
 !   
 ! 
 !   integer ::i,j,ii,jj
-!   real (4),parameter ::undef=9.99e20
+!   real (4),parameter ::fillval=9.99e20
 ! 
 !   land_flag=.false.
 ! 
@@ -249,7 +249,7 @@ end program main
 ! 
 !       if(sl(i,j)>sl_land)then
 !         land_flag(i,j)=.true.
-! !        var(i,j)=undef
+! !        var(i,j)=fillval
 !       end if
 ! 
 !     end do
@@ -267,7 +267,7 @@ end program main
 !   real(4)::sl_tmp
 ! 
 !   integer ::i,j,ii,jj
-!   real (4),parameter ::undef=9.99e20
+!   real (4),parameter ::fillval=9.99e20
 ! 
 !   !  land_flag=.false.
 ! 
@@ -276,22 +276,22 @@ end program main
 ! 
 !       if(lon(i)>=132..and.lat(j)<=34)then
 !         land_flag(i,j)=.true.
-! !        var(i,j)=undef
+! !        var(i,j)=fillval
 !       elseif(lon(i)>=136..and.lat(j)<=35)then
 !         land_flag(i,j)=.true.
-! !        var(i,j)=undef
+! !        var(i,j)=fillval
 !       elseif(lon(i)>=141..and.lat(j)<=42)then
 !         land_flag(i,j)=.true.
-! !        var(i,j)=undef
+! !        var(i,j)=fillval
 !       elseif(lon(i)>=138..and.lat(j)<=36.9)then
 !         land_flag(i,j)=.true.
-! !        var(i,j)=undef
+! !        var(i,j)=fillval
 !       elseif(lon(i)>=140..and.lat(j)>=42.and.lat(j)<=42.5)then
 !         land_flag(i,j)=.true.
-! !        var(i,j)=undef
+! !        var(i,j)=fillval
 !       elseif(lon(i)>=131..and.lat(j)<=34)then
 !         land_flag(i,j)=.true.
-! !        var(i,j)=undef
+! !        var(i,j)=fillval
 !       elseif(lon(i)>=133..and.lat(j)<=35)then
 !         land_flag(i,j)=.true.
 ! 
@@ -311,7 +311,7 @@ end program main
 ! 
 ! 
 ! 
-! !        var(i,j)=undef
+! !        var(i,j)=fillval
 ! 
 ! 
 ! 

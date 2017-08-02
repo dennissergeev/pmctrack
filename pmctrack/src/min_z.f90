@@ -1,14 +1,16 @@
 subroutine min_z(z,nx,ny,proj,minlat,minlon,z_min,n_min,lat,lon,type_min,del_z_min)
  
   use constants
+  use params
+
   implicit none 
   integer(4),intent (in)::nx,ny
   integer(4),intent (in)::proj
   real(4),intent (in)::lon(0:nx),lat(0:ny)
   real(4),intent (in)::z(0:nx,0:ny)
-  real(4),intent (out)::minlat(100),minlon(100),z_min(100)
+  real(4),intent (out)::minlat(nmax),minlon(nmax),z_min(nmax)
   real(4),intent (in)::del_z_min
-  integer ,intent (out)::n_min,type_min(100)
+  integer ,intent (out)::n_min,type_min(nmax)
   integer (4)::i,j,ii,jj,m
   integer (4)::i_min
 
@@ -24,26 +26,17 @@ subroutine min_z(z,nx,ny,proj,minlat,minlon,z_min,n_min,lat,lon,type_min,del_z_m
 
   real(4)::zmin_tmp
   
-  real (4),parameter ::undef=9.99e20
-
   integer (4)::n_part,n_part_tmp
   integer (4)::s_part
 
 
-  integer (4),parameter ::pmax=40000
   integer (4)::var_part_tmp(1:2,1:pmax)
   integer (4)::p=0
-  integer (4)::mx(8),my(8)
   real(4)::surround8(8)
-  integer (4)::buf_mij(2,100)
+  integer (4)::buf_mij(2,nmax)
   logical(4)::mij_flag
  
   
-
-
-
-  mx(1:8)=(/1,1,0,-1,-1,-1,0,1/)
-  my(1:8)=(/0,1,1,1,0,-1,-1,-1/)
 
   minlat=0
   minlon=0
@@ -89,7 +82,7 @@ subroutine min_z(z,nx,ny,proj,minlat,minlon,z_min,n_min,lat,lon,type_min,del_z_m
 
       n_part=n_part+1
       z_part_tmp(mi,mj)=n_part
-      z_tmp(mi,mj)=undef
+      z_tmp(mi,mj)=fillval
 
       s_part=s_part+1
 
@@ -98,7 +91,7 @@ subroutine min_z(z,nx,ny,proj,minlat,minlon,z_min,n_min,lat,lon,type_min,del_z_m
         if(mi+mx(m)>=0.and.mi+mx(m)<=nx.and.mj+my(m)>=0.and.mj+my(m)<=ny)then
           if(z_tmp(mi+mx(m),mj+my(m))<zmin_tmp)then  
             z_part_tmp(mi+mx(m),mj+my(m))=n_part
-            z_tmp(mi+mx(m),mj+my(m))=undef
+            z_tmp(mi+mx(m),mj+my(m))=fillval
             
             s_part=s_part+1
 
@@ -125,7 +118,7 @@ subroutine min_z(z,nx,ny,proj,minlat,minlon,z_min,n_min,lat,lon,type_min,del_z_m
             if(z_tmp(mi_tmp+mx(m),mj_tmp+my(m))<zmin_tmp)then
               if(z_part_tmp(mi_tmp+mx(m),mj_tmp+my(m))==0)then
                 z_part_tmp(mi_tmp+mx(m),mj_tmp+my(m))=n_part
-                z_tmp(mi_tmp+mx(m),mj_tmp+my(m))=undef
+                z_tmp(mi_tmp+mx(m),mj_tmp+my(m))=fillval
 
             s_part=s_part+1
 
@@ -189,7 +182,7 @@ subroutine min_z(z,nx,ny,proj,minlat,minlon,z_min,n_min,lat,lon,type_min,del_z_m
 
 
 
-   z_tmp=undef
+   z_tmp=fillval
    do j=0,ny
      do i=0,nx
 !       if(z_part_tmp(i,j)>0.and.zs(i,j)<500.)then
@@ -218,7 +211,7 @@ subroutine min_z(z,nx,ny,proj,minlat,minlon,z_min,n_min,lat,lon,type_min,del_z_m
 !      if(.not.land_flag(i,j))then
         z_tmp(i,j)=z(i,j)
 !      else
- !       z_tmp(i,j)=undef
+ !       z_tmp(i,j)=fillval
 !      end if
     end do
   end do
@@ -255,7 +248,7 @@ subroutine min_z(z,nx,ny,proj,minlat,minlon,z_min,n_min,lat,lon,type_min,del_z_m
     
     n_part=1
     z_part_tmp(mi,mj)=n_part
-    z_tmp(mi,mj)=undef
+    z_tmp(mi,mj)=fillval
     
     s_part=s_part+1
     
@@ -265,7 +258,7 @@ subroutine min_z(z,nx,ny,proj,minlat,minlon,z_min,n_min,lat,lon,type_min,del_z_m
       if(mi+mx(m)>=0.and.mi+mx(m)<=nx.and.mj+my(m)>=0.and.mj+my(m)<=ny)then
         if(z_tmp(mi+mx(m),mj+my(m))<zmin_tmp)then  
           z_part_tmp(mi+mx(m),mj+my(m))=n_part
-          z_tmp(mi+mx(m),mj+my(m))=undef
+          z_tmp(mi+mx(m),mj+my(m))=fillval
           
           s_part=s_part+1
           
@@ -292,7 +285,7 @@ subroutine min_z(z,nx,ny,proj,minlat,minlon,z_min,n_min,lat,lon,type_min,del_z_m
           if(z_tmp(mi_tmp+mx(m),mj_tmp+my(m))<zmin_tmp)then
             if(z_part_tmp(mi_tmp+mx(m),mj_tmp+my(m))==0)then
               z_part_tmp(mi_tmp+mx(m),mj_tmp+my(m))=n_part
-              z_tmp(mi_tmp+mx(m),mj_tmp+my(m))=undef
+              z_tmp(mi_tmp+mx(m),mj_tmp+my(m))=fillval
               
               s_part=s_part+1
               
@@ -343,7 +336,7 @@ subroutine min_z(z,nx,ny,proj,minlat,minlon,z_min,n_min,lat,lon,type_min,del_z_m
     
 
 
-!   z_tmp=undef
+!   z_tmp=fillval
    do j=0,ny
      do i=0,nx
 !       if(z_part_tmp(i,j)>0.and.zs(i,j)<500.)then
@@ -368,7 +361,7 @@ end if
 
 
 
-  z_part_r=undef
+  z_part_r=fillval
 
   do j=0,ny
     do i=0,nx
@@ -382,7 +375,7 @@ end if
 !     z_min(1)=0.
 !     do j=0,ny
 !       do i=0,nx
-!         if(z_part(i,j)==1) z_part_r(i,j)=undef
+!         if(z_part(i,j)==1) z_part_r(i,j)=fillval
 !       end do
 !     end do
   

@@ -1,34 +1,37 @@
 subroutine tracking2(mlon,mlat,max_vor,mtype,u_vor_f,v_vor_f,u_vor_b,v_vor_b,nt,&
      &n_max,vor_index,vor_num,vor_merge,vor_part,nx,ny,proj,lon,lat,del_r,del_t)
+
   use constants
+  use params
+
   implicit none 
   integer ,intent (in)::nt,nx,ny
   integer ,intent (in)::proj
   integer ,intent (in)::n_max(nt)
-  real (4),intent (in)::mlon(100,nt),mlat(100,nt),max_vor(100,nt)
-  integer ,intent (in)::mtype(100,nt)
-  real (4),intent (in)::u_vor_f(100,nt),v_vor_f(100,nt)
-  real (4),intent (in)::u_vor_b(100,nt),v_vor_b(100,nt)
+  real (4),intent (in)::mlon(nmax,nt),mlat(nmax,nt),max_vor(nmax,nt)
+  integer ,intent (in)::mtype(nmax,nt)
+  real (4),intent (in)::u_vor_f(nmax,nt),v_vor_f(nmax,nt)
+  real (4),intent (in)::u_vor_b(nmax,nt),v_vor_b(nmax,nt)
   real(4),intent (in)::lon(0:nx),lat(0:ny)
   real(4),intent (in)::del_r,del_t
   integer (4),intent (in)::vor_part(0:nx,0:ny,nt)
-  integer (4),intent (out)::vor_index(10000,nt)
+  integer (4),intent (out)::vor_index(pmax,nt)
   integer (4),intent (out)::vor_num
-  integer (4),intent (out)::vor_merge(10000)
+  integer (4),intent (out)::vor_merge(pmax)
   integer ::kt
   integer ::i_max,i_max1
-  integer ::i_next(100,nt),i_previous(100,nt)
-  real (4)::r_next(100,nt),r_next_tmp
+  integer ::i_next(nmax,nt),i_previous(nmax,nt)
+  real (4)::r_next(nmax,nt),r_next_tmp
   integer ::i,j
-  integer ::vor_part_s(100)
+  integer ::vor_part_s(nmax)
 
   integer ::i_vor_num,i_vor_num2,vor_num_tmp
 
-  logical::vor_previous_flag(100,nt)
-  integer::vor_previous_index(100,nt)
+  logical::vor_previous_flag(nmax,nt)
+  integer::vor_previous_index(nmax,nt)
 
-  integer :: vor_c_f_index(100,100),i_c_f,n_c_f(100)
-  integer :: vor_c_b_index(100,100),i_c_b,n_c_b(100)
+  integer :: vor_c_f_index(nmax,nmax),i_c_f,n_c_f(nmax)
+  integer :: vor_c_b_index(nmax,nmax),i_c_b,n_c_b(nmax)
 
   real (4)::mv_lon,mv_lat
   real (4)::e_mv_lon,e_mv_lat
@@ -38,7 +41,7 @@ subroutine tracking2(mlon,mlat,max_vor,mtype,u_vor_f,v_vor_f,u_vor_b,v_vor_b,nt,
 
   integer (4)::land_num,all_num
 
-  real (4)::r_c(100,100),r_c_min
+  real (4)::r_c(nmax,nmax),r_c_min
 
   real (4)::del_lon_min,del_lat_min
   real(4)::r_tmp,theta_tmp
@@ -56,7 +59,7 @@ subroutine tracking2(mlon,mlat,max_vor,mtype,u_vor_f,v_vor_f,u_vor_b,v_vor_b,nt,
 
   n_c_f=0
 
-  vor_previous_flag(1:100,1:nt)=.false.
+  vor_previous_flag(1:nmax,1:nt)=.false.
   vor_previous_index=0
 
 

@@ -1,5 +1,8 @@
 subroutine cf_synop_check(vor_in,vor_part,n_part,nx,ny,proj,lon,lat,mtype_part,d_cf_min,size_synop)
+
   use constants
+  use params
+
   implicit none 
   integer (4),intent (in)::nx,ny
   integer (4),intent (in)::proj
@@ -24,20 +27,15 @@ subroutine cf_synop_check(vor_in,vor_part,n_part,nx,ny,proj,lon,lat,mtype_part,d
   real (4)::d_cf,theta_d_cf
 
   real(4)::slope,width,length
-  real(4)::one(10000,1:2)
+  real(4)::one(pmax,1:2)
   integer (4)::one_num
 
   real(4)::a,b,c,k,r2
 
   !----synoptic
   real (4)::size_vor
-  integer (4)::mx(8),my(8)
 
   integer (4)::i,j
-
-
-  mx(1:8)=(/1,1,0,-1,-1,-1,0,1/)
-  my(1:8)=(/0,1,1,1,0,-1,-1,-1/)
 
   lonin=lon(1)-lon(0)
   latin=lat(1)-lat(0)
@@ -66,7 +64,7 @@ subroutine cf_synop_check(vor_in,vor_part,n_part,nx,ny,proj,lon,lat,mtype_part,d
         if(vor_part(i,j)==n_part)then
           if(proj==1)then
             size_vor=size_vor&
-                 &+lonin*(pi/180.)*ra/1000.*cos(lat(j)*pi/180.)*latin*(pi/180.)*ra/1000.
+                 &+lonin*(pi/180.)*ra/rkilo*cos(lat(j)*pi/180.)*latin*(pi/180.)*ra/rkilo
           elseif(proj==2)then
             size_vor=size_vor&
                  &+lonin*latin*1.0e-6

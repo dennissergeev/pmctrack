@@ -9,6 +9,9 @@ subroutine tracking_main(vor,u,v,psea,&
      &period_min,d_cf_min,size_synop,del_psea_min,distance_ec,&
      &outdir)
     
+  use constants
+  use params
+
   implicit none   
   integer,intent (in) ::nx,ny,nx1,nx2,ny1,ny2,nz,nt
   real(4),intent (in)::vor(0:nx,0:ny,1:nt)
@@ -72,14 +75,13 @@ subroutine tracking_main(vor,u,v,psea,&
   real(4),allocatable::u_vor_b(:,:),v_vor_b(:,:)
   integer (4),allocatable::n_max(:),n_min(:)
   integer (4)::i_max,i_min
-  real (4),parameter ::undef=9.99e20
 
   integer (4)::vor_num,i_vor_num,vor_num_out=0
-  integer (4)::vor_merge(10000),vor_merge_num(10000)
+  integer (4)::vor_merge(pmax),vor_merge_num(pmax)
   integer (4),allocatable::vor_index(:,:)
-  integer (4)::kt_appear(1000)
-  integer (4)::vor_period(10000)
-  real(4)::vor_max_track(10000)
+  integer (4)::kt_appear(kmax)
+  integer (4)::vor_period(pmax)
+  real(4)::vor_max_track(pmax)
 
   real(4):: vor_movement
 
@@ -156,17 +158,17 @@ subroutine tracking_main(vor,u,v,psea,&
   allocate(vor_part(nx1:nx2,ny1:ny2,nt))
   allocate(vor_part_r(nx1:nx2,ny1:ny2))
   allocate (n_max(nt),n_min(nt))
-  allocate (mlat(100,nt),mlon(100,nt),max_vor(100,nt),s_part(100,nt),mtype(100,nt))
-  allocate (minlat(100,nt),minlon(100,nt),z_min(100,nt),z_min_size(100,nt))
+  allocate (mlat(nmax,nt),mlon(nmax,nt),max_vor(nmax,nt),s_part(nmax,nt),mtype(nmax,nt))
+  allocate (minlat(nmax,nt),minlon(nmax,nt),z_min(nmax,nt),z_min_size(nmax,nt))
 
-  allocate (onelat(1000,nt),onelon(1000,nt),vor_one(1000,nt))
+  allocate (onelat(kmax,nt),onelon(kmax,nt),vor_one(kmax,nt))
 
 
-  allocate (mi(100,nt),mj(100,nt))
-  allocate (u_vor_f(100,nt),v_vor_f(100,nt))
-  allocate (u_vor_b(100,nt),v_vor_b(100,nt))
+  allocate (mi(nmax,nt),mj(nmax,nt))
+  allocate (u_vor_f(nmax,nt),v_vor_f(nmax,nt))
+  allocate (u_vor_b(nmax,nt),v_vor_b(nmax,nt))
 
-  allocate (vor_index(10000,nt))
+  allocate (vor_index(pmax,nt))
 
 
   allocate(dummy(nx1:nx2,ny1:ny2))
@@ -242,18 +244,18 @@ subroutine tracking_main(vor,u,v,psea,&
       mj(i_max,kt)=nint((mlat(i_max,kt)-lats)/latin)
       if(proj==1)then
         write (82,*)mlon(i_max,kt),mlat(i_max,kt),&
-             &max_vor(i_max,kt)*1000,nint(s_part(i_max,kt)),mtype(i_max,kt)
+             &max_vor(i_max,kt)*ikilo,nint(s_part(i_max,kt)),mtype(i_max,kt)
       elseif(proj==2)then
-        write (82,*)mlon(i_max,kt)/1000,mlat(i_max,kt)/1000,&
-             &max_vor(i_max,kt)*1000,nint(s_part(i_max,kt)),mtype(i_max,kt)
+        write (82,*)mlon(i_max,kt)/ikilo,mlat(i_max,kt)/ikilo,&
+             &max_vor(i_max,kt)*ikilo,nint(s_part(i_max,kt)),mtype(i_max,kt)
       end if
  
      if(proj==1)then
         write (*,*)mlon(i_max,kt),mlat(i_max,kt),&
-             &max_vor(i_max,kt)*1000,nint(s_part(i_max,kt)),mtype(i_max,kt)
+             &max_vor(i_max,kt)*ikilo,nint(s_part(i_max,kt)),mtype(i_max,kt)
       elseif(proj==2)then
-        write (*,*)mlon(i_max,kt)/1000,mlat(i_max,kt)/1000,&
-             &max_vor(i_max,kt)*1000,nint(s_part(i_max,kt)),mtype(i_max,kt)
+        write (*,*)mlon(i_max,kt)/ikilo,mlat(i_max,kt)/ikilo,&
+             &max_vor(i_max,kt)*ikilo,nint(s_part(i_max,kt)),mtype(i_max,kt)
       end if
  
 
@@ -307,7 +309,7 @@ subroutine tracking_main(vor,u,v,psea,&
 
 
 !---- output steeering wind ----!
-    dummy=undef
+    dummy=fillval
 
     do i_max=1,n_max(kt)
       dummy(mi(i_max,kt),mj(i_max,kt))=u_vor_f(i_max,kt)
@@ -315,7 +317,7 @@ subroutine tracking_main(vor,u,v,psea,&
 
     write (12)dummy(nx1:nx2,ny1:ny2)
 
-    dummy=undef
+    dummy=fillval
 
     do i_max=1,n_max(kt)
       dummy(mi(i_max,kt),mj(i_max,kt))=v_vor_f(i_max,kt)
@@ -324,7 +326,7 @@ subroutine tracking_main(vor,u,v,psea,&
     write (12)dummy(nx1:nx2,ny1:ny2)
 
 
-!     dummy=undef
+!     dummy=fillval
 
 !     do i_max=1,n_max(kt)
 !       dummy(mi(i_max,kt),mj(i_max,kt))=-u_vor_b(i_max,kt)
@@ -332,7 +334,7 @@ subroutine tracking_main(vor,u,v,psea,&
 
 !     write (12)dummy(nx1:nx2,ny1:ny2)
 
-!     dummy=undef
+!     dummy=fillval
 
 !     do i_max=1,n_max(kt)
 !       dummy(mi(i_max,kt),mj(i_max,kt))=-v_vor_b(i_max,kt)
@@ -373,8 +375,8 @@ subroutine tracking_main(vor,u,v,psea,&
           vortex(i_vor_num,kt,1)=mlon(vor_index(i_vor_num,kt),kt)
           vortex(i_vor_num,kt,2)=mlat(vor_index(i_vor_num,kt),kt)
         elseif(proj==2)then
-          vortex(i_vor_num,kt,1)=mlon(vor_index(i_vor_num,kt),kt)/1000
-          vortex(i_vor_num,kt,2)=mlat(vor_index(i_vor_num,kt),kt)/1000
+          vortex(i_vor_num,kt,1)=mlon(vor_index(i_vor_num,kt),kt)/ikilo
+          vortex(i_vor_num,kt,2)=mlat(vor_index(i_vor_num,kt),kt)/ikilo
         endif
         vortex(i_vor_num,kt,3)=max_vor(vor_index(i_vor_num,kt),kt)
         vortex(i_vor_num,kt,4)=s_part(vor_index(i_vor_num,kt),kt)
@@ -424,7 +426,7 @@ subroutine tracking_main(vor,u,v,psea,&
         do kt=1,nt
           if(vortex(i_vor_num,kt,3)>0.0000001)then
             write (67,'(3f12.5,I6,f15.5,I3)')vortex(i_vor_num,kt,1),&
-                 &vortex(i_vor_num,kt,2),vortex(i_vor_num,kt,3)*1000.,&
+                 &vortex(i_vor_num,kt,2),vortex(i_vor_num,kt,3)*rkilo,&
                  &kt,vortex(i_vor_num,kt,4),vortex_type(i_vor_num,kt)
             
           end if

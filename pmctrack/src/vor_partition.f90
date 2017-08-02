@@ -1,173 +1,169 @@
-subroutine vor_partition(vor_in,nx,ny,proj,&
-     &mlat_out,mlon_out,vor_max_out,mtype_out,&
-     &n_max_out,lat,lon,vor_part_max,s_part_out,&
-     &vor_min,vor_part_min,del_vor_min,del_vor_max_coeff,d_cf_min,size_synop)
-  use const
-  implicit none 
-  integer(4),intent (in)::nx,ny
-  integer(4),intent (in)::proj
-  real(4),intent (in)::lon(0:nx),lat(0:ny)
-  real(4),intent (in)::vor_in(0:nx,0:ny)
-  real(4),intent (out)::mlat_out(100),mlon_out(100),vor_max_out(100)
-  real (4),intent (out)::s_part_out(100)
-  integer ,intent (out)::n_max_out
-  integer ,intent (out)::vor_part_max(0:nx,0:ny)
-  integer ,intent (out)::mtype_out(100)
+subroutine vor_partition(vor_in, nx, ny, proj, &
+     & mlat_out, mlon_out, vor_max_out, mtype_out, &
+     & n_max_out, lat, lon, vor_part_max, s_part_out, &
+     & vor_min, vor_part_min, del_vor_min, del_vor_max_coeff, d_cf_min, &
+     & size_synop)
 
-  real(4),intent (in)::vor_min,vor_part_min,del_vor_min,del_vor_max_coeff
-  real(4),intent (in)::d_cf_min,size_synop
+use constants
+use params
 
+implicit none 
+integer(4), intent (in)  :: nx, ny
+integer(4), intent (in)  :: proj
+real   (4), intent (in)  :: lon(0:nx), lat(0:ny)
+real   (4), intent (in)  :: vor_in(0:nx, 0:ny)
+real   (4), intent (out) :: mlat_out(nmax), mlon_out(nmax), vor_max_out(nmax)
+real   (4), intent (out) :: s_part_out(nmax)
+integer,    intent (out) :: n_max_out
+integer,    intent (out) :: vor_part_max(0:nx, 0:ny)
+integer,    intent (out) :: mtype_out(nmax)
 
-  real(4)::vor_out(0:nx,0:ny)
-
-  real(4)::mlat(100),mlon(100),vor_max(100)
-  integer (4)::n_max
-  real(4)::lonin,latin
-
-  real(4)::vor(0:nx,0:ny)
-  integer (4)::i,j,ii,jj,m
-  integer (4)::i_max,i_max2
-  real(4)::max_tmp
-  real (4)::vor_min_tmp
-  integer (4)::mi,mj,mij(2),mi_tmp,mj_tmp
-  integer (4)::i_vor_min,n_vor_min
-  logical(4)::mij_flag,topo_flag
-  integer (4)::n_part,i_part
-  integer (4)::vor_part(0:nx,0:ny),vor_part_tmp(0:nx,0:ny)
-  real(4)::vor_part_r(0:nx,0:ny),vor_part_max_r(0:nx,0:ny)
-  integer (4)::buf_mij(2,100),buf_mij_out(2,100)
-
-  integer (4)::part_num(100),part_num_out(100)
-  integer (4)::mtype_part(100),mtype(100,2)
-  real (4)::partmax(100)
-
-  real(4)::del_vor_max_tmp
-
-  real (4),parameter ::undef=9.99e20
-
-  real (4)::d,theta_d
-  real (4)::d_cf,theta_d_cf
-  logical (4)::remove_flag(100)
-  integer (4)::remove_num
-
-  real (4)::l(100),l_min(100),theta_l
-  integer (4)::l_min_loc
-
-  real(4)::cdot,theta
-  real(4)::gradx,grady
-
-  real(4)::max0_divide
+real   (4), intent (in)  :: vor_min, vor_part_min, del_vor_min, del_vor_max_coeff
+real   (4), intent (in)  :: d_cf_min, size_synop
 
 
-  !----cold front
-  integer (4)::width,width_max,pnum
-  integer (4)::j_n,j_s,i_w,i_e,i_n,i_s
-  logical ::flag_coldfront
-  logical::flag_one
+real   (4) :: vor_out(0:nx, 0:ny)
+
+real   (4) :: mlat(nmax), mlon(nmax), vor_max(nmax)
+integer(4) :: n_max
+real   (4) :: lonin, latin
+
+real   (4) :: vor(0:nx, 0:ny)
+integer(4) :: i, j, ii, jj, m
+integer(4) :: i_max, i_max2
+real   (4) :: max_tmp
+real   (4) :: vor_min_tmp
+integer(4) :: mi, mj, mij(2), mi_tmp, mj_tmp
+integer(4) :: i_vor_min, n_vor_min
+logical(4) :: mij_flag, topo_flag
+integer(4) :: n_part, i_part
+integer(4) :: vor_part(0:nx, 0:ny), vor_part_tmp(0:nx, 0:ny)
+real   (4) :: vor_part_r(0:nx, 0:ny), vor_part_max_r(0:nx, 0:ny)
+integer(4) :: buf_mij(2, nmax), buf_mij_out(2, nmax)
+
+integer(4) :: part_num(nmax), part_num_out(nmax)
+integer(4) :: mtype_part(nmax), mtype(nmax, 2)
+real   (4) :: partmax(nmax)
+
+real   (4) :: del_vor_max_tmp
+
+real   (4) :: d, theta_d
+real   (4) :: d_cf, theta_d_cf
+logical(4) :: remove_flag(nmax)
+integer(4) :: remove_num
+
+real   (4) :: l(nmax), l_min(nmax), theta_l
+integer(4) :: l_min_loc
+
+real   (4) :: cdot, theta
+real   (4) :: gradx, grady
+
+real   (4) :: max0_divide
 
 
-  character (len=80)::fname_one,fname_cf
-
-  !----synoptic
-  real (4)::size_vor
-
-  integer (4),parameter ::pmax=10000
-  integer (4)::surround8_buf(1:2,1:pmax)
-  integer (4)::p=0
-  integer (4)::mx(8),my(8)
-
-  
-  mx(1:8)=(/1,1,0,-1,-1,-1,0,1/)
-  my(1:8)=(/0,1,1,1,0,-1,-1,-1/)
+!----cold front
+integer(4) :: width, width_max, pnum
+integer(4) :: j_n, j_s, i_w, i_e, i_n, i_s
+logical    :: flag_coldfront
+logical    :: flag_one
 
 
+character (len=80) :: fname_one, fname_cf
+
+!----synoptic
+real   (4) :: size_vor
+
+integer(4) :: surround8_buf(1:2, 1:pmax)
+integer(4) :: p=0
 
 
-  lonin=lon(1)-lon(0)
-  latin=lat(1)-lat(0)
+lonin=lon(1)-lon(0)
+latin=lat(1)-lat(0)
 
 
-  n_max=0
-  n_part=0
-  max_tmp=0.
+n_max=0
+n_part=0
+max_tmp=0.
 
-  buf_mij=-1
+buf_mij=-1
 
-  vor_min_tmp=vor_min
+vor_min_tmp=vor_min
 
-  vor_out(0:nx,0:ny)=undef
+vor_out(0:nx, 0:ny)=fillval
 
-  vor_out(0,ny)=-1
+vor_out(0, ny)=-1
 
-  vor_part=0
-  part_num=0
-  vor_part_max=0
-  partmax=0.
+vor_part=0
+part_num=0
+vor_part_max=0
+partmax=0.
 
-  mtype(:,:)=0
+mtype(:, :)=0
 
-  mtype_out(:)=0
-  mtype_part(:)=0
-  do j=0,ny
-    do i=0,nx
-      vor(i,j)=vor_in(i,j)
-    end do
+mtype_out(:)=0
+mtype_part(:)=0
+do j=0,ny
+  do i=0,nx
+    vor(i,j)=vor_in(i,j)
   end do
+end do
+
+max_tmp=maxval(vor)
+n_vor_min=int((max_tmp-vor_min)/del_vor_min)+1
+
+do
+  p=0
+ 
 
   max_tmp=maxval(vor)
-  n_vor_min=int((max_tmp-vor_min)/del_vor_min)+1
-
-  do
-    p=0
-   
-
-    max_tmp=maxval(vor)
-    mij=maxloc(vor)
-    mi=mij(1)-1
-    mj=mij(2)-1
-    if(max_tmp<=vor_min)exit
-    n_part=n_part+1
-    vor_part(mi,mj)=n_part
-    partmax(n_part)=vor(mi,mj)
+  mij=maxloc(vor)
+  mi=mij(1)-1
+  mj=mij(2)-1
+  if(max_tmp<=vor_min)exit
+  n_part=n_part+1
+  vor_part(mi,mj)=n_part
+  partmax(n_part)=vor(mi,mj)
 
 
-    vor(mi,mj)=0.
+  vor(mi,mj)=0.
 
+
+  do m=1,8
+    print*, m, mi, mx(m), mj, my(m)
+    if(vor(mi+mx(m),mj+my(m))>vor_part_min)then     
+      vor_part(mi+mx(m),mj+my(m))=n_part
+      vor(mi+mx(m),mj+my(m))=0.
+
+      if (p < pmax) then
+        p = p + 1 
+        surround8_buf(1,p) = mi+mx(m)
+        surround8_buf(2,p) = mj+my(m)
+      end if
+    end if
+  end do
+
+  do 
+    if(p==0)exit
+    mi_tmp=surround8_buf(1,p)
+    mj_tmp=surround8_buf(2,p)
+    print*,mi_tmp, mj_tmp
+    p=p-1
 
     do m=1,8
-      if(vor(mi+mx(m),mj+my(m))>vor_part_min)then     
-        vor_part(mi+mx(m),mj+my(m))=n_part
-        vor(mi+mx(m),mj+my(m))=0.
+      if(vor(mi_tmp+mx(m),mj_tmp+my(m))>vor_part_min)then
+        if(vor_part(mi_tmp+mx(m),mj_tmp+my(m))==0)then
+          vor_part(mi_tmp+mx(m),mj_tmp+my(m))=n_part
 
-        if (p < pmax) then
-          p = p + 1 
-          surround8_buf(1,p) = mi+mx(m)
-          surround8_buf(2,p) = mj+my(m)
+          vor(mi_tmp+mx(m),mj_tmp+my(m))=0.
+          if (p < pmax) then
+            p = p + 1 
+            surround8_buf(1,p) = mi_tmp+mx(m)
+            surround8_buf(2,p) = mj_tmp+my(m)
+          end if
         end if
       end if
     end do
-
-    do 
-      if(p==0)exit
-      mi_tmp=surround8_buf(1,p)
-      mj_tmp=surround8_buf(2,p)
-      p=p-1
-
-      do m=1,8
-        if(vor(mi_tmp+mx(m),mj_tmp+my(m))>vor_part_min)then
-          if(vor_part(mi_tmp+mx(m),mj_tmp+my(m))==0)then
-            vor_part(mi_tmp+mx(m),mj_tmp+my(m))=n_part
-
-            vor(mi_tmp+mx(m),mj_tmp+my(m))=0.
-            if (p < pmax) then
-              p = p + 1 
-              surround8_buf(1,p) = mi_tmp+mx(m)
-              surround8_buf(2,p) = mj_tmp+my(m)
-            end if
-          end if
-        end if
-      end do
-    end do
+  end do
 
 
 
@@ -605,7 +601,7 @@ subroutine vor_partition(vor_in,nx,ny,proj,&
         
         if(proj==1)then
           s_part_out(vor_part_max(i,j))=s_part_out(vor_part_max(i,j))&
-               &+lonin*(pi/180.)*ra/1000.*cos(lat(j)*pi/180.)*latin*(pi/180.)*ra/1000.
+               &+lonin*(pi/180.)*ra/rkilo*cos(lat(j)*pi/180.)*latin*(pi/180.)*ra/rkilo
         elseif(proj==2)then
           s_part_out(vor_part_max(i,j))=s_part_out(vor_part_max(i,j))&
                &+lonin*latin*1.0e-6
@@ -624,8 +620,8 @@ subroutine vor_partition(vor_in,nx,ny,proj,&
   end do
 
 
-  vor_part_r=undef
-  vor_part_max_r=undef
+  vor_part_r=fillval
+  vor_part_max_r=fillval
 
   vor_part_r(0,ny)=-1.
   vor_part_max_r(0,ny)=-1.
