@@ -113,24 +113,27 @@ do
   if(max_tmp<=vor_min)exit
   n_part=n_part+1
   vor_part(mi,mj)=n_part
-  partmax(n_part)=vor(mi,mj)
-
+  partmax(n_part) = vor(mi, mj)
 
   vor(mi,mj)=0.
 
-
   do m=1,8
-    print*, m, mi, mx(m), mj, my(m)
-    if(vor(mi+mx(m),mj+my(m))>vor_part_min)then     
-      vor_part(mi+mx(m),mj+my(m))=n_part
-      vor(mi+mx(m),mj+my(m))=0.
+    ! print*, m, mi, mx(m), mj, my(m)
+    if ( mi+mx(m) >= 0  .and. &
+       & mi+mx(m) <= nx .and. &
+       & mj+my(m) >= 0  .and. &
+       & mj+my(m) <= ny       ) then
+      if(vor(mi+mx(m),mj+my(m))>vor_part_min)then     
+        vor_part(mi+mx(m),mj+my(m))=n_part
+        vor(mi+mx(m),mj+my(m))=0.
 
-      if (p < pmax) then
-        p = p + 1 
-        surround8_buf(1,p) = mi+mx(m)
-        surround8_buf(2,p) = mj+my(m)
+        if (p < pmax) then
+          p = p + 1 
+          surround8_buf(1,p) = mi+mx(m)
+          surround8_buf(2,p) = mj+my(m)
+        end if
       end if
-    end if
+    endif
   end do
 
   do 
@@ -141,22 +144,25 @@ do
     p=p-1
 
     do m=1,8
-      if(vor(mi_tmp+mx(m),mj_tmp+my(m))>vor_part_min)then
-        if(vor_part(mi_tmp+mx(m),mj_tmp+my(m))==0)then
-          vor_part(mi_tmp+mx(m),mj_tmp+my(m))=n_part
+      if ( mi_tmp+mx(m) >= 0  .and. &
+         & mi_tmp+mx(m) <= nx .and. &
+         & mj_tmp+my(m) >= 0  .and. &
+         & mj_tmp+my(m) <= ny       ) then
+        if(vor(mi_tmp+mx(m),mj_tmp+my(m))>vor_part_min)then
+          if(vor_part(mi_tmp+mx(m),mj_tmp+my(m))==0)then
+            vor_part(mi_tmp+mx(m),mj_tmp+my(m))=n_part
 
-          vor(mi_tmp+mx(m),mj_tmp+my(m))=0.
-          if (p < pmax) then
-            p = p + 1 
-            surround8_buf(1,p) = mi_tmp+mx(m)
-            surround8_buf(2,p) = mj_tmp+my(m)
+            vor(mi_tmp+mx(m),mj_tmp+my(m))=0.
+            if (p < pmax) then
+              p = p + 1 
+              surround8_buf(1,p) = mi_tmp+mx(m)
+              surround8_buf(2,p) = mj_tmp+my(m)
+            end if
           end if
         end if
       end if
     end do
   end do
-
-
 
 
 !--------------- Check cold front and synoptic low----------------
@@ -214,14 +220,19 @@ do
 
 
       do m=1,8
-        if(vor(mi+mx(m),mj+my(m))>vor_min_tmp)then     
-          vor_part_tmp(mi+mx(m),mj+my(m))=n_part
-          vor(mi+mx(m),mj+my(m))=0.
+        if ( mi+mx(m) >= 0  .and. &
+           & mi+mx(m) <= nx .and. &
+           & mj+my(m) >= 0  .and. &
+           & mj+my(m) <= ny       ) then
+          if(vor(mi+mx(m),mj+my(m))>vor_min_tmp)then     
+            vor_part_tmp(mi+mx(m),mj+my(m))=n_part
+            vor(mi+mx(m),mj+my(m))=0.
 
-          if (p < pmax) then
-            p = p + 1 
-            surround8_buf(1,p) = mi+mx(m)
-            surround8_buf(2,p) = mj+my(m)
+            if (p < pmax) then
+              p = p + 1 
+              surround8_buf(1,p) = mi+mx(m)
+              surround8_buf(2,p) = mj+my(m)
+            end if
           end if
         end if
       end do
@@ -233,15 +244,20 @@ do
         p=p-1
 
         do m=1,8
-          if(vor(mi_tmp+mx(m),mj_tmp+my(m))>vor_min_tmp)then
-            if(vor_part_tmp(mi_tmp+mx(m),mj_tmp+my(m))==0)then
-              vor_part_tmp(mi_tmp+mx(m),mj_tmp+my(m))=n_part
-              vor(mi_tmp+mx(m),mj_tmp+my(m))=0.
+          if ( mi_tmp+mx(m) >= 0  .and. &
+             & mi_tmp+mx(m) <= nx .and. &
+             & mj_tmp+my(m) >= 0  .and. &
+             & mj_tmp+my(m) <= ny       ) then
+            if(vor(mi_tmp+mx(m),mj_tmp+my(m))>vor_min_tmp)then
+              if(vor_part_tmp(mi_tmp+mx(m),mj_tmp+my(m))==0)then
+                vor_part_tmp(mi_tmp+mx(m),mj_tmp+my(m))=n_part
+                vor(mi_tmp+mx(m),mj_tmp+my(m))=0.
 
-              if (p < pmax) then
-                p = p + 1 
-                surround8_buf(1,p) = mi_tmp+mx(m)
-                surround8_buf(2,p) = mj_tmp+my(m)
+                if (p < pmax) then
+                  p = p + 1 
+                  surround8_buf(1,p) = mi_tmp+mx(m)
+                  surround8_buf(2,p) = mj_tmp+my(m)
+                end if
               end if
             end if
           end if

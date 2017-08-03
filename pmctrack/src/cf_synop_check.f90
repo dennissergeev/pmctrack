@@ -58,8 +58,8 @@ subroutine cf_synop_check(vor_in,vor_part,n_part,nx,ny,proj,lon,lat,mtype_part,d
     one_num=0
     one(:,:)=0
 
-    do j=0,ny
-      do i=0,nx
+    do j=1,ny-1
+      do i=1,nx-1
         
 
         if(vor_part(i,j)==n_part)then
@@ -72,7 +72,7 @@ subroutine cf_synop_check(vor_in,vor_part,n_part,nx,ny,proj,lon,lat,mtype_part,d
           end if
 
 
-          call median_check(vor_in(i-1:i+1,j-1:j+1),flag_one,pnum)
+          call median_check(vor_in(i-1:i+1,j-1:j+1), flag_one, pnum)
           if(flag_one)then
             if(pnum>=6)then
 !              write (81,*)lon(i),lat(j),pnum,n_part
@@ -95,6 +95,8 @@ subroutine cf_synop_check(vor_in,vor_part,n_part,nx,ny,proj,lon,lat,mtype_part,d
         end if
       end do
     end do
+
+    print*, 'i_s', i_s, 'i_n', i_n
 
     if(proj==1)then
       if(i_s/=i_n)then

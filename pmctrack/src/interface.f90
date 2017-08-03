@@ -163,7 +163,7 @@ program main
       i_rec=i_rec+1
       
       read(11,rec=i_rec) psea(0:nx,0:ny,kt)
-      call apply_mask_2d(psea(0:nx, 0:ny,kt), nx, ny, land_mask)
+      ! call apply_mask_2d(psea(0:nx, 0:ny,kt), nx, ny, land_mask)
 
       i_rec=i_rec+1
       !do k=1,nz
@@ -173,12 +173,12 @@ program main
       do k=1,nz
         if(k<=nz)read(11,rec=i_rec) u(0:nx,0:ny,k,kt)
         i_rec=i_rec+1
-        call apply_mask_2d(u(0:nx, 0:ny, k, kt), nx, ny, land_mask)
+        ! call apply_mask_2d(u(0:nx, 0:ny, k, kt), nx, ny, land_mask)
       end do
       do k=1,nz
         if(k<=nz)read(11,rec=i_rec) v(0:nx,0:ny,k,kt)
         i_rec=i_rec+1
-        call apply_mask_2d(v(0:nx, 0:ny, k, kt), nx, ny, land_mask)
+        ! call apply_mask_2d(v(0:nx, 0:ny, k, kt), nx, ny, land_mask)
       end do
       !!        write (0,*)'Read v  '
 
