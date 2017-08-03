@@ -4,9 +4,8 @@ program main
 
   implicit none   
 
-  real(4)::p0(100)
   real(4),allocatable::levs(:),lon(:),lat(:)
-  real(4),allocatable::vor(:,:,:),psea(:,:,:),vor_in(:,:,:)
+  real(4),allocatable::vor(:,:,:),psea(:,:,:)
   real(4),allocatable::u(:,:,:,:),v(:,:,:,:)
   real(4),allocatable::land_mask(:,:)
 

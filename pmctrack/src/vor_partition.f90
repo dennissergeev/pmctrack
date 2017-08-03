@@ -36,8 +36,9 @@ real   (4) :: max_tmp
 real   (4) :: vor_min_tmp
 integer(4) :: mi, mj, mij(2), mi_tmp, mj_tmp
 integer(4) :: i_vor_min, n_vor_min
-logical(4) :: mij_flag, topo_flag
-integer(4) :: n_part, i_part
+logical(4) :: mij_flag
+! logical(4) :: topo_flag
+integer(4) :: n_part !, i_part
 integer(4) :: vor_part(0:nx, 0:ny), vor_part_tmp(0:nx, 0:ny)
 real   (4) :: vor_part_r(0:nx, 0:ny), vor_part_max_r(0:nx, 0:ny)
 integer(4) :: buf_mij(2, nmax), buf_mij_out(2, nmax)
@@ -48,27 +49,21 @@ real   (4) :: partmax(nmax)
 
 real   (4) :: del_vor_max_tmp
 
-real   (4) :: d, theta_d
-real   (4) :: d_cf, theta_d_cf
+! real   (4) :: d, theta_d
+! real   (4) :: d_cf, theta_d_cf
 logical(4) :: remove_flag(nmax)
 integer(4) :: remove_num
 
 real   (4) :: l(nmax), l_min(nmax), theta_l
-integer(4) :: l_min_loc
-
-real   (4) :: cdot, theta
-real   (4) :: gradx, grady
-
-real   (4) :: max0_divide
 
 !----cold front
-integer(4) :: width, width_max, pnum
-integer(4) :: j_n, j_s, i_w, i_e, i_n, i_s
-logical    :: flag_coldfront
-logical    :: flag_one
+! integer(4) :: width, width_max, pnum
+! integer(4) :: j_n, j_s, i_w, i_e, i_n, i_s
+! logical    :: flag_coldfront
+! logical    :: flag_one
 
 !----synoptic
-real   (4) :: size_vor
+! real   (4) :: size_vor
 
 integer(4) :: surround8_buf(1:2, 1:pmax)
 integer(4) :: p=0
@@ -649,7 +644,3 @@ do
 
   return
 end subroutine vor_partition
-
-
-
-

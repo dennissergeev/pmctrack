@@ -56,16 +56,11 @@ subroutine tracking_main(vor,u,v,psea,&
   integer (4),allocatable::vor_part(:,:,:)
   real (4),allocatable::vor_part_r(:,:)
 
-  integer (4)::i_rec
-
-  integer (4)::nx_out,ny_out
   integer (4)::nx12,ny12
-  integer(4)::i,j,k
+  integer(4)::i,j
   integer (4)::kt
-  integer (4)::ios
   real(4),allocatable::mlat(:,:),mlon(:,:),max_vor(:,:)
   real(4),allocatable::minlat(:,:),minlon(:,:),z_min(:,:)
-  integer ::min_i,min_j
   real(4),allocatable::s_part(:,:)
   integer (4),allocatable::mi(:,:),mj(:,:)
   integer (4),allocatable::mtype(:,:),z_min_size(:,:)
@@ -75,23 +70,17 @@ subroutine tracking_main(vor,u,v,psea,&
   real(4),allocatable::u_vor_f(:,:),v_vor_f(:,:)
   real(4),allocatable::u_vor_b(:,:),v_vor_b(:,:)
   integer (4),allocatable::n_max(:),n_min(:)
-  integer (4)::i_max,i_min
+  integer (4)::i_max
 
-  integer (4)::vor_num,i_vor_num,vor_num_out=0
+  integer (4)::vor_num,i_vor_num
   integer (4)::vor_merge(pmax),vor_merge_num(pmax)
   integer (4),allocatable::vor_index(:,:)
-  integer (4)::kt_appear(kmax)
-  integer (4)::vor_period(pmax)
-  real(4)::vor_max_track(pmax)
-
-  real(4):: vor_movement
-
 
   real(4),allocatable::vortex(:,:,:)
   integer (4),allocatable::vortex_type(:,:)
   integer (4),allocatable::vortex_flag(:)
 
-  character (100) :: fname_out, fname_loc, fname_track, fname_in
+  character (100) :: fname_out, fname_loc, fname_track
 
 
   write (*,*)'nx=',nx,'ny=',ny,'nt=',nt,'nz=',nz

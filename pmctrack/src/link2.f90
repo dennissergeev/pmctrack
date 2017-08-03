@@ -3,7 +3,7 @@ subroutine tracking2(mlon,mlat,mtype,u_vor_f,v_vor_f,nt,&
   &                  nx,ny,proj,lon,lat,del_r,del_t)
 
   use constants, only: pi, ra 
-  use params, only: nmax, pmax 
+  use params, only: fillval, nmax, pmax 
 
   implicit none 
   integer ,intent (in)::nt,nx,ny
@@ -21,33 +21,29 @@ subroutine tracking2(mlon,mlat,mtype,u_vor_f,v_vor_f,nt,&
   integer (4),intent (out)::vor_merge(pmax)
   integer ::kt
   integer ::i_max,i_max1
-  integer ::i_next(nmax,nt),i_previous(nmax,nt)
+  integer ::i_next(nmax,nt)
   real (4)::r_next(nmax,nt),r_next_tmp
   integer ::i,j
   integer ::vor_part_s(nmax)
 
-  integer ::i_vor_num,i_vor_num2,vor_num_tmp
+  integer ::i_vor_num,i_vor_num2
 
   logical::vor_previous_flag(nmax,nt)
   integer::vor_previous_index(nmax,nt)
 
-  integer :: vor_c_f_index(nmax,nmax),i_c_f,n_c_f(nmax)
-  integer :: vor_c_b_index(nmax,nmax),i_c_b,n_c_b(nmax)
+  integer :: vor_c_f_index(nmax,nmax),n_c_f(nmax)
 
-  real (4)::mv_lon,mv_lat
   real (4)::e_mv_lon,e_mv_lat
   real (4)::e_mlon,e_mlat
 
-  real(4)::dot_product=0.
 
   integer (4)::land_num,all_num
 
   real (4)::r_c(nmax,nmax),r_c_min
 
-  real (4)::del_lon_min,del_lat_min
   real(4)::r_tmp,theta_tmp
 
-  r_next=9.99e20
+  r_next = fillval
 
 
   vor_merge=0

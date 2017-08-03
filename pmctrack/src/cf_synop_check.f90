@@ -20,13 +20,14 @@ subroutine cf_synop_check(vor_in,vor_part,n_part,nx,ny,proj,lon,lat,mtype_part,d
 
   !----cold front
   integer (4)::pnum
-  integer (4)::j_n,j_s,i_w,i_e,i_n,i_s
-  logical ::flag_coldfront
+  ! integer (4)::i_w,i_e,i_n,i_s
+  integer (4)::j_n,j_s,i_n,i_s
+  ! logical ::flag_coldfront
   logical::flag_one
-  character (len=80)::fname_one
+  ! character (len=80)::fname_one
   real (4)::d_cf,theta_d_cf
 
-  real(4)::slope,width,length
+  ! real(4)::slope,width,length
   real(4)::one(pmax,1:2)
   integer (4)::one_num
 
@@ -191,10 +192,9 @@ subroutine quadric_fit(one,one_num,a,b,c,k,r2)
   integer (4),intent (in)::one_num
   real(4),intent (in)::one(1:one_num,1:2)
   real (4),intent (out)::a,b,c,k,r2
-  real(4)::r
   integer (4)::i
   
-  real(8)::sx,sx2,sx3,sx4,sx2y,sxy,sy,s1
+  real(4)::sx,sx2,sx3,sx4,sx2y,sxy,sy,s1
 
   real(4)::xbar,ybar
 
@@ -291,7 +291,7 @@ subroutine correlation(x, y, n, r2)
 
   real :: xm, ym, sigx, sigy, cor
 
-  real(kind=8) :: sx, sy, sxy, sx2, sy2
+  real(kind=4) :: sx, sy, sxy, sx2, sy2
   integer (4)::i
 
 
@@ -320,5 +320,3 @@ subroutine correlation(x, y, n, r2)
     end if
   end if
 end subroutine correlation
-
-

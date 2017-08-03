@@ -10,28 +10,25 @@ subroutine min_z(z, nx, ny, minlat, minlon, &
   real(4),intent (out)::minlat(nmax),minlon(nmax),z_min(nmax)
   real(4),intent (in)::del_z_min
   integer ,intent (out)::n_min,type_min(nmax)
-  integer (4)::i,j,ii,jj,m
+  integer (4)::i,j,m ! ii
   integer (4)::i_min
 
 
   real(4)::z_tmp(0:nx,0:ny),z_part_r(0:nx,0:ny)
   integer (4)::z_part(0:nx,0:ny),z_part_tmp(0:nx,0:ny)
 
-  integer (4)::flag
-  real(4)::r,theta
   integer (4)::mi,mj,mij(2),mi_tmp,mj_tmp
 
   real(4)::min,min0,max
 
   real(4)::zmin_tmp
   
-  integer (4)::n_part,n_part_tmp
+  integer (4)::n_part
   integer (4)::s_part
 
 
   integer (4)::var_part_tmp(1:2,1:pmax4)
   integer (4)::p=0
-  real(4)::surround8(8)
   integer (4)::buf_mij(2,nmax)
   logical(4)::mij_flag
  

@@ -67,14 +67,14 @@ subroutine smth_r(var,nx,ny,lon,lat,var_smth,nx1,nx2,ny1,ny2,r_smth,proj)
   integer ::nsmth_x,nsmth_y
 
 
-  real(4)::d,d_ave,theta_d
+  real(4)::d,theta_d
 
   lonin=lon(2)-lon(1)
   latin=lat(2)-lat(1)
 
   if(proj==1)then
-    nsmth_x=r_smth/nint(ra*lonin*pi/180.0*cos(lat(ny1+ny2/2)*pi/180.0)*1.0e-3)+1
-    nsmth_y=r_smth/nint(ra*latin*pi/180.0*1.0e-3)+1
+    nsmth_x=nint(r_smth/(ra*lonin*pi/180.0*cos(lat(ny1+ny2/2)*pi/180.0))*1.0e-3)+1
+    nsmth_y=nint(r_smth/(ra*latin*pi/180.0*1.0e-3)+1)
   elseif(proj==2)then
     nsmth_x=nint(r_smth/lonin*1.0e-3)+2
     nsmth_y=nint(r_smth/latin*1.0e-3)+2
