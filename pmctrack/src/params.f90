@@ -9,7 +9,7 @@ module params
   integer(4), parameter :: pmax = 10000 
   integer(4), parameter :: pmax4 = pmax * 4
 
-  integer(4), parameter :: mx(8) = (/1, 1, 0, -1, -1, -1, 0, 1/)
-  integer(4), parameter :: my(8) = (/1, 1, 0, -1, -1, -1, 0, 1/)
+  integer(4), parameter :: mx(8) = (/1, 1, 0, -1, -1, -1,  0,  1/)
+  integer(4), parameter :: my(8) = (/0, 1, 1,  1,  0, -1, -1, -1/)
 end module params
 

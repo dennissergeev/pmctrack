@@ -57,30 +57,30 @@ program main
 
   nx=300
   ny=94
-  nt=24
+  nt=48
   nz=10
 
-  nx1=10
+  nx1=120
   nx2=290
-  ny1=5
-  ny2=90
+  ny1=30
+  ny2=70
 
   lons=-30
   lats=60
   lonin=0.3
   latin=0.3  
 
-  del_t=10800.0
+  del_t=3600.0
   
   ! parameter for smoothing of vorticity
   smth_type=2
   nsmth_x=10
   nsmth_y=10
-  r_smth=30.0
+  r_smth=10.0
   
   ! parameter for detecting vortex
-  zeta_max0=2.0e-4
-  zeta_min0=1.5e-4
+  zeta_max0=2.0e-4       !2.0e-4
+  zeta_min0=1.5e-4   !1.5e-4
   int_zeta_min0=0.02e-4
   gamma=0.25
   
@@ -199,11 +199,14 @@ program main
       !end do
 
       do k=1,nz
-        if(k==3)read(11,rec=i_rec) vor(0:nx,0:ny,kt)
+        if(k==3) then
+          read(11,rec=i_rec) vor(0:nx,0:ny,kt)
+          call apply_mask_2d(vor(0:nx, 0:ny, kt), nx, ny, land_mask)
+        end if
         i_rec=i_rec+1
-        call apply_mask_2d(vor(0:nx, 0:ny, kt), nx, ny, land_mask)
       end do
       !        write (0,*)'Read vor  '
+      ! write (0,*)'Max vor  ', maxval(vor(nx1:nx2,ny1:ny2,kt))
 
       close(11)    
 
