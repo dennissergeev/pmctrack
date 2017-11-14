@@ -20,8 +20,8 @@ $(OBJDIR)/cf_synop_check.o \
 $(OBJDIR)/synop_check.o \
 $(OBJDIR)/min_z.o \
 $(OBJDIR)/steering_wind.o \
-$(OBJDIR)/link2.o \
-$(OBJDIR)/link.o \
+$(OBJDIR)/link_vor2.o \
+$(OBJDIR)/link_vor.o \
 $(OBJDIR)/track_check.o \
 $(OBJDIR)/smth.o \
 $(OBJDIR)/tracking_main.o \

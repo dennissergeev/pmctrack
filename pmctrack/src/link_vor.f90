@@ -1,4 +1,4 @@
-subroutine tracking(mlon,mlat,mtype,u_vor_f,v_vor_f,nt,&
+subroutine link_vor(mlon,mlat,mtype,u_vor_f,v_vor_f,nt,&
   &                 n_max,vor_index,vor_num,vor_merge,vor_part,&
   &                 nx,ny,proj,lon,lat,del_lon,del_lat,del_t)
 
@@ -318,4 +318,4 @@ subroutine tracking(mlon,mlat,mtype,u_vor_f,v_vor_f,nt,&
     end do
 
   return
-end subroutine tracking
+end subroutine link_vor
