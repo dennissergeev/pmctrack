@@ -29,6 +29,9 @@ $(OBJDIR)/interface.o
 
 all: $(TARGET)
 
+run: $(TARGET)
+	./$(TARGET)
+
 debug: FFLAGS += -g -fcheck=all -fbacktrace # -Wall
 debug: $(TARGET)
 
