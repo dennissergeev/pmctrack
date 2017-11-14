@@ -172,6 +172,8 @@ subroutine tracking_main(vor,u,v,psea,&
     elseif(smth_type==2)then
       call smth_r(vor(0:nx,0:ny,kt),nx,ny,lon(0:nx),lat(0:ny),vor_smth(nx1:nx2,ny1:ny2,kt),&
              &nx1,nx2,ny1,ny2,r_smth,proj)
+    else
+      vor_smth(nx1:nx2,ny1:ny2,kt) = vor(nx1:nx2,ny1:ny2,kt)
     end if
 
 
