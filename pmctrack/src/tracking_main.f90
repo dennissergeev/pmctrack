@@ -341,12 +341,12 @@ subroutine tracking_main(vor,u,v,psea,&
   write (*,*)'Tracking vortex'
   if(track_type==1)then
 
-    call tracking(mlon,mlat,mtype,u_vor_f,v_vor_f,&
+    call linkin_vort(mlon,mlat,mtype,u_vor_f,v_vor_f,&
          &nt,n_max,vor_index,vor_num,vor_merge,&
          &vor_part(nx1:nx2,ny1:ny2,1:nt),nx12,ny12,proj,lon(nx1:nx2),lat(ny1:ny2),&
          &del_lon,del_lat,del_t)
   elseif(track_type==2)then
-    call tracking2(mlon,mlat,mtype,u_vor_f,v_vor_f,&
+    call linkin_vort2(mlon,mlat,mtype,u_vor_f,v_vor_f,&
          &nt,n_max,vor_index,vor_num,vor_merge,&
          &vor_part(nx1:nx2,ny1:ny2,1:nt),nx12,ny12,proj,lon(nx1:nx2),lat(ny1:ny2),&
          &del_r,del_t)
