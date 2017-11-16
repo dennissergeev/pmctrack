@@ -4,47 +4,49 @@ subroutine linkin_vort2(mlon,mlat,mtype,u_vor_f,v_vor_f,nt,&
 
   use constants, only: pi, ra 
   use params, only: fillval, nmax, pmax 
+  use types, only: wp, dp
 
   implicit none 
-  integer ,intent (in)::nt,nx,ny
-  integer ,intent (in)::proj
-  integer ,intent (in)::n_max(nt)
-  real (4),intent (in)::mlon(nmax,nt),mlat(nmax,nt)
-  integer ,intent (in)::mtype(nmax,nt)
-  real (4),intent (in)::u_vor_f(nmax,nt),v_vor_f(nmax,nt)
+
+  integer    , intent(in)  :: nt,nx,ny
+  integer    , intent(in)  :: proj
+  integer    , intent(in)  :: n_max(nt)
+  real   (wp), intent(in)  :: mlon(nmax, nt), mlat(nmax, nt)
+  integer    , intent(in)  :: mtype(nmax, nt)
+  real   (wp), intent(in)  :: u_vor_f(nmax, nt), v_vor_f(nmax, nt)
   ! real (4),intent (in)::u_vor_b(nmax,nt),v_vor_b(nmax,nt)
-  real(4),intent (in)::lon(0:nx),lat(0:ny)
-  real(4),intent (in)::del_r,del_t
-  integer (4),intent (in)::vor_part(0:nx,0:ny,nt)
-  integer (4),intent (out)::vor_index(pmax,nt)
-  integer (4),intent (out)::vor_num
-  integer (4),intent (out)::vor_merge(pmax)
-  integer ::kt
-  integer ::i_max,i_max1
-  integer ::i_next(nmax,nt)
-  real (4)::r_next(nmax,nt),r_next_tmp
-  integer ::i,j
-  integer ::vor_part_s(nmax)
+  real   (wp), intent(in)  :: lon(0:nx),lat(0:ny)
+  real   (wp), intent(in)  :: del_r,del_t
+  integer    , intent(in)  ::   vor_part(0:nx,0:ny,nt)
+  integer    , intent(out) :: vor_index(pmax,nt)
+  integer    , intent(out) :: vor_num
+  integer    , intent(out) :: vor_merge(pmax)
+  ! Local variables
+  integer                  :: kt
+  integer                  :: i_max,i_max1
+  integer                  :: i_next(nmax, nt)
+  real   (wp)              :: r_next(0:nmax, nt), r_next_tmp
+  integer                  :: vor_part_s(nmax)
+  integer                  :: i, j
 
-  integer ::i_vor_num,i_vor_num2
+  integer                  :: i_vor_num, i_vor_num2
 
-  logical::vor_previous_flag(nmax,nt)
-  integer::vor_previous_index(nmax,nt)
+  logical                  :: vor_previous_flag(nmax, nt)
+  integer                  :: vor_previous_index(nmax, nt)
 
-  integer :: vor_c_f_index(nmax,nmax),n_c_f(nmax)
+  integer                  :: vor_c_f_index(nmax, nmax), n_c_f(nmax)
 
-  real (4)::e_mv_lon,e_mv_lat
-  real (4)::e_mlon,e_mlat
+  real   (wp)              :: e_mv_lon, e_mv_lat
+  real   (wp)              :: e_mlon, e_mlat
 
+  integer                  :: land_num, all_num
 
-  integer (4)::land_num,all_num
+  real   (wp)              :: r_c(nmax, nmax), r_c_min
 
-  real (4)::r_c(nmax,nmax),r_c_min
+  real   (wp)              :: r_tmp, theta_tmp
 
-  real(4)::r_tmp,theta_tmp
 
   r_next = fillval
-
 
   vor_merge=0
 
@@ -59,19 +61,18 @@ subroutine linkin_vort2(mlon,mlat,mtype,u_vor_f,v_vor_f,nt,&
   vor_previous_flag(1:nmax,1:nt)=.false.
   vor_previous_index=0
 
+  do kt = 1, nt-1 ! Time loop
 
-  do kt=1,nt-1
 
-
-  do i_max=1,n_max(kt)
-    do i_vor_num=1,vor_num           
-      if(i_max==vor_index(i_vor_num,kt))then 
-        !The vortex labeled as i_max at kt  existed at kt-1
-        vor_previous_flag(i_max,kt)=.true.
-        vor_previous_index(i_max,kt)=vor_index(i_vor_num,kt-1)
-      end if
+    do i_max=1,n_max(kt)
+      do i_vor_num=1,vor_num           
+        if(i_max==vor_index(i_vor_num,kt))then 
+          !The vortex labeled as i_max at kt  existed at kt-1
+          vor_previous_flag(i_max,kt) = .true.
+          vor_previous_index(i_max,kt) = vor_index(i_vor_num,kt-1)
+        end if
+      end do
     end do
-  end do
 
 
     ! t=kt -> t=kt+1
@@ -254,9 +255,9 @@ subroutine linkin_vort2(mlon,mlat,mtype,u_vor_f,v_vor_f,nt,&
     end do
     
 
-
       !------- check the merger of the vortices -------  
     do i_vor_num=1,vor_num      
+      print*, 'linkin_vort2(259):', i_vor_num, kt, vor_index(i_vor_num, kt)
       r_next_tmp=r_next(vor_index(i_vor_num,kt),kt)
           
       
@@ -284,10 +285,7 @@ subroutine linkin_vort2(mlon,mlat,mtype,u_vor_f,v_vor_f,nt,&
             
     end do
 
-
-
-
-  end do
+  end do  ! Time loop 
 
   return
 end subroutine linkin_vort2

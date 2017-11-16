@@ -1,6 +1,7 @@
 # Package-specific
 _precc/
 output
+logs/
 
 ######################
 # OS generated files #
@@ -18,7 +19,7 @@ Thumbs.db
 ###########
 *.mod
 *.so
-*.exe
+*.out
 
 ##########
 # python #

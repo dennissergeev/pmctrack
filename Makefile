@@ -7,11 +7,12 @@ FFLAGS = -O3 -frecord-marker=4
 .PHONY: all debug clean
 
 PROJNAME = pmctrack
-TARGET = track.exe
+TARGET = track.out
 OUTDIR = output
 SRCDIR = $(PROJNAME)/src
 OBJDIR = $(PROJNAME)/src/_precc
 OBJ = \
+$(OBJDIR)/types.o \
 $(OBJDIR)/const.o \
 $(OBJDIR)/params.o \
 $(OBJDIR)/util.o \

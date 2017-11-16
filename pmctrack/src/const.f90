@@ -1,14 +1,16 @@
 module constants
 
+use types, only : wp
+
 implicit none
 
 ! Physical constants
-real    (4), parameter :: pi = 4 * atan(1.)
-real    (4), parameter :: ra = 6378.0e3
+real(wp), parameter :: pi = 4.0 * atan(1.0_wp)
+real(wp), parameter :: ra = 6378.0e3_wp
 
 ! Metric parameters
-integer (4), parameter :: ikilo = 1000
-real    (4), parameter :: rkilo = 1000.
+integer , parameter :: ikilo = 1000
+real(wp), parameter :: rkilo = 1000.0_wp
 
 end module constants
 
