@@ -9,6 +9,7 @@ FFLAGS = -O3 -frecord-marker=4
 PROJNAME = pmctrack
 TARGET = track.out
 OUTDIR = output
+# QUICKVIEW = tools/quickview.py
 SRCDIR = $(PROJNAME)/src
 OBJDIR = $(PROJNAME)/src/_precc
 OBJ = \
@@ -28,21 +29,23 @@ $(OBJDIR)/smth.o \
 $(OBJDIR)/tracking_main.o \
 $(OBJDIR)/interface.o
 
-all: $(TARGET)
+all : $(TARGET)
 
-run: $(TARGET)
+run : $(TARGET)
 	./$(TARGET)
 
-debug: FFLAGS += -g -fcheck=all -fbacktrace # -Wall
-debug: $(TARGET)
+debug : FFLAGS += -g -fcheck=all -fbacktrace # -Wall
+debug : $(TARGET)
 
-help:
-	@echo 'Makefile for the tracking code                '
-	@echo '                                              '
-	@echo 'Usage:                                        '
-	@echo '    make all     	Compile tracking code'
-	@echo '    make clean	        Clean the directory  '
-	@echo '                                              '
+help :
+	@echo 'Makefile for the tracking code                                 '
+	@echo '                                                               '
+	@echo 'Usage:                                                         '
+	@echo '    make all                              Compile tracking code'
+	@echo '    make debug                     Compile with debugging flags'
+	@echo '    make run                         Run the tracking algorithm'
+	@echo '    make clean                Clean the output and object files'
+	@echo '                                                               '
 
 $(TARGET) : $(OBJ)
 	@mkdir -p $(OUTDIR)
@@ -51,10 +54,6 @@ $(TARGET) : $(OBJ)
 $(OBJDIR)/%.o : $(SRCDIR)/%.f90
 	@mkdir -p $(OBJDIR)
 	$(F90) $(FFLAGS) -c $< -o $@ 
-
-#.f.o :
-#	$(F90) $(FFLAGS)  -c $<
-
 
 clean :
 	-rm -f $(OBJDIR)/*[.o,.mod]
