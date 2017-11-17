@@ -139,9 +139,9 @@ subroutine tracking_main(vor,u,v,psea,&
     write (*,*)'Use del_lon,del_lat',del_lon,del_lat
 
   elseif(track_type==2)then
-    write (*,*)'Use radious ',del_r,'km'
+    write (*,*)'Use radius ',del_r,'km'
   end if
-
+  
   allocate(vor_smth(nx1:nx2,ny1:ny2,nt))
   allocate(vor_part(nx1:nx2,ny1:ny2,nt))
   allocate(vor_part_r(nx1:nx2,ny1:ny2))
@@ -338,9 +338,8 @@ subroutine tracking_main(vor,u,v,psea,&
 
   end do
 
-  write (*,*)'Tracking vortex'
+  write (*, *) 'Linking vortices'
   if(track_type==1)then
-
     call linkin_vort(mlon,mlat,mtype,u_vor_f,v_vor_f,&
          &nt,n_max,vor_index,vor_num,vor_merge,&
          &vor_part(nx1:nx2,ny1:ny2,1:nt),nx12,ny12,proj,lon(nx1:nx2),lat(ny1:ny2),&
@@ -377,7 +376,7 @@ subroutine tracking_main(vor,u,v,psea,&
 
   ! --- check the track ---
 
-  write (*,*)'Check the track'
+  write (*,*) 'Check the track'
   
   do i_vor_num=1,vor_num
     call track_check2(vortex(i_vor_num,:,:),vortex_flag(i_vor_num),nt,period_min)
@@ -432,9 +431,6 @@ subroutine tracking_main(vor,u,v,psea,&
     end do
 
   write (*,*)'Owari'
-
-
-
 
   return
 end subroutine tracking_main

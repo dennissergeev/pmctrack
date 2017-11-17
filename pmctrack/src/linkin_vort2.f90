@@ -4,7 +4,7 @@ subroutine linkin_vort2(mlon,mlat,mtype,u_vor_f,v_vor_f,nt,&
 
   use constants, only: pi, ra 
   use params, only: fillval, nmax, pmax 
-  use types, only: wp, dp
+  use types, only: wp
 
   implicit none 
 

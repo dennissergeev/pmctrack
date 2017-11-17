@@ -60,10 +60,10 @@ program main
   nt=48
   nz=10
 
-  nx1=120
-  nx2=290
-  ny1=30
-  ny2=70
+  nx1= 1!120
+  nx2= 299!290
+  ny1= 1!30
+  ny2= 93!70
 
   lons=-30
   lats=60
@@ -76,7 +76,7 @@ program main
   smth_type=2
   nsmth_x=10
   nsmth_y=10
-  r_smth=10.0
+  r_smth=30.0
   
   ! parameter for detecting vortex
   zeta_max0=2.0e-4       !2.0e-4
@@ -94,16 +94,16 @@ program main
   steering_type=2
   n_steering_x=20
   n_steering_y=20
-  r_steering=200.0
+  r_steering=100.0 ! 200.0
 
 ! parameter for linking vortex
   track_type=2
   del_lon=1.0
   del_lat=0.8
-  del_r=120.0
+  del_r=100.0 !120.0
 
-! parameter for checking the track
-  period_min=3
+! parameter for checking the track (N del_t)
+  period_min=9
 
 
   ! Grid 
