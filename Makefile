@@ -1,7 +1,12 @@
 #F90    = ifort
 #FFLAGS =  -convert little_endian -assume byterecl 
-F90    = gfortran
-FFLAGS = -O3 -frecord-marker=4 -cpp 
+F90         = gfortran
+FFLAGS      = -cpp -frecord-marker=4 #-O3
+NETCDF_LIB  = $(shell nc-config --flibs)
+NETCDF_INC  = $(shell nc-config --fflags)
+
+INCS = ${NETCDF_INC}
+LIBS = ${NETCDF_LIB} 
 
 .SUFFIXES: .o .c .f90 # .f
 .PHONY: all debug clean
@@ -9,7 +14,6 @@ FFLAGS = -O3 -frecord-marker=4 -cpp
 PROJNAME = pmctrack
 TARGET = track.out
 OUTDIR = output
-# QUICKVIEW = tools/quickview.py
 SRCDIR = $(PROJNAME)/src
 OBJDIR = $(PROJNAME)/src/_precc
 OBJ = \
@@ -29,33 +33,35 @@ $(OBJDIR)/smth.o \
 $(OBJDIR)/tracking_main.o \
 $(OBJDIR)/interface.o
 
-all : $(TARGET)
+all: $(TARGET)
 
-run : $(TARGET)
+run: $(TARGET)
 	./$(TARGET)
 
-debug : FFLAGS += -g -fcheck=all -fbacktrace -Ddebug # -Wall
-debug : $(TARGET)
+debug: FFLAGS += -g -fcheck=all -fbacktrace -Ddebug # -Wall
+debug: $(TARGET)
 
-help :
-	@echo 'Makefile for the tracking code                                 '
-	@echo '                                                               '
-	@echo 'Usage:                                                         '
-	@echo '    make all                              Compile tracking code'
-	@echo '    make debug                     Compile with debugging flags'
-	@echo '    make run                         Run the tracking algorithm'
-	@echo '    make clean                Clean the output and object files'
-	@echo '                                                               '
+help:
+	@echo 'Makefile for the tracking code                '
+	@echo '                                              '
+	@echo 'Usage:                                        '
+	@echo '    make all     	Compile tracking code'
+	@echo '    make clean	        Clean the directory  '
+	@echo '                                              '
 
-$(TARGET) : $(OBJ)
+$(TARGET): $(OBJ)
 	@mkdir -p $(OUTDIR)
-	$(F90) $(FFLAGS) -o $@ $(OBJ)
+	$(F90) $(FFLAGS) ${LIBS} -o $@ $(OBJ)
 
-$(OBJDIR)/%.o : $(SRCDIR)/%.f90
+$(OBJDIR)/%.o: $(SRCDIR)/%.f90
 	@mkdir -p $(OBJDIR)
-	$(F90) $(FFLAGS) -c $< -o $@ 
+	$(F90) $(FFLAGS) ${INCS} -c $< -o $@ 
 
-clean :
+#.f.o:
+#	$(F90) $(FFLAGS)  -c $<
+
+
+clean:
 	-rm -f $(OBJDIR)/*[.o,.mod]
 	-rm -f $(TARGET)
 	-rm -f $(OUTDIR)/vor*[.txt,.dat]
