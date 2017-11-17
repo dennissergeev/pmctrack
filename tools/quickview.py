@@ -51,8 +51,8 @@ SCRIPT = Path(__file__).basename().splitext()[0]
 #  ny1=30
 #  ny2=70
 # TODO: move to args?
-xx = slice(120, 290+1)
-yy = slice(30, 70+1)
+xx = slice(1, -1)  # slice(120, 290+1)
+yy = slice(1, -1)  # slice(30, 70+1)
 # Column names
 vor_loc_df_kw = dict(delimiter='\s+',
                      names=['lon', 'lat', 'vo', 'rad', 'vortex_type'])
@@ -132,6 +132,9 @@ def plot_fields(fig, ax, lons, lats, vort, slp, lsm=None):
     h = ax.contour(lons, lats, slp*slp_scl, **slp_kw)
     ax.clabel(h, **clab_kw)
 
+    if isinstance(lsm, np.ndarray):
+        ax.contourf(lons, lats, lsm, cmap='gray_r', alpha=0.25)
+
 
 def plot_tracks(fig, ax, counter):
     """ Plot results of the tracking algorithm """
@@ -171,7 +174,7 @@ def main(args=None):
         ds = iris.load(ORIG_DATA_DIR.listdir(ORIG_DATA_FILES))
     vort = ds.extract_strict('atmosphere_relative_vorticity')
     slp = ds.extract_strict('air_pressure_at_sea_level')
-    # lsm = ds.extract_strict('land_binary_mask')
+    lsm = ds.extract_strict('land_binary_mask')
 
     # Date-time span
     t0, tfreq, t1 = args.tspan.split(':')
@@ -195,11 +198,12 @@ def main(args=None):
         pres_constr = iris.Constraint(pressure_level=950)
         vo_data = vort.extract(time_constr & pres_constr).data[yy, xx]
         slp_data = slp.extract(time_constr).data[yy, xx]
+        lsm_data = lsm.extract(time_constr).data[yy, xx]
 
         # Prepare figure
         anno_text = f'{idt: %b %d, %H%M}UTC'
         fig, ax = prep_canvas(anno_text=anno_text)
-        plot_fields(fig, ax, lons, lats, vo_data, slp_data)
+        plot_fields(fig, ax, lons, lats, vo_data, slp_data, lsm=lsm_data)
         plot_tracks(fig, ax, counter+1)
 
         imgname = imgname_mask.format(time=f'{idt:%Y%m%d%H%M}',
