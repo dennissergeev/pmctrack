@@ -1,7 +1,7 @@
 #F90    = ifort
 #FFLAGS =  -convert little_endian -assume byterecl 
 F90    = gfortran
-FFLAGS = -O3 -frecord-marker=4 
+FFLAGS = -O3 -frecord-marker=4 -cpp 
 
 .SUFFIXES: .o .c .f90 # .f
 .PHONY: all debug clean
@@ -34,7 +34,7 @@ all : $(TARGET)
 run : $(TARGET)
 	./$(TARGET)
 
-debug : FFLAGS += -g -fcheck=all -fbacktrace # -Wall
+debug : FFLAGS += -g -fcheck=all -fbacktrace -Ddebug # -Wall
 debug : $(TARGET)
 
 help :

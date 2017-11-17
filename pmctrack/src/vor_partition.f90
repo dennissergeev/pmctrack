@@ -140,7 +140,9 @@ do
     if(p==0)exit
     mi_tmp=surround8_buf(1,p)
     mj_tmp=surround8_buf(2,p)
-    print*,mi_tmp, mj_tmp
+#ifdef debug
+    print*, 'vor_partition(143):', mi_tmp, mj_tmp
+#endif
     p=p-1
 
     do m=1,8
