@@ -17,21 +17,22 @@ OUTDIR = output
 SRCDIR = $(PROJNAME)/src
 OBJDIR = $(PROJNAME)/src/_precc
 OBJ = \
-$(OBJDIR)/types.o \
-$(OBJDIR)/const.o \
-$(OBJDIR)/params.o \
-$(OBJDIR)/util.o \
-$(OBJDIR)/vor_partition.o \
-$(OBJDIR)/cf_synop_check.o \
-$(OBJDIR)/synop_check.o \
-$(OBJDIR)/min_z.o \
-$(OBJDIR)/steering_wind.o \
-$(OBJDIR)/linkin_vort2.o \
-$(OBJDIR)/linkin_vort.o \
-$(OBJDIR)/track_check.o \
-$(OBJDIR)/smth.o \
-$(OBJDIR)/tracking_main.o \
-$(OBJDIR)/interface.o
+$(OBJDIR)/io.o
+#$(OBJDIR)/types.o \
+#$(OBJDIR)/const.o \
+#$(OBJDIR)/params.o \
+#$(OBJDIR)/util.o \
+#$(OBJDIR)/vor_partition.o \
+#$(OBJDIR)/cf_synop_check.o \
+#$(OBJDIR)/synop_check.o \
+#$(OBJDIR)/min_z.o \
+#$(OBJDIR)/steering_wind.o \
+#$(OBJDIR)/linkin_vort2.o \
+#$(OBJDIR)/linkin_vort.o \
+#$(OBJDIR)/track_check.o \
+#$(OBJDIR)/smth.o \
+#$(OBJDIR)/tracking_main.o \
+#$(OBJDIR)/interface.o
 
 all: $(TARGET)
 
@@ -51,7 +52,7 @@ help:
 
 $(TARGET): $(OBJ)
 	@mkdir -p $(OUTDIR)
-	$(F90) $(FFLAGS) ${LIBS} -o $@ $(OBJ)
+	$(F90) $(FFLAGS) -o $@ $(OBJ) ${INCS} ${LIBS}
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.f90
 	@mkdir -p $(OBJDIR)
