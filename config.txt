@@ -1,0 +1,10 @@
+# CONFIGURATION FILE FOR PMC TRACKING ALGORITHM
+year=2011
+month=1
+thelevel=950
+datadir="../../reanalysis/ERA5"
+vort_name="vo"
+u_name="u"
+v_name="v"
+msl_name="msl"
+proj=1
