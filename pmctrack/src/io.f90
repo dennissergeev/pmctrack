@@ -1,18 +1,21 @@
 program read_netcdf
   use netcdf
+  !use iso_fortran_env
   implicit none
   
   integer, parameter :: wp = kind(0.0)
 
   ! This is the name of the data file we will read.
-  character (len = *), parameter :: FILE_NAME = "../../../phd/reanalysis/ERA5/era5.an.sfc.2011.01.vo.nc"
+  character (len = *), parameter :: CONFIG_FILE = "config.txt"
+  character (len=256) :: FILE_NAME
+
   integer :: ncid
 
-  character (len = nf90_max_name), parameter :: LVL_NAME = "level"
-  character (len = nf90_max_name), parameter :: LAT_NAME = "latitude"
-  character (len = nf90_max_name), parameter :: LON_NAME = "longitude"
-  character (len = nf90_max_name), parameter :: REC_NAME = "time"
-  character (len = nf90_max_name), parameter :: VORT_NAME = "vo"
+  character (len=*), parameter :: LVL_NAME = "level"
+  character (len=*), parameter :: LAT_NAME = "latitude"
+  character (len=*), parameter :: LON_NAME = "longitude"
+  character (len=*), parameter :: REC_NAME = "time"
+  character (len=*), parameter :: VORT_NAME = "vo"
   integer :: dimid
   integer :: ntime, nlvls, nlats, nlons
 
@@ -32,6 +35,49 @@ program read_netcdf
 
   character(len=nf90_max_name), dimension(4) :: DIM_NAMES 
   integer, dimension(4) :: DIMS
+
+
+integer, parameter :: fh = 999
+character (len=256) :: buffer
+character (len=256) :: label
+integer :: line
+integer :: ios
+integer :: sep
+integer :: proj, vert_grid
+
+ios = 0
+line = 0
+
+  open (fh, file=CONFIG_FILE, form='formatted', status='old', action='read')
+  do while (ios == 0)
+    read(fh, '(A)', iostat=ios) buffer
+    if (ios == 0) then
+      line = line + 1
+
+      ! Find the first instance of whitespace.  Split label and data.
+      sep = scan(buffer, '=')
+      if (sep == 0) then
+        label = buffer
+      else
+        label = buffer(1:sep-1)
+        buffer = buffer(sep+1:len_trim(buffer))
+      end if
+
+      select case (trim(label))
+      case ('file'); read(buffer, *, iostat=ios) FILE_NAME
+      case ('proj'); read(buffer, *, iostat=ios) proj
+      case default
+        if (index (trim(label), "#") == 1) then
+          print*, buffer
+        ! else
+        !   print *, 'Skipping invalid label at line', line
+        end if
+      end select
+    end if
+  end do
+  close(fh)
+
+!call get_command_argument(1, FILE_NAME)
 
   DIM_NAMES(1) = trim(REC_NAME)
   DIM_NAMES(2) = trim(LVL_NAME) 
@@ -108,7 +154,7 @@ contains
     implicit none
 
     integer, intent(in) :: ncid
-    character (len=nf90_max_name), intent(in) :: var_name
+    character (len=*), intent(in) :: var_name
     real(wp), intent(inout) :: var_data(:, :, :, :)
     ! Local variables
     integer :: var_id
@@ -130,7 +176,7 @@ contains
     implicit none
 
     integer, intent(in) :: ncid
-    character (len=nf90_max_name), intent(in) :: var_name
+    character (len=*), intent(in) :: var_name
     real(wp), intent(inout) :: var_data(:, :, :)
     ! Local variables
     integer :: var_id
@@ -148,7 +194,7 @@ contains
     implicit none
 
     integer, intent(in) :: ncid
-    character (len=nf90_max_name), intent(in) :: var_name
+    character (len=*), intent(in) :: var_name
     real(wp), intent(inout) :: var_data(:, :, :)
     integer, intent(in) :: lvl_idx
     ! Local variables
