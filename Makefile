@@ -17,6 +17,7 @@ OUTDIR = output
 SRCDIR = $(PROJNAME)/src
 OBJDIR = $(PROJNAME)/src/_precc
 OBJ = \
+$(OBJDIR)/datetime.o \
 $(OBJDIR)/types.o \
 $(OBJDIR)/nc_io.o \
 $(OBJDIR)/config_params.o \

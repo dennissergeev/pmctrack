@@ -1,5 +1,7 @@
 program read_netcdf
   use netcdf
+  use datetime_module
+
   use types, only : wp
   use config_params, only :  get_config_params, datadir,          &
     & year_start, month_start, day_start,                         &
@@ -17,36 +19,6 @@ program read_netcdf
 
   implicit none
   
-  !character(len=256) :: datadir
-  !character(len=256) :: vort_name
-  !character(len=256) :: u_name
-  !character(len=256) :: v_name
-  !character(len=256) :: psea_name
-  !character(len=256) :: land_name
-  !integer            :: year_start
-  !integer            :: month_start
-  !integer            :: day_start
-  !integer            :: year_end
-  !integer            :: month_end
-  !integer            :: day_end
-  !integer            :: thelevel
-  !integer            :: proj
-  !integer            :: vert_grid
-  !integer            :: nx1, nx2, ny1, ny2
-  !integer            :: nt
-  !integer            :: smth_type
-  !integer            :: nsmth_x, nsmth_y
-  !real(wp)           :: r_smth
-  !real(wp)           :: zeta_max0, zeta_min0
-  !real(wp)           :: int_zeta_min0, gamma
-  !real(wp)           :: d_cf_min, size_synop
-  !real(wp)           :: del_psea_min, distance_ec
-  !integer            :: steering_type
-  !integer            :: n_steering_x, n_steering_y
-  !real(wp)           :: r_steering
-  !integer            :: track_type
-  !real(wp)           :: del_lon, del_lat,del_r
-  !integer            :: period_min
   real(wp)           :: lon0
   real(wp)           :: lat0
   real(wp)           :: lonin
