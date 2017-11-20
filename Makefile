@@ -18,7 +18,8 @@ SRCDIR = $(PROJNAME)/src
 OBJDIR = $(PROJNAME)/src/_precc
 OBJ = \
 $(OBJDIR)/io.o \
-$(OBJDIR)/types.o
+$(OBJDIR)/types.o \
+$(OBJDIR)/get_config_params.o
 #$(OBJDIR)/const.o \
 #$(OBJDIR)/params.o \
 #$(OBJDIR)/util.o \
