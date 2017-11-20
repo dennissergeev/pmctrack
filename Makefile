@@ -19,7 +19,7 @@ OBJDIR = $(PROJNAME)/src/_precc
 OBJ = \
 $(OBJDIR)/types.o \
 $(OBJDIR)/nc_io.o \
-$(OBJDIR)/get_config_params.o \
+$(OBJDIR)/config_params.o \
 $(OBJDIR)/io.o
 #$(OBJDIR)/const.o \
 #$(OBJDIR)/params.o \
