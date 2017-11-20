@@ -82,17 +82,23 @@ program read_netcdf
   ! Get dimensions from the vorticity file
   call get_dims(nc_file_name, DIM_NAMES, ntime, nlvls, nlats, nlons)
 
-  allocate(time(ntime))
-  allocate(lvls(nlvls))
-  allocate(lats(nlats))
-  allocate(lons(nlons))
-  allocate(vor      (nlons, nlats, ntime))
-  allocate(u        (nlons, nlats, nlvls, ntime))
-  allocate(v        (nlons, nlats, nlvls, ntime))
-  allocate(psea     (nlons, nlats, ntime))
-  allocate(land_mask(nlons, nlats))
+  allocate(time(0:ntime-1))
+  allocate(lvls(0:nlvls-1))
+  allocate(lats(0:nlats-1))
+  allocate(lons(0:nlons-1))
+  allocate(vor      (0:nlons-1, 0:nlats-1, 0:ntime-1))
+  allocate(u        (0:nlons-1, 0:nlats-1, 0:nlvls-1, 0:ntime-1))
+  allocate(v        (0:nlons-1, 0:nlats-1, 0:nlvls-1, 0:ntime-1))
+  allocate(psea     (0:nlons-1, 0:nlats-1, 0:ntime-1))
+  allocate(land_mask(0:nlons-1, 0:nlats-1))
 
   call get_coords(nc_file_name, DIM_NAMES, time, lvls, lats, lons)
+  !lats = lats(:1:-1)
+  print*, lons(0)
+  print*, lats(0)
+  print*, lons(1) - lons(0)
+  print*, lats(1) - lats(0)
+  !stop
 
   ! Read vorticity at the specified level
   lvl_idx = minloc(abs(lvls - thelevel), 1)
