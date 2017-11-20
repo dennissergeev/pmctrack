@@ -1,4 +1,4 @@
-program read_netcdf
+program main
   use netcdf
   use datetime_module
 
@@ -24,6 +24,7 @@ program read_netcdf
   real(wp)           :: lonin
   real(wp)           :: latin
   real(wp)           :: del_t
+  integer            :: ntimes
 
   character (len=256)            :: nc_file_name
   character (len=*), parameter   :: LVL_NAME = "level"
@@ -47,7 +48,8 @@ program read_netcdf
   character(len=nf90_max_name), dimension(4) :: DIM_NAMES 
   ! integer, dimension(4) :: DIMS
 
-  !call get_command_argument(1, FILE_NAME)
+  type(datetime) :: a, b, calendar_start  
+  type(timedelta) :: td
 
   DIM_NAMES(1) = trim(REC_NAME)
   DIM_NAMES(2) = trim(LVL_NAME) 
@@ -95,6 +97,22 @@ program read_netcdf
   lonin = lons(1) - lons(0)
   latin = lats(1) - lats(0)
   del_t = (time(1) - time(0)) * 3600
+
+  a = datetime(year_start, month_start, day_start)
+  b = datetime(year_end, month_end, day_end)
+  td = b - a
+  ntimes = td%total_seconds() / del_t 
+  print*, ntimes
+
+  calendar_start = datetime(1900, 1, 1)
+  td = timedelta(hours=time(0))
+  a = calendar_start + td
+  print*, 'Start date: ', a
+
+  if (month_end > month_start) then
+   print*,'' 
+  end if
+
 
   ! Read vorticity at the specified level
   lvl_idx = minloc(abs(lvls - thelevel), 1)
@@ -149,4 +167,4 @@ program read_netcdf
   deallocate(psea)
   deallocate(land_mask)
 
-end program read_netcdf
+end program main
