@@ -1,6 +1,7 @@
 program main
 
-  use util
+  use netcdf
+  use util, only : apply_mask_2d
 
   implicit none   
 
@@ -25,7 +26,6 @@ program main
   integer ::kt
 
   character (80)::fname
-  character (80)::fname_in="../../reanalysis/ERA5/track/era5_slp_u_v_vo_"
   character (80) :: outdir="output"
   
  
@@ -143,7 +143,7 @@ program main
 
 
 
-  write (*,*)'Read ERA5 data',nt
+  write (*,*)'Read ERA5 data'
 
   do kt=1, nt
     i_rec=1

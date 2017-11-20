@@ -1,6 +1,8 @@
 program read_netcdf
   use netcdf
   use types, only : wp
+  use nc_io, only : get_dims, get_coords, get_one_level, &
+    & get_data_4d, get_data_3d, get_data_2d
   !use iso_fortran_env
   implicit none
   
@@ -54,9 +56,6 @@ program read_netcdf
   real(wp)         , allocatable :: v(:, :, :, :) 
   real(wp)         , allocatable :: land_mask(:, :) 
 
-  ! Loop indices
-  integer :: lvl, lat, lon, t, i
-
   integer :: lvl_idx
 
   character(len=nf90_max_name), dimension(4) :: DIM_NAMES 
@@ -71,12 +70,22 @@ program read_netcdf
 
   call get_config_params(CONFIG_FILE, datadir, year, month,       &
     & vort_name, u_name, v_name, psea_name, land_name,            &
-    & thelevel, proj, vert_grid, nx1, nx2, ny1, ny2, nt, del_t,   &
+    & thelevel, proj, vert_grid, nx1, nx2, ny1, ny2,              &
     & smth_type, nsmth_x, nsmth_y, r_smth,                        &
     & zeta_max0, zeta_min0, int_zeta_min0, gamma,                 &
     & d_cf_min, size_synop, del_psea_min, distance_ec,            &
     & steering_type, n_steering_x, n_steering_y, r_steering,      &
     & track_type, del_lon, del_lat, del_r, period_min)
+#ifdef debug
+  print*, datadir, year, month,       &
+    & vort_name, u_name, v_name, psea_name, land_name,            &
+    & thelevel, proj, vert_grid, nx1, nx2, ny1, ny2,              &
+    & smth_type, nsmth_x, nsmth_y, r_smth,                        &
+    & zeta_max0, zeta_min0, int_zeta_min0, gamma,                 &
+    & d_cf_min, size_synop, del_psea_min, distance_ec,            &
+    & steering_type, n_steering_x, n_steering_y, r_steering,      &
+    & track_type, del_lon, del_lat, del_r, period_min
+#endif
 
   write(nc_file_name, '(A,A,A,I4.4,A,I2.2,A,A,A)') trim(datadir), '/', &
                                                  & 'era5.an.sfc.', year, '.', &
@@ -97,11 +106,14 @@ program read_netcdf
   allocate(land_mask(0:nlons-1, 0:nlats-1))
 
   call get_coords(nc_file_name, DIM_NAMES, time, lvls, lats, lons)
+  lvls = lvls(nlvls-1:0:-1)
   lats = lats(nlats-1:0:-1)
   lon0 = lons(0)
   lat0 = lats(0)
+  ! Calculate grid spacing and time increment assuming the grid is uniform
   lonin = lons(1) - lons(0)
   latin = lats(1) - lats(0)
+  del_t = (time(1) - time(0)) * 3600
 
   ! Read vorticity at the specified level
   lvl_idx = minloc(abs(lvls - thelevel), 1)
@@ -145,172 +157,5 @@ program read_netcdf
   deallocate(v)
   deallocate(psea)
   deallocate(land_mask)
-
-contains
-  
-  subroutine get_dims(nc_file_name, dim_names, ntime, nlvls, nlats, nlons)
-    implicit none
-
-    character(len=*)              , intent(in)    :: nc_file_name
-    character(len=*), dimension(4), intent(in)    :: dim_names
-    integer                       , intent(inout) :: ntime 
-    integer                       , intent(inout) :: nlvls 
-    integer                       , intent(inout) :: nlats 
-    integer                       , intent(inout) :: nlons 
-    ! Local variables
-    integer                                       :: ncid
-    integer                                       :: dimid
-    integer                       , dimension(4)  :: dims
-
-    call check( nf90_open(nc_file_name, nf90_nowrite, ncid) )
-
-    do i = 1, size(dim_names)
-      call check( nf90_inq_dimid(ncid, dim_names(i), dimid) )
-      call check( nf90_inquire_dimension(ncid, dimid, len=dims(i)) )
-    end do
-    ntime = dims(1)
-    nlvls = dims(2)
-    nlats = dims(3)
-    nlons = dims(4)
-
-    call check( nf90_close(ncid) )
-  end subroutine get_dims
-
-  subroutine get_coords(nc_file_name, dim_names, time, lvls, lats, lons)
-    implicit none
-
-    character(len=*)              , intent(in)    :: nc_file_name
-    character(len=*), dimension(4), intent(in)    :: dim_names
-    integer                       , intent(inout) :: time(:) 
-    integer                       , intent(inout) :: lvls(:) 
-    real(wp)                      , intent(inout) :: lats(:) 
-    real(wp)                      , intent(inout) :: lons(:) 
-    ! Local variables
-    integer                                       :: ncid
-    integer                                       :: var_id
-
-    call check( nf90_open(nc_file_name, nf90_nowrite, ncid) )
-
-    call check( nf90_inq_varid(ncid, dim_names(1), var_id) )
-    call check( nf90_get_var(ncid, var_id, time) )
-    call check( nf90_inq_varid(ncid, dim_names(2), var_id) )
-    call check( nf90_get_var(ncid, var_id, lvls) )
-    call check( nf90_inq_varid(ncid, dim_names(3), var_id) )
-    call check( nf90_get_var(ncid, var_id, lats) )
-    call check( nf90_inq_varid(ncid, dim_names(4), var_id) )
-    call check( nf90_get_var(ncid, var_id, lons) )
-
-    call check( nf90_close(ncid) )
-  end subroutine get_coords
-
-  subroutine get_data_4d(nc_file_name, var_name, var_data)
-    implicit none
-
-    character(len=*)              , intent(in)    :: nc_file_name
-    character(len=*)              , intent(in)    :: var_name
-    real(wp)                      , intent(inout) :: var_data(:, :, :, :)
-    ! Local variables
-    integer                                       :: ncid
-    integer                                       :: var_id
-    real(wp)                                      :: scale_factor, add_offset
-
-    call check( nf90_open(nc_file_name, nf90_nowrite, ncid) )
-
-    call check( nf90_inq_varid(ncid, var_name, var_id) )
-    !call check( nf90_inquire_variable(ncid, var_id, xtype=xtype, ndims=ndims) )
-    call check( nf90_get_var(ncid, var_id, var_data) )
-    call check( nf90_get_att(ncid, var_id, "scale_factor", scale_factor) )
-    call check( nf90_get_att(ncid, var_id, "add_offset", add_offset) )
-  
-    var_data = scale_factor * var_data + add_offset
-
-    call check( nf90_close(ncid) )
-  end subroutine get_data_4d
-
-  subroutine get_data_3d(nc_file_name, var_name, var_data)
-    implicit none
-
-    character(len=*)              , intent(in)    :: nc_file_name
-    character(len=*)              , intent(in)    :: var_name
-    real(wp)                      , intent(inout) :: var_data(:, :, :)
-    ! Local variables
-    integer                                       :: ncid
-    integer                                       :: var_id
-    real(wp)                                      :: scale_factor, add_offset
-
-    call check( nf90_open(nc_file_name, nf90_nowrite, ncid) )
-
-    call check( nf90_inq_varid(ncid, var_name, var_id) )
-    call check( nf90_get_var(ncid, var_id, var_data) )
-    call check( nf90_get_att(ncid, var_id, "scale_factor", scale_factor) )
-    call check( nf90_get_att(ncid, var_id, "add_offset", add_offset) )
-  
-    var_data = scale_factor * var_data + add_offset
-
-    call check( nf90_close(ncid) )
-  end subroutine get_data_3d
-
-  subroutine get_data_2d(nc_file_name, var_name, var_data)
-    implicit none
-
-    character(len=*)              , intent(in)    :: nc_file_name
-    character(len=*)              , intent(in)    :: var_name
-    real(wp)                      , intent(inout) :: var_data(:, :)
-    ! Local variables
-    integer                                       :: ncid
-    integer                                       :: var_id
-    real(wp)                                      :: scale_factor, add_offset
-
-    call check( nf90_open(nc_file_name, nf90_nowrite, ncid) )
-
-    call check( nf90_inq_varid(ncid, var_name, var_id) )
-    call check( nf90_get_var(ncid, var_id, var_data) )
-    call check( nf90_get_att(ncid, var_id, "scale_factor", scale_factor) )
-    call check( nf90_get_att(ncid, var_id, "add_offset", add_offset) )
-  
-    var_data = scale_factor * var_data + add_offset
-
-    call check( nf90_close(ncid) )
-  end subroutine get_data_2d
-
-  subroutine get_one_level(nc_file_name, var_name, var_data, lvl_idx)
-    implicit none
-
-    character(len=*)              , intent(in)    :: nc_file_name
-    character(len=*)              , intent(in)    :: var_name
-    real(wp)                      , intent(inout) :: var_data(:, :, :)
-    integer                       , intent(in)    :: lvl_idx
-    ! Local variables
-    integer                                       :: ncid
-    integer                                       :: var_id
-    real(wp)                                      :: scale_factor, add_offset
-    integer                                       :: shp(3)
-
-    shp = shape(var_data)
-
-    call check( nf90_open(nc_file_name, nf90_nowrite, ncid) )
-
-    call check( nf90_inq_varid(ncid, var_name, var_id) )
-    call check( nf90_get_var(ncid, var_id, var_data,  &
-                             start=(/1, 1, lvl_idx, 1/), &
-                             count=(/shp(1), shp(2), 1, shp(3)/)) )
-    call check( nf90_get_att(ncid, var_id, "scale_factor", scale_factor) )
-    call check( nf90_get_att(ncid, var_id, "add_offset", add_offset) )
-  
-    var_data = scale_factor * var_data + add_offset
-
-    call check( nf90_close(ncid) )
-  end subroutine get_one_level
-
-
-  subroutine check(status)
-    integer, intent ( in) :: status
-    
-    if(status /= nf90_noerr) then 
-      print*, 'status:', status
-      print *, trim(nf90_strerror(status))
-      stop "Stopped"
-    end if
-  end subroutine check  
 
 end program read_netcdf

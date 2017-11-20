@@ -57,8 +57,8 @@ subroutine get_config_params(config_file, datadir, year, month, &
   ios = 0
   line = 0
 
-  open (fh, file=CONFIG_FILE, form='formatted', status='old', &
-    &       iostat=ios, action='read')
+  open (fh, file=trim(config_file), form='formatted', status='old', &
+    &   iostat=ios, action='read')
   if (ios == 0) then
     do while (ios == 0)
       read(fh, '(A)', iostat=ios) buffer
@@ -113,9 +113,7 @@ subroutine get_config_params(config_file, datadir, year, month, &
         case ('del_r'); read(buffer, *, iostat=ios) del_r
         case ('period_min'); read(buffer, *, iostat=ios) period_min
         case default
-          if (index (trim(label), "#") == 1) then
-            print*, buffer
-          else
+          if (index (trim(label), "#") /= 1) then
             write(*, *) 'ConfigParseWarning: Skipping invalid line', line
           end if
         end select

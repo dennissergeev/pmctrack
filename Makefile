@@ -17,9 +17,10 @@ OUTDIR = output
 SRCDIR = $(PROJNAME)/src
 OBJDIR = $(PROJNAME)/src/_precc
 OBJ = \
-$(OBJDIR)/io.o \
 $(OBJDIR)/types.o \
-$(OBJDIR)/get_config_params.o
+$(OBJDIR)/nc_io.o \
+$(OBJDIR)/get_config_params.o \
+$(OBJDIR)/io.o
 #$(OBJDIR)/const.o \
 #$(OBJDIR)/params.o \
 #$(OBJDIR)/util.o \
@@ -40,7 +41,7 @@ all: $(TARGET)
 run: $(TARGET)
 	./$(TARGET)
 
-debug: FFLAGS += -g -fcheck=all -fbacktrace -Ddebug # -Wall
+debug: FFLAGS += -g -fcheck=all -fbacktrace -Ddebug -Wall
 debug: $(TARGET)
 
 help:
