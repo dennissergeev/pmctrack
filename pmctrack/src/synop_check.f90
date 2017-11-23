@@ -1,15 +1,14 @@
-subroutine synop_check(mlon,mlat,n_max,minlon,minlat,n_min,mtype,proj,d_min)
+subroutine synop_check(mlon,mlat,n_max,minlon,minlat,n_min,mtype)
 
   use constants, only: pi, ra
+  use params, only : proj, distance_ec
 
   implicit none
 
   integer (4),intent (in)::n_max,n_min
   real(4),intent (in)::mlon(n_max),mlat(n_max)
   real(4),intent (in)::minlon(n_min),minlat(n_min)
-  real(4),intent (in) ::d_min
   integer (4),intent (inout)::mtype(n_max)
-  integer(4),intent (in)::proj
 
   integer (4)::i_max,i_min
   real (4)::d,theta_d
@@ -36,7 +35,7 @@ subroutine synop_check(mlon,mlat,n_max,minlon,minlat,n_min,mtype,proj,d_min)
         end if
  !       write (*,*)'d=',d
         
-        if(d<d_min*1.0e3)flag_synop(i_max)=.true.
+        if(d<distance_ec*1.0e3)flag_synop(i_max)=.true.
       end do
 
       if(mtype(i_max)>=2.and..not.flag_synop(i_max))then

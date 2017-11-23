@@ -1,9 +1,12 @@
-subroutine steering_wind_f(u,v,p,nx,ny,nz,nt,kt,mi,mj,u_vor,v_vor,n_steering_x,n_steering_y)
+subroutine steering_wind_f(u,v,p,nx,ny,nz,nt,kt,mi,mj,u_vor,v_vor)
+
+  use types, only : wp
+  use params, only : n_steering_x, n_steering_y
+  use utils, only : integral_p
 
   implicit none
 
   integer ,intent (in)::nx,ny,nz,nt,kt
-  integer ,intent (in)::n_steering_x,n_steering_y
   real(4) ,intent (in)::u(0:nx,0:ny,nz,nt),v(0:nx,0:ny,nz,nt)
   real(4) ,intent (in)::p(nz)
   
@@ -52,7 +55,11 @@ subroutine steering_wind_f(u,v,p,nx,ny,nz,nt,kt,mi,mj,u_vor,v_vor,n_steering_x,n
 end subroutine steering_wind_f
 
 
-subroutine steering_wind_b(u,v,p,nx,ny,nz,nt,kt,mi,mj,u_vor,v_vor,n_steering_x,n_steering_y)
+subroutine steering_wind_b(u,v,p,nx,ny,nz,nt,kt,mi,mj,u_vor,v_vor)
+
+  use types, only : wp
+  use params, only : n_steering_x, n_steering_y
+  use utils, only : integral_p
 
   implicit none
 
@@ -64,7 +71,6 @@ subroutine steering_wind_b(u,v,p,nx,ny,nz,nt,kt,mi,mj,u_vor,v_vor,n_steering_x,n
   real(4) ::u_t0t1(0:nx,0:ny,nz),v_t0t1(0:nx,0:ny,nz)
   real(4) ::u_int(0:nx,0:ny),v_int(0:nx,0:ny)
 
-  integer ,intent (in)::n_steering_x,n_steering_y
   integer ::n_steering_s
   integer ::ii,jj
 
@@ -106,12 +112,13 @@ end subroutine steering_wind_b
 subroutine steering_wind_r(u,v,p,lon,lat,proj,nx,ny,nz,nt,kt1,kt2,mi,mj,&
      &u_vor,v_vor,r_steering)
 
+  use types, only : wp
   use constants, only: pi, ra
+  use params, only : r_steering, proj
+  use utils, only : integral_p
 
   implicit none 
   integer ,intent (in)::nx,ny,nz,nt,kt1,kt2
-  integer ,intent (in)::proj
-  real(4),intent (in)::r_steering
   real(4) ,intent (in)::u(0:nx,0:ny,nz,nt),v(0:nx,0:ny,nz,nt)
   real(4) ,intent (in)::p(nz),lon(0:nx),lat(0:ny)
   integer (4),intent (in)::mi,mj
@@ -125,13 +132,13 @@ subroutine steering_wind_r(u,v,p,lon,lat,proj,nx,ny,nz,nt,kt1,kt2,mi,mj,&
   real(4)::d,theta_d
 
   real(4)::lonin,latin
-  integer::n_steering_x,n_steering_y
+  integer::x_steer,y_steer
 
   lonin=lon(2)-lon(1)
   latin=lat(2)-lat(1)
 
-  n_steering_x=nint(r_steering/(ra*lonin*pi/180.0*cos(lat(mj)*pi/180.0)*1.0e-3)+5)
-  n_steering_y=nint(r_steering/(ra*latin*pi/180.0*1.0e-3)+5)
+  x_steer=nint(r_steering/(ra*lonin*pi/180.0*cos(lat(mj)*pi/180.0)*1.0e-3)+5)
+  y_steer=nint(r_steering/(ra*latin*pi/180.0*1.0e-3)+5)
 
  
   u_vor=0.
@@ -143,8 +150,8 @@ subroutine steering_wind_r(u,v,p,lon,lat,proj,nx,ny,nz,nt,kt1,kt2,mi,mj,&
   v_t0t1(0:nx,0:ny,1:nz)=0.5*(v(0:nx,0:ny,1:nz,kt1)+v(0:nx,0:ny,1:nz,kt2))
 
 
-  do jj=-n_steering_y,n_steering_y
-     do ii=-n_steering_x,n_steering_x
+  do jj=-y_steer,y_steer
+     do ii=-x_steer,x_steer
        if(mi+ii>=0.and.mi+ii<=nx.and.mj+jj>=0.and.mj+jj<=ny)then
        if(proj==1)then
          if(ii/=0.and.jj/=0)then
@@ -183,24 +190,3 @@ subroutine steering_wind_r(u,v,p,lon,lat,proj,nx,ny,nz,nt,kt1,kt2,mi,mj,&
 
   return
 end subroutine steering_wind_r
-
-
-subroutine integral_p(var,int,nz,p)
-  implicit none 
-  integer ,intent (in)::nz
-  real (4),intent (in)::var(nz)
-  real (4),intent (in)::p(nz)
-  real (4),intent (out)::int
-  integer ::k
-  
-  int=0.
-
-  do k=1,nz-1
-     int=int+0.5*(var(k)+var(k+1))*(p(k)-p(k+1))
-  end do
-  int=int/(p(1)-p(nz))
-
-  return
-end subroutine integral_p
-
-

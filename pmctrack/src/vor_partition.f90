@@ -1,16 +1,14 @@
-subroutine vor_partition(vor_in, nx, ny, proj, &
+subroutine vor_partition(vor_in, nx, ny, &
      & mlat_out, mlon_out, vor_max_out, mtype_out, &
-     & n_max_out, lat, lon, vor_part_max, s_part_out, &
-     & vor_min, vor_part_min, del_vor_min, del_vor_max_coeff, d_cf_min, &
-     & size_synop)
+     & n_max_out, lat, lon, vor_part_max, s_part_out)
 
-use constants, only: pi, ra, rkilo
-use params, only: fillval, nmax, pmax, mx, my
+use constants, only: pi, ra, rkilo, fillval, nmax, pmax, mx, my
+use params, only : proj, d_cf_min, size_synop, &
+  & zeta_max0, zeta_min0, int_zeta_min0, gamma
 
 implicit none 
 
 integer(4), intent (in)  :: nx, ny
-integer(4), intent (in)  :: proj
 real   (4), intent (in)  :: lon(0:nx), lat(0:ny)
 real   (4), intent (in)  :: vor_in(0:nx, 0:ny)
 real   (4), intent (out) :: mlat_out(nmax), mlon_out(nmax), vor_max_out(nmax)
@@ -19,8 +17,7 @@ integer,    intent (out) :: n_max_out
 integer,    intent (out) :: vor_part_max(0:nx, 0:ny)
 integer,    intent (out) :: mtype_out(nmax)
 
-real   (4), intent (in)  :: vor_min, vor_part_min, del_vor_min, del_vor_max_coeff
-real   (4), intent (in)  :: d_cf_min, size_synop
+real   (4), intent (in)  ::
 
 ! LOCAL VARIABLES
 real   (4) :: vor_out(0:nx, 0:ny)
@@ -78,7 +75,7 @@ max_tmp = 0
 
 buf_mij=-1
 
-vor_min_tmp=vor_min
+vor_min_tmp=zeta_max0
 
 vor_out(0:nx, 0:ny)=fillval
 
@@ -100,7 +97,7 @@ do j=0,ny
 end do
 
 max_tmp=maxval(vor)
-n_vor_min=int((max_tmp-vor_min)/del_vor_min)+1
+n_vor_min=int((max_tmp-zeta_max0)/int_zeta_min0)+1
 
 do
   p=0
@@ -110,7 +107,7 @@ do
   mij=maxloc(vor)
   mi=mij(1)-1
   mj=mij(2)-1
-  if(max_tmp<=vor_min)exit
+  if(max_tmp<=zeta_max0)exit
   n_part=n_part+1
   vor_part(mi,mj)=n_part
   partmax(n_part) = vor(mi, mj)
@@ -123,7 +120,7 @@ do
        & mi+mx(m) <= nx .and. &
        & mj+my(m) >= 0  .and. &
        & mj+my(m) <= ny       ) then
-      if(vor(mi+mx(m),mj+my(m))>vor_part_min)then     
+      if(vor(mi+mx(m),mj+my(m))>zeta_min0)then     
         vor_part(mi+mx(m),mj+my(m))=n_part
         vor(mi+mx(m),mj+my(m))=0.
 
@@ -150,7 +147,7 @@ do
          & mi_tmp+mx(m) <= nx .and. &
          & mj_tmp+my(m) >= 0  .and. &
          & mj_tmp+my(m) <= ny       ) then
-        if(vor(mi_tmp+mx(m),mj_tmp+my(m))>vor_part_min)then
+        if(vor(mi_tmp+mx(m),mj_tmp+my(m))>zeta_min0)then
           if(vor_part(mi_tmp+mx(m),mj_tmp+my(m))==0)then
             vor_part(mi_tmp+mx(m),mj_tmp+my(m))=n_part
 
@@ -204,7 +201,7 @@ do
   !-------------------------------------------------------------
 
   do i_vor_min=0,n_vor_min
-    vor_min_tmp=vor_part_min+i_vor_min*del_vor_min
+    vor_min_tmp=zeta_min0+i_vor_min*int_zeta_min0
     do
       p=0
 
@@ -212,7 +209,7 @@ do
       mij=maxloc(vor)
       mi=mij(1)-1
       mj=mij(2)-1
-      if(max_tmp<=vor_min)exit
+      if(max_tmp<=zeta_max0)exit
 
 
 
@@ -275,7 +272,7 @@ do
       end do
 
       if(mij_flag)then
-        del_vor_max_tmp=del_vor_max_coeff*max_tmp
+        del_vor_max_tmp=gamma*max_tmp
 
         if(max_tmp-vor_min_tmp>del_vor_max_tmp)then
 
@@ -406,9 +403,9 @@ do
     do
       vor_part_tmp=0
 
-      vor_min_tmp=vor_min_tmp-del_vor_min
+      vor_min_tmp=vor_min_tmp-int_zeta_min0
 
-      if(vor_min_tmp<vor_part_min)exit
+      if(vor_min_tmp<zeta_min0)exit
 
       
 

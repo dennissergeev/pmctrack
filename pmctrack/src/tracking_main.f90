@@ -1,52 +1,19 @@
 subroutine tracking_main(vor,u,v,psea,&
-     &proj,vert_grid,&
-     &nx,ny,nx1,nx2,ny1,ny2,nz,levs,nt,&
-     &lons,lats,lonin,latin,del_t,&
-     &nsmth_x,nsmth_y,r_smth,smth_type,&
-     &zeta_max0,zeta_min0,int_zeta_min0,gamma,&
-     &n_steering_x,n_steering_y,r_steering,steering_type,&
-     &del_lon,del_lat,del_r,track_type,&
-     &period_min,d_cf_min,size_synop,del_psea_min,distance_ec,&
-     &outdir)
+     &nx,ny,nz,levs,nt,&
+     &lons,lats,lonin,latin,del_t)
     
-  use constants, only: ikilo, rkilo 
-  use params, only: fillval, nmax, kmax, pmax
+  use types, only : wp
+  use constants, only : ikilo, rkilo, fillval, nmax, kmax, pmax
+  use params, only : proj, vert_grid, nx1, nx2, ny1, ny2, &
+    & smth_type, steering_type, track_type, outdir 
 
   implicit none
  
-  integer,intent (in) ::nx,ny,nx1,nx2,ny1,ny2,nz,nt
+  integer,intent (in) ::nx,ny,nz,nt
   real(4),intent (in)::vor(0:nx,0:ny,1:nt)
   real(4),intent (in)::u(0:nx,0:ny,1:nz,1:nt),v(0:nx,0:ny,1:nz,1:nt)
   real(4),intent (in)::psea(0:nx,0:ny,1:nt)
   real(4),intent (in)::lons,lats,lonin,latin,levs,del_t
-
-  integer (4)::proj,vert_grid
-
-! parameter for smoothing of vorticity
-  integer,intent (in)::smth_type
-  integer,intent (in)::nsmth_x,nsmth_y
-  real(4),intent (in)::r_smth
-
-! parameter for detecting vortex
-  real(4),intent (in)::zeta_max0,zeta_min0,int_zeta_min0,gamma
-
-! parameter for excluding the synoptic scale disturbances
-  real(4),intent (in)::d_cf_min,size_synop,del_psea_min,distance_ec
-  
-! parameter for calculating steering winds
-  integer,intent (in)::steering_type
-  integer,intent (in)::n_steering_x,n_steering_y
-  real(4),intent (in)::r_steering
-
-! parameter for linking vortex
-  integer,intent (in)::track_type
-  real(4),intent (in)::del_lon,del_lat,del_r
-
-! parameter for checking the track
-  integer,intent (in)::period_min
-
-! output directory
-  character (50), intent(in) :: outdir
 
 ! LOCAL VARIABLES
   real(4),allocatable::lon(:),lat(:)
@@ -126,20 +93,20 @@ subroutine tracking_main(vor,u,v,psea,&
   if(smth_type==1)then 
     write (*,*)'smth latlon'
   elseif(smth_type==2)then
-    write (*,*)'smth radius',r_smth,'km'
+    write (*,*)'smth radius'
   end if
 
   if(steering_type==1)then 
     write (*,*)'calculate steering wind in latlon coordinate'
   elseif(steering_type==2)then
-    write (*,*)'calculate steering wind in radius',r_steering,'km'
+    write (*,*)'calculate steering wind in radius'
   end if
 
   if(track_type==1)then
-    write (*,*)'Use del_lon,del_lat',del_lon,del_lat
+    write (*,*)'Use del_lon,del_lat'
 
   elseif(track_type==2)then
-    write (*,*)'Use radius ',del_r,'km'
+    write (*,*)'Use radius'
   end if
   
   allocate(vor_smth(nx1:nx2,ny1:ny2,nt))
@@ -167,11 +134,9 @@ subroutine tracking_main(vor,u,v,psea,&
 
     if(smth_type==1)then 
 !      write (*,*)'smth latlon'
-      call smth(vor(0:nx,0:ny,kt),nx,ny,vor_smth(nx1:nx2,ny1:ny2,kt),&
-           &nx1,nx2,ny1,ny2,nsmth_x,nsmth_y)
+      call smth(vor(0:nx,0:ny,kt),nx,ny,vor_smth(nx1:nx2,ny1:ny2,kt))
     elseif(smth_type==2)then
-      call smth_r(vor(0:nx,0:ny,kt),nx,ny,lon(0:nx),lat(0:ny),vor_smth(nx1:nx2,ny1:ny2,kt),&
-             &nx1,nx2,ny1,ny2,r_smth,proj)
+      call smth_r(vor(0:nx,0:ny,kt),nx,ny,lon(0:nx),lat(0:ny),vor_smth(nx1:nx2,ny1:ny2,kt))
     else
       vor_smth(nx1:nx2,ny1:ny2,kt) = vor(nx1:nx2,ny1:ny2,kt)
     end if
@@ -187,20 +152,16 @@ subroutine tracking_main(vor,u,v,psea,&
     write (*,'(A,I4.4,A,I2.2,A,I2.2,A,I2.2,A,I2.2)')'Detecting vortex at kt = ',kt
 
     call vor_partition(vor_smth(nx1:nx2,ny1:ny2,kt),&
-         &nx12,ny12,proj,&
+         &nx12,ny12,&
          &mlat(:,kt),mlon(:,kt),&
          &max_vor(:,kt),mtype(:,kt),n_max(kt),lat(ny1:ny2),lon(nx1:nx2),&
-         &vor_part(nx1:nx2,ny1:ny2,kt),s_part(:,kt),&
-         &zeta_max0,zeta_min0,int_zeta_min0,gamma,&
-         &d_cf_min,size_synop)
-
-
+         &vor_part(nx1:nx2,ny1:ny2,kt),s_part(:,kt))
     if(n_max(kt)>=1)then
       call min_z(psea(nx1:nx2,ny1:ny2,kt),&
            &nx12,ny12,&
            &minlat(:,kt),minlon(:,kt),&
            &z_min(:,kt),n_min(kt),lat(ny1:ny2),lon(nx1:nx2),&
-           &z_min_size(:,kt),del_psea_min)
+           &z_min_size(:,kt))
     else
       n_min(kt)=0
     endif
@@ -208,12 +169,13 @@ subroutine tracking_main(vor,u,v,psea,&
 
     if(maxval(mtype(:,kt))>=1)then
 
-     call synop_check(mlon(:,kt),mlat(:,kt),n_max(kt),minlon(:,kt),minlat(:,kt),n_min(kt),mtype(:,kt),proj,distance_ec)
+     call synop_check(mlon(:,kt),mlat(:,kt),n_max(kt),minlon(:,kt),minlat(:,kt),n_min(kt),mtype(:,kt))
     end if
 
  
 
-    vor_part_r=9.99e20
+    vor_part_r = fillval
+
     vor_part_r(nx1,ny2)=-1.
 
     do j=ny1,ny2
@@ -266,30 +228,26 @@ subroutine tracking_main(vor,u,v,psea,&
       call steering_wind_f(u,v,&
            &levs,nx,ny,nz,nt,kt,&
            &mi(i_max,kt),mj(i_max,kt),&
-           &u_vor_f(i_max,kt),v_vor_f(i_max,kt),&
-           &n_steering_x,n_steering_y)
+           &u_vor_f(i_max,kt),v_vor_f(i_max,kt))
 
       call steering_wind_b(u,v,&
            &levs,nx,ny,nz,nt,kt,&
            &mi(i_max,kt),mj(i_max,kt),&
-           &u_vor_b(i_max,kt),v_vor_b(i_max,kt),&
-           &n_steering_x,n_steering_y)
+           &u_vor_b(i_max,kt),v_vor_b(i_max,kt))
 
 
     elseif(steering_type==2)then
       if(kt<nt)then
         call steering_wind_r(u,v,&
-             &levs,lon,lat,proj,nx,ny,nz,nt,kt,kt+1,&
+             &levs,lon,lat,nx,ny,nz,nt,kt,kt+1,&
              &mi(i_max,kt),mj(i_max,kt),&
-             &u_vor_f(i_max,kt),v_vor_f(i_max,kt),&
-             &r_steering)
+             &u_vor_f(i_max,kt),v_vor_f(i_max,kt))
       endif
       if(kt>1)then
         call steering_wind_r(u,v,&
-             &levs,lon,lat,proj,nx,ny,nz,nt,kt,kt-1,&
+             &levs,lon,lat,nx,ny,nz,nt,kt,kt-1,&
              &mi(i_max,kt),mj(i_max,kt),&
-             &u_vor_b(i_max,kt),v_vor_b(i_max,kt),&
-             &r_steering)
+             &u_vor_b(i_max,kt),v_vor_b(i_max,kt))
       endif
 
     end if
@@ -342,13 +300,13 @@ subroutine tracking_main(vor,u,v,psea,&
   if(track_type==1)then
     call linkin_vort(mlon,mlat,mtype,u_vor_f,v_vor_f,&
          &nt,n_max,vor_index,vor_num,vor_merge,&
-         &vor_part(nx1:nx2,ny1:ny2,1:nt),nx12,ny12,proj,lon(nx1:nx2),lat(ny1:ny2),&
-         &del_lon,del_lat,del_t)
+         &vor_part(nx1:nx2,ny1:ny2,1:nt),nx12,ny12,lon(nx1:nx2),lat(ny1:ny2),&
+         del_t)
   elseif(track_type==2)then
     call linkin_vort2(mlon,mlat,mtype,u_vor_f,v_vor_f,&
          &nt,n_max,vor_index,vor_num,vor_merge,&
-         &vor_part(nx1:nx2,ny1:ny2,1:nt),nx12,ny12,proj,lon(nx1:nx2),lat(ny1:ny2),&
-         &del_r,del_t)
+         &vor_part(nx1:nx2,ny1:ny2,1:nt),nx12,ny12,lon(nx1:nx2),lat(ny1:ny2),&
+         del_t)
   end if
     
 
@@ -379,7 +337,7 @@ subroutine tracking_main(vor,u,v,psea,&
   write (*,*) 'Check the track'
   
   do i_vor_num=1,vor_num
-    call track_check2(vortex(i_vor_num,:,:),vortex_flag(i_vor_num),nt,period_min)
+    call track_check2(vortex(i_vor_num,:,:),vortex_flag(i_vor_num),nt)
  end do
 
   
@@ -434,4 +392,3 @@ subroutine tracking_main(vor,u,v,psea,&
 
   return
 end subroutine tracking_main
-

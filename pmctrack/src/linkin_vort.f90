@@ -1,19 +1,21 @@
-subroutine linkin_vort(mlon,mlat,mtype,u_vor_f,v_vor_f,nt,&
-  &                 n_max,vor_index,vor_num,vor_merge,vor_part,&
-  &                 nx,ny,proj,lon,lat,del_lon,del_lat,del_t)
+subroutine linkin_vort(mlon, mlat, mtype, u_vor_f, v_vor_f, nt,        &
+  &                    n_max, vor_index, vor_num, vor_merge, vor_part, &
+  &                    nx, ny, lon, lat, del_t)
 
-  use constants, only: pi, ra
-  use params, only: fillval, nmax, pmax
+  use constants, only: pi, ra, fillval, nmax, pmax
+  use params, only: proj, del_lon, del_lat
 
   implicit none 
-  integer ,intent (in)::nt,nx,ny
-  integer ,intent (in)::proj
+  integer ,intent (in)::nt
+  integer ,intent (in)::nx,ny
+!  integer ,intent (in)::proj
   integer ,intent (in)::n_max(nt)
   real (4),intent (in)::mlon(nmax,nt),mlat(nmax,nt)
   integer ,intent (in)::mtype(nmax,nt)
   real (4),intent (in)::u_vor_f(nmax,nt),v_vor_f(nmax,nt)
   real(4),intent (in)::lon(0:nx),lat(0:ny)
-  real(4),intent (in)::del_lon,del_lat,del_t
+  !real(4),intent (in)::del_lon,del_lat
+  real(4),intent (in) :: del_t
   integer (4),intent (in)::vor_part(0:nx,0:ny,nt)
   integer (4),intent (out)::vor_index(pmax,nt)
   integer (4),intent (out)::vor_num

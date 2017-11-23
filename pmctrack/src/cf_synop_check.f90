@@ -1,11 +1,10 @@
-subroutine cf_synop_check(vor_in,vor_part,n_part,nx,ny,proj,lon,lat,mtype_part,d_cf_min,size_synop)
+subroutine cf_synop_check(vor_in,vor_part,n_part,nx,ny,lon,lat,mtype_part)
 
-  use constants, only: pi, ra, rkilo 
-  use params, only: pmax
+  use constants, only: pi, ra, rkilo, pmax
+  use params, only: proj, d_cf_min, size_synop
 
   implicit none 
   integer (4),intent (in)::nx,ny
-  integer (4),intent (in)::proj
   integer (4),intent (in)::vor_part(0:nx,0:ny)
   integer (4),intent (in)::n_part
 
@@ -13,7 +12,6 @@ subroutine cf_synop_check(vor_in,vor_part,n_part,nx,ny,proj,lon,lat,mtype_part,d
 
   real(4),intent (in)::lon(0:nx),lat(0:ny)
   real(4),intent (in)::vor_in(0:nx,0:ny)
-  real(4),intent (in)::d_cf_min,size_synop
 
 
   real(4)::lonin,latin

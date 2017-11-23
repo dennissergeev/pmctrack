@@ -1,7 +1,10 @@
-subroutine smth(var,nx,ny,var_smth,nx1,nx2,ny1,ny2,nsmth_x,nsmth_y)
+subroutine smth(var, nx, ny, var_smth)
+
+  use types, only : wp
+  use params, only : nsmth_x, nsmth_y, nx1, nx2, ny1, ny2
+
   implicit none 
-  integer ,intent (in)::nx,ny,nx1,nx2,ny1,ny2
-  integer ,intent (in)::nsmth_x,nsmth_y
+  integer ,intent (in)::nx,ny
   real (4),intent (in)::var(0:nx,0:ny)
   real (4),intent (out)::var_smth(nx1:nx2,ny1:ny2)
   real (4)::tmp(nx1:nx2,ny1:ny2)
@@ -47,10 +50,11 @@ end subroutine smth
 
 
 
+subroutine smth_r(var,nx,ny,lon,lat,var_smth)
 
-subroutine smth_r(var,nx,ny,lon,lat,var_smth,nx1,nx2,ny1,ny2,r_smth,proj)
-
+  use types, only : wp
   use constants, only: pi, ra
+  use params, only : r_smth, nx1, nx2, ny1, ny2
 
   implicit none
 
@@ -58,13 +62,12 @@ subroutine smth_r(var,nx,ny,lon,lat,var_smth,nx1,nx2,ny1,ny2,r_smth,proj)
   integer ,intent (in)::proj
   real (4),intent (in)::var(0:nx,0:ny)
   real (4),intent (in)::lon(0:nx),lat(0:ny)
-  real (4),intent (in)::r_smth
   real (4),intent (out)::var_smth(nx1:nx2,ny1:ny2)
   real (4)::tmp(nx1:nx2,ny1:ny2)
   integer ::nc
   integer ::i,j,ii,jj
   real(4)::lonin,latin
-  integer ::nsmth_x,nsmth_y
+  integer ::x_smth, y_smth
 
 
   real(4)::d,theta_d
@@ -73,28 +76,28 @@ subroutine smth_r(var,nx,ny,lon,lat,var_smth,nx1,nx2,ny1,ny2,r_smth,proj)
   latin=lat(2)-lat(1)
 
   if(proj==1)then
-    nsmth_x=nint(r_smth/(ra*lonin*pi/180.0*cos(lat(ny1+ny2/2)*pi/180.0))*1.0e-3)+1
-    nsmth_y=nint(r_smth/(ra*latin*pi/180.0*1.0e-3)+1)
+    x_smth=nint(r_smth/(ra*lonin*pi/180.0*cos(lat(ny1+ny2/2)*pi/180.0))*1.0e-3)+1
+    y_smth=nint(r_smth/(ra*latin*pi/180.0*1.0e-3)+1)
   elseif(proj==2)then
-    nsmth_x=nint(r_smth/lonin*1.0e-3)+2
-    nsmth_y=nint(r_smth/latin*1.0e-3)+2
+    x_smth=nint(r_smth/lonin*1.0e-3)+2
+    y_smth=nint(r_smth/latin*1.0e-3)+2
   end if
 
-!  write (*,*)nsmth_x,nsmth_y
+!  write (*,*)x_smth,y_smth
 
   var_smth(nx1:nx2,ny1:ny2)=var(nx1:nx2,ny1:ny2)
 
   do j=ny1,ny2
-    if(j-nsmth_y>=0.and.j+nsmth_y<=ny)then
+    if(j-y_smth>=0.and.j+y_smth<=ny)then
       do i=nx1,nx2
-        if(i-nsmth_x>=0.and.i+nsmth_x<=nx)then
+        if(i-x_smth>=0.and.i+x_smth<=nx)then
           
           nc=0
           tmp(i,j)=0.
           if(var(i,j)>-10.0)then
             !           write (*,*)'smth at ',i,j
-            do jj=-nsmth_y,nsmth_y
-              do ii=-nsmth_x,nsmth_x
+            do jj=-y_smth,y_smth
+              do ii=-x_smth,x_smth
                 if(proj==1)then
                   if(ii/=0.and.jj/=0)then
                     theta_d=acos(cos(pi/180*lat(j))*cos(pi/180*lat(j+jj))&

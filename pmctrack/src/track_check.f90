@@ -1,8 +1,10 @@
-subroutine track_check2(vortex,vortex_flag,nt,period_min)
+subroutine track_check2(vortex,vortex_flag,nt)
+
+  use types, only : wp
+  use params, only : period_min
 
   implicit none 
   integer(4),intent (in)::nt
-  integer(4),intent (in)::period_min
   real(4),intent (in)::vortex(1:nt,3)
   integer(4),intent (out)::vortex_flag
   

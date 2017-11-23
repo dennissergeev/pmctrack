@@ -146,15 +146,9 @@ program main
 
   ! call apply_mask_2d(vor(0:nx, 0:ny, kt), nx, ny, land_mask)
 
-  ! call tracking_main(vor, u, v, psea, &
-  !    &proj, vert_grid,                &
-  !    &nx,ny,nx1,nx2,ny1,ny2,nz,levs,nt,&
-  !    &lons,lats,lonin,latin,del_t,&
-  !    &nsmth_x,nsmth_y,r_smth,smth_type,&
-  !    &zeta_max0,zeta_min0,int_zeta_min0,gamma,&
-  !    &n_steering_x,n_steering_y,r_steering,steering_type,&
-  !    &del_lon,del_lat,del_r,track_type,&
-  !    &period_min,d_cf_min,size_synop,del_psea_min,distance_ec,outdir)
+  ! subroutine tracking_main(vor,u,v,psea,&
+  !      &nx,ny,nz,levs,nt,&
+  !      &lons,lats,lonin,latin,del_t)
 
 
   deallocate(time)

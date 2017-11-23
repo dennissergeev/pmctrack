@@ -1,14 +1,14 @@
 subroutine min_z(z, nx, ny, minlat, minlon, &
-  &              z_min, n_min, lat, lon, type_min, del_z_min)
+  &              z_min, n_min, lat, lon, type_min)
  
-  use params, only: fillval, nmax, pmax4, mx, my
+  use constants, only: fillval, nmax, pmax4, mx, my
+  use params, only : del_psea_min
 
   implicit none 
   integer(4),intent (in)::nx,ny
   real(4),intent (in)::lon(0:nx),lat(0:ny)
   real(4),intent (in)::z(0:nx,0:ny)
   real(4),intent (out)::minlat(nmax),minlon(nmax),z_min(nmax)
-  real(4),intent (in)::del_z_min
   integer ,intent (out)::n_min,type_min(nmax)
   integer (4)::i,j,m ! ii
   integer (4)::i_min
@@ -141,7 +141,7 @@ subroutine min_z(z, nx, ny, minlat, minlon, &
       end do
       
       if(mij_flag)then
-        if(zmin_tmp-min>del_z_min)then
+        if(zmin_tmp-min>del_psea_min)then
           
 
           do j=0,ny
@@ -164,7 +164,7 @@ subroutine min_z(z, nx, ny, minlat, minlon, &
           !      write (*,*)(var_part(ii,1,n_min),ii=-l,l),(var_part(ii,2,n_min),ii=-l,l)
           !     write (*,*)n_min,max,mlon(n_min),mlat(n_min)
 !          write (99,*)minlon(n_min),minlat(n_min),z_min(n_min)
-       !   write (*,*)minlon(n_min),minlat(n_min),z_min(n_min),zmin_tmp,min,del_z_min
+       !   write (*,*)minlon(n_min),minlat(n_min),z_min(n_min),zmin_tmp,min,del_psea_min
 
 !          write (*,*)n_min,minlon(n_min),minlat(n_min)
           n_min=n_min+1         

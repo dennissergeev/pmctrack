@@ -20,10 +20,9 @@ OBJ = \
 $(OBJDIR)/datetime.o \
 $(OBJDIR)/types.o \
 $(OBJDIR)/nc_io.o \
-$(OBJDIR)/config_params.o \
+$(OBJDIR)/params.o \
+$(OBJDIR)/const.o \
 $(OBJDIR)/io.o
-#$(OBJDIR)/const.o \
-#$(OBJDIR)/params.o \
 #$(OBJDIR)/util.o \
 #$(OBJDIR)/vor_partition.o \
 #$(OBJDIR)/cf_synop_check.o \

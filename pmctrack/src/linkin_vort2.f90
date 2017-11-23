@@ -1,22 +1,21 @@
 subroutine linkin_vort2(mlon,mlat,mtype,u_vor_f,v_vor_f,nt,&
   &                     n_max,vor_index,vor_num,vor_merge,vor_part,&
-  &                     nx,ny,proj,lon,lat,del_r,del_t)
+  &                     nx,ny,lon,lat,del_t)
 
-  use constants, only: pi, ra 
-  use params, only: fillval, nmax, pmax 
   use types, only: wp
+  use constants, only: pi, ra, fillval, nmax, pmax 
+  use params, only: proj, del_r 
 
   implicit none 
 
   integer    , intent(in)  :: nt,nx,ny
-  integer    , intent(in)  :: proj
   integer    , intent(in)  :: n_max(nt)
   real   (wp), intent(in)  :: mlon(nmax, nt), mlat(nmax, nt)
   integer    , intent(in)  :: mtype(nmax, nt)
   real   (wp), intent(in)  :: u_vor_f(nmax, nt), v_vor_f(nmax, nt)
   ! real (4),intent (in)::u_vor_b(nmax,nt),v_vor_b(nmax,nt)
   real   (wp), intent(in)  :: lon(0:nx),lat(0:ny)
-  real   (wp), intent(in)  :: del_r,del_t
+  real   (wp), intent(in)  :: del_t
   integer    , intent(in)  ::   vor_part(0:nx,0:ny,nt)
   integer    , intent(out) :: vor_index(pmax,nt)
   integer    , intent(out) :: vor_num
