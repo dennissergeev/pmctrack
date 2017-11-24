@@ -1,6 +1,5 @@
 program main
 
-  use netcdf
   use util, only : apply_mask_2d
 
   implicit none   

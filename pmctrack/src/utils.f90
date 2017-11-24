@@ -1,7 +1,7 @@
-module util
+module utils
 
-use constants, only: missval
 use types, only : wp
+use constants, only: missval
 
 implicit none
 
@@ -49,4 +49,4 @@ contains
     return
   end subroutine integral_p
 
-end module util
+end module utils

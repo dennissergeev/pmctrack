@@ -45,7 +45,8 @@ subroutine cf_synop_check(vor_in,vor_part,n_part,nx,ny,lon,lat,mtype_part)
 
 
 !    write (*,*)fname_one,kt,yyyy(kt),mm(kt),dd(kt),hh(kt),mn(kt)
-
+    theta_d_cf = 0. ! to avoid warnings
+    d_cf = 0. ! just in case
 
     j_n=0
     j_s=ny
@@ -163,7 +164,7 @@ end subroutine cf_synop_check
 
 subroutine median_check(val,flag,pnum)
 
-  use params, only: mx, my
+  use constants, only: mx, my
   implicit none 
   real (4),intent (in)::val(-1:1,-1:1)
   logical (4),intent (out)::flag

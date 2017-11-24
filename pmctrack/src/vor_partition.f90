@@ -17,8 +17,6 @@ integer,    intent (out) :: n_max_out
 integer,    intent (out) :: vor_part_max(0:nx, 0:ny)
 integer,    intent (out) :: mtype_out(nmax)
 
-real   (4), intent (in)  ::
-
 ! LOCAL VARIABLES
 real   (4) :: vor_out(0:nx, 0:ny)
 

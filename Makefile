@@ -21,19 +21,19 @@ $(OBJDIR)/datetime.o \
 $(OBJDIR)/types.o \
 $(OBJDIR)/nc_io.o \
 $(OBJDIR)/params.o \
-$(OBJDIR)/const.o \
+$(OBJDIR)/constants.o \
+$(OBJDIR)/utils.o \
+$(OBJDIR)/vor_partition.o \
+$(OBJDIR)/cf_synop_check.o \
+$(OBJDIR)/synop_check.o \
+$(OBJDIR)/min_z.o \
+$(OBJDIR)/steering_wind.o \
+$(OBJDIR)/linkin_vort2.o \
+$(OBJDIR)/linkin_vort.o \
+$(OBJDIR)/track_check.o \
+$(OBJDIR)/smth.o \
+$(OBJDIR)/tracking_main.o \
 $(OBJDIR)/io.o
-#$(OBJDIR)/util.o \
-#$(OBJDIR)/vor_partition.o \
-#$(OBJDIR)/cf_synop_check.o \
-#$(OBJDIR)/synop_check.o \
-#$(OBJDIR)/min_z.o \
-#$(OBJDIR)/steering_wind.o \
-#$(OBJDIR)/linkin_vort2.o \
-#$(OBJDIR)/linkin_vort.o \
-#$(OBJDIR)/track_check.o \
-#$(OBJDIR)/smth.o \
-#$(OBJDIR)/tracking_main.o \
 #$(OBJDIR)/interface.o
 
 all: $(TARGET)

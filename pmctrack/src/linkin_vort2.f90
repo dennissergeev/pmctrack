@@ -45,6 +45,11 @@ subroutine linkin_vort2(mlon,mlat,mtype,u_vor_f,v_vor_f,nt,&
   real   (wp)              :: r_tmp, theta_tmp
 
 
+  r_tmp = 0.
+  theta_tmp = 0.
+  e_mv_lon = 0.
+  e_mv_lat = 0.
+
   r_next = fillval
 
   vor_merge=0

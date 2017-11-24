@@ -54,12 +54,11 @@ subroutine smth_r(var,nx,ny,lon,lat,var_smth)
 
   use types, only : wp
   use constants, only: pi, ra
-  use params, only : r_smth, nx1, nx2, ny1, ny2
+  use params, only : proj, r_smth, nx1, nx2, ny1, ny2
 
   implicit none
 
-  integer ,intent (in)::nx,ny,nx1,nx2,ny1,ny2
-  integer ,intent (in)::proj
+  integer, intent (in)::nx, ny
   real (4),intent (in)::var(0:nx,0:ny)
   real (4),intent (in)::lon(0:nx),lat(0:ny)
   real (4),intent (out)::var_smth(nx1:nx2,ny1:ny2)
@@ -68,9 +67,12 @@ subroutine smth_r(var,nx,ny,lon,lat,var_smth)
   integer ::i,j,ii,jj
   real(4)::lonin,latin
   integer ::x_smth, y_smth
-
-
   real(4)::d,theta_d
+
+  x_smth = 0
+  y_smth = 0
+
+  d = 0.
 
   lonin=lon(2)-lon(1)
   latin=lat(2)-lat(1)

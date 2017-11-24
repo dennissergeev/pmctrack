@@ -56,6 +56,11 @@ subroutine linkin_vort(mlon, mlat, mtype, u_vor_f, v_vor_f, nt,        &
   vor_previous_flag(1:nmax,1:nt)=.false.
   vor_previous_index=0
 
+  r_tmp = 0.
+  theta_tmp = 0.
+  e_mv_lon = 0.
+  e_mv_lat = 0.
+  r_c_min = 0.
 
   do kt=1,nt-1
 

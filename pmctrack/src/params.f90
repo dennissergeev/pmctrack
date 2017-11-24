@@ -1,4 +1,4 @@
-module config_params
+module params
   use types, only : wp
 
   implicit none
@@ -129,4 +129,4 @@ contains
     end if
     close(fh)
   end subroutine get_config_params
-end module config_params
+end module params

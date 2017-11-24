@@ -3,7 +3,7 @@ program main
   use datetime_module
 
   use types, only : wp
-  use config_params, only :  get_config_params, datadir,          &
+  use params, only :  get_config_params, datadir,                 &
     & year_start, month_start, day_start,                         &
     & year_end, month_end, day_end,                               &
     & vort_name, u_name, v_name, psea_name, land_name,            &
@@ -15,7 +15,7 @@ program main
     & track_type, del_lon, del_lat, del_r, period_min
   use nc_io, only : get_dims, get_coords, get_one_level, &
     & get_data_4d, get_data_3d, get_data_2d
-  use util, only : apply_mask_2d
+  use utils, only : apply_mask_2d
 
   implicit none
   
@@ -44,6 +44,7 @@ program main
   real(wp)         , allocatable :: land_mask(:, :) 
 
   integer :: lvl_idx
+  integer :: kt
 
   character(len=nf90_max_name), dimension(4) :: DIM_NAMES 
   ! integer, dimension(4) :: DIMS
@@ -101,7 +102,7 @@ program main
   a = datetime(year_start, month_start, day_start)
   b = datetime(year_end, month_end, day_end)
   td = b - a
-  ntimes = td%total_seconds() / del_t 
+  ntimes = int(td%total_seconds() / del_t )
   print*, ntimes
 
   calendar_start = datetime(1900, 1, 1)
@@ -119,37 +120,36 @@ program main
   call get_one_level(nc_file_name, vort_name, vor, lvl_idx)
   vor = vor(:, nlats-1:0:-1, :)
 
-  !write(nc_file_name, '(A,A,A,I4.4,A,I2.2,A,A,A)') trim(datadir), '/', &
-  !                                               & 'era5.an.pl.', year, '.', &
-  !                                               & month, '.', &
-  !                                               & trim(u_name), '.nc'
-  !call get_data_4d(nc_file_name, u_name, u)
-  !u = u(:, nlats-1:0:-1, :, :)
-
-  !write(nc_file_name, '(A,A,A,I4.4,A,I2.2,A,A,A)') trim(datadir), '/', &
-  !                                               & 'era5.an.pl.', year, '.', &
-  !                                               & month, '.', &
-  !                                               & trim(v_name), '.nc'
-  !call get_data_4d(nc_file_name, v_name, v)
-  !v = v(:, nlats-1:0:-1, :, :)
-
-  !write(nc_file_name, '(A,A,A,I4.4,A,I2.2,A,A,A)') trim(datadir), '/', &
-  !                                               & 'era5.an.sfc.', year, '.', &
-  !                                               & month, '.', &
-  !                                               & trim(psea_name), '.nc'
-  !call get_data_3d(nc_file_name, psea_name, psea)
-  !psea = psea(:, nlats-1:0:-1, :)
+  write(nc_file_name, '(A,A,A,I4.4,A,I2.2,A,A,A)') trim(datadir), '/', &
+                                                 & 'era5.an.pl.', year_start, '.', &
+                                                 & month_start, '.', &
+                                                 & trim(u_name), '.nc'
+  call get_data_4d(nc_file_name, u_name, u)
+  u = u(:, nlats-1:0:-1, :, :)
+  write(nc_file_name, '(A,A,A,I4.4,A,I2.2,A,A,A)') trim(datadir), '/', &
+                                                 & 'era5.an.pl.', year_start, '.', &
+                                                 & month_start, '.', &
+                                                 & trim(v_name), '.nc'
+  call get_data_4d(nc_file_name, v_name, v)
+  v = v(:, nlats-1:0:-1, :, :)
+  write(nc_file_name, '(A,A,A,I4.4,A,I2.2,A,A,A)') trim(datadir), '/', &
+                                                 & 'era5.an.sfc.', year_start, '.', &
+                                                 & month_start, '.', &
+                                                 & trim(psea_name), '.nc'
+  call get_data_3d(nc_file_name, psea_name, psea)
+  psea = psea(:, nlats-1:0:-1, :)
 
   write(nc_file_name, '(A,A,A,A)') trim(datadir), '/', trim(land_name), '.nc'
   call get_data_2d(nc_file_name, land_name, land_mask)
   land_mask = land_mask(:, nlats-1:0:-1)
 
-  ! call apply_mask_2d(vor(0:nx, 0:ny, kt), nx, ny, land_mask)
+  do kt = 1, ntimes
+    call apply_mask_2d(vor(0:nlons-1, 0:nlats-1, kt), nlons-1, nlats-1, land_mask)
+  end do
 
-  ! subroutine tracking_main(vor,u,v,psea,&
-  !      &nx,ny,nz,levs,nt,&
-  !      &lons,lats,lonin,latin,del_t)
-
+  call tracking_main(vor, u, v, psea, &
+    & nlons-1, nlats-1, nlvls, lvls, ntimes, &
+    & lons, lats, lonin, latin, del_t)
 
   deallocate(time)
   deallocate(lvls)

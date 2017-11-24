@@ -109,8 +109,8 @@ subroutine steering_wind_b(u,v,p,nx,ny,nz,nt,kt,mi,mj,u_vor,v_vor)
   return
 end subroutine steering_wind_b
 
-subroutine steering_wind_r(u,v,p,lon,lat,proj,nx,ny,nz,nt,kt1,kt2,mi,mj,&
-     &u_vor,v_vor,r_steering)
+subroutine steering_wind_r(u,v,p,lon,lat,nx,ny,nz,nt,kt1,kt2,mi,mj,&
+     &u_vor,v_vor)
 
   use types, only : wp
   use constants, only: pi, ra
@@ -144,6 +144,8 @@ subroutine steering_wind_r(u,v,p,lon,lat,proj,nx,ny,nz,nt,kt1,kt2,mi,mj,&
   u_vor=0.
   v_vor=0.
   s_tot=0.0
+  d = 0.
+  theta_d = 0.
 
 
   u_t0t1(0:nx,0:ny,1:nz)=0.5*(u(0:nx,0:ny,1:nz,kt1)+u(0:nx,0:ny,1:nz,kt2))

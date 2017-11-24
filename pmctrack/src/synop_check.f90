@@ -14,7 +14,8 @@ subroutine synop_check(mlon,mlat,n_max,minlon,minlat,n_min,mtype)
   real (4)::d,theta_d
   logical (4)::flag_synop(n_max)
 
-
+  d = 0.
+  theta_d = 0.
   
   flag_synop=.false.
 
