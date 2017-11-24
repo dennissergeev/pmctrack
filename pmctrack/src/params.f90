@@ -14,9 +14,11 @@ module params
   integer            :: year_start
   integer            :: month_start
   integer            :: day_start
+  integer            :: hour_start
   integer            :: year_end
   integer            :: month_end
   integer            :: day_end
+  integer            :: hour_end
   integer            :: thelevel
   integer            :: proj
   integer            :: vert_grid
@@ -82,9 +84,11 @@ contains
           case ('year_start'); read(buffer, *, iostat=ios) year_start
           case ('month_start'); read(buffer, *, iostat=ios) month_start
           case ('day_start'); read(buffer, *, iostat=ios) day_start
+          case ('hour_start'); read(buffer, *, iostat=ios) hour_start
           case ('year_end'); read(buffer, *, iostat=ios) year_end
           case ('month_end'); read(buffer, *, iostat=ios) month_end
           case ('day_end'); read(buffer, *, iostat=ios) day_end
+          case ('hour_end'); read(buffer, *, iostat=ios) hour_end
           case ('thelevel'); read(buffer, *, iostat=ios) thelevel
           case ('vort_name'); read(buffer, *, iostat=ios) vort_name
           case ('u_name'); read(buffer, *, iostat=ios) u_name
