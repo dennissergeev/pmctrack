@@ -33,8 +33,7 @@ $(OBJDIR)/linkin_vort.o \
 $(OBJDIR)/track_check.o \
 $(OBJDIR)/smth.o \
 $(OBJDIR)/tracking_main.o \
-$(OBJDIR)/io.o
-#$(OBJDIR)/interface.o
+$(OBJDIR)/main.o
 
 all: $(TARGET)
 

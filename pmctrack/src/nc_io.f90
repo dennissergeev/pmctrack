@@ -164,6 +164,66 @@ contains
   end subroutine get_one_level
 
 
+  subroutine get_time_slice_3d(nc_file_name, var_name, var_data, time_idx)
+    implicit none
+
+    character(len=*)              , intent(in)    :: nc_file_name
+    character(len=*)              , intent(in)    :: var_name
+    real(wp)                      , intent(inout) :: var_data(:, :, :)
+    integer                       , intent(in)    :: time_idx
+    ! Local variables
+    integer                                       :: ncid
+    integer                                       :: var_id
+    real(wp)                                      :: scale_factor, add_offset
+    integer                                       :: shp(3)
+
+    shp = shape(var_data)
+
+    call check( nf90_open(nc_file_name, nf90_nowrite, ncid) )
+
+    call check( nf90_inq_varid(ncid, var_name, var_id) )
+    call check( nf90_get_var(ncid, var_id, var_data,  &
+                             start=(/1, 1, 1, time_idx/), &
+                             count=(/shp(1), shp(2), shp(3), 1/)) )
+    call check( nf90_get_att(ncid, var_id, "scale_factor", scale_factor) )
+    call check( nf90_get_att(ncid, var_id, "add_offset", add_offset) )
+  
+    var_data = scale_factor * var_data + add_offset
+
+    call check( nf90_close(ncid) )
+  end subroutine get_time_slice_3d
+
+
+  subroutine get_time_slice_2d(nc_file_name, var_name, var_data, time_idx)
+    implicit none
+
+    character(len=*)              , intent(in)    :: nc_file_name
+    character(len=*)              , intent(in)    :: var_name
+    real(wp)                      , intent(inout) :: var_data(:, :)
+    integer                       , intent(in)    :: time_idx
+    ! Local variables
+    integer                                       :: ncid
+    integer                                       :: var_id
+    real(wp)                                      :: scale_factor, add_offset
+    integer                                       :: shp(2)
+
+    shp = shape(var_data)
+
+    call check( nf90_open(nc_file_name, nf90_nowrite, ncid) )
+
+    call check( nf90_inq_varid(ncid, var_name, var_id) )
+    call check( nf90_get_var(ncid, var_id, var_data,  &
+                             start=(/1, 1, time_idx/), &
+                             count=(/shp(1), shp(2), 1/)) )
+    call check( nf90_get_att(ncid, var_id, "scale_factor", scale_factor) )
+    call check( nf90_get_att(ncid, var_id, "add_offset", add_offset) )
+  
+    var_data = scale_factor * var_data + add_offset
+
+    call check( nf90_close(ncid) )
+  end subroutine get_time_slice_2d
+
+
   subroutine check(status)
     implicit none
     integer, intent (in) :: status
