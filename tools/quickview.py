@@ -38,7 +38,8 @@ ORIG_DATA_DIR = TOPDIR / 'reanalysis' / 'ERA5'
 TRACK_RES_DIR = TOPDIR / 'pmc_tracking' / 'pmctrack' / 'output'
 PLOT_DIR = TRACK_RES_DIR / 'quickviews'
 # File wildcards
-ORIG_DATA_FILES = 'era5*.nc'
+ORIG_DATA_FILES = 'era5*2011.01*.nc'
+LAND_MASK_FILE = 'lsm.nc'
 VORTRACK_FILES = 'vortrack*.txt'
 VORMAX_FILES = 'vormax_loc_{kt:04d}.txt'
 # Other paths
@@ -172,6 +173,7 @@ def main(args=None):
     with warnings.catch_warnings():
         warnings.simplefilter('ignore')
         ds = iris.load(ORIG_DATA_DIR.listdir(ORIG_DATA_FILES))
+        ds += iris.load(ORIG_DATA_DIR.listdir(LAND_MASK_FILE))
     vort = ds.extract_strict('atmosphere_relative_vorticity')
     slp = ds.extract_strict('air_pressure_at_sea_level')
     lsm = ds.extract_strict('land_binary_mask')
@@ -198,7 +200,7 @@ def main(args=None):
         pres_constr = iris.Constraint(pressure_level=950)
         vo_data = vort.extract(time_constr & pres_constr).data[yy, xx]
         slp_data = slp.extract(time_constr).data[yy, xx]
-        lsm_data = lsm.extract(time_constr).data[yy, xx]
+        lsm_data = lsm.data[0, yy, xx]
 
         # Prepare figure
         anno_text = f'{idt: %b %d, %H%M}UTC'
