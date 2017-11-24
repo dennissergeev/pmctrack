@@ -3,7 +3,7 @@ module params
 
   implicit none
 
-  character(len=*), parameter :: CONFIG_FILE = "config.ini"
+  character(len=*), parameter :: CONFIG_FILE = "settings.conf"
   character(len=256) :: datadir
   character(len=256) :: outdir
   character(len=256) :: vort_name

@@ -103,7 +103,7 @@ program main
   b = datetime(year_end, month_end, day_end)
   td = b - a
   ntimes = int(td%total_seconds() / del_t )
-  print*, ntimes
+  print*, 'ntimes=', ntimes
 
   calendar_start = datetime(1900, 1, 1)
   td = timedelta(hours=time(0))
