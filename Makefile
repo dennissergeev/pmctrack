@@ -1,9 +1,9 @@
 #F90    = ifort
 #FFLAGS =  -convert little_endian -assume byterecl 
 F90         = gfortran
-FFLAGS      = -cpp -frecord-marker=4 #-O3
-NETCDF_LIB  = $(shell nc-config --flibs)
-NETCDF_INC  = $(shell nc-config --fflags)
+FFLAGS      = -cpp -frecord-marker=4 -O3
+NETCDF_LIB  = -L/usr/lib -lnetcdff -lnetcdf #$(shell nc-config --flibs)
+NETCDF_INC  = -I/usr/include #$(shell nc-config --fflags)
 
 INCS = ${NETCDF_INC}
 LIBS = ${NETCDF_LIB} 
@@ -40,7 +40,7 @@ all: $(TARGET)
 run: $(TARGET)
 	./$(TARGET)
 
-debug: FFLAGS += -g -fcheck=all -fbacktrace -Ddebug -Wall
+debug: FFLAGS += -O0 -g -fcheck=all -fbacktrace -Ddebug -Wall
 debug: $(TARGET)
 
 help:

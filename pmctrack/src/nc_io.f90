@@ -86,13 +86,16 @@ contains
   end subroutine get_coords
 
 
-  subroutine get_data_4d(nc_file_name, var_name, time_idx, nt, var_data)
+  subroutine get_data_4d(nc_file_name, var_name, time_idx, nt, lvl_idx, nz, &
+    & var_data)
     implicit none
 
     character(len=*)              , intent(in)    :: nc_file_name
     character(len=*)              , intent(in)    :: var_name
     integer                       , intent(in)    :: time_idx
     integer                       , intent(in)    :: nt
+    integer                       , intent(in)    :: lvl_idx
+    integer                       , intent(in)    :: nz
     real(wp)                      , intent(inout) :: var_data(:, :, :, :)
     ! Local variables
     integer                                       :: ncid
@@ -105,8 +108,8 @@ contains
     call check( nf90_open(nc_file_name, nf90_nowrite, ncid) )
     call check( nf90_inq_varid(ncid, var_name, var_id) )
     call check( nf90_get_var(ncid, var_id, var_data,  &
-                             start=(/     1,      1,      1, time_idx/), &
-                             count=(/shp(1), shp(2), shp(3),       nt/)) )
+                             start=(/     1,      1, lvl_idx, time_idx/), &
+                             count=(/shp(1), shp(2),      nz,       nt/)) )
 
     call check( nf90_get_att(ncid, var_id, "scale_factor", scale_factor) )
     call check( nf90_get_att(ncid, var_id, "add_offset", add_offset) )

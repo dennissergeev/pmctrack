@@ -48,6 +48,8 @@ subroutine cf_synop_check(vor_in,vor_part,n_part,nx,ny,lon,lat,mtype_part)
     theta_d_cf = 0. ! to avoid warnings
     d_cf = 0. ! just in case
 
+    i_n=0
+    i_s=nx
     j_n=0
     j_s=ny
 

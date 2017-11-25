@@ -7,7 +7,8 @@ program main
     & year_start, month_start, day_start, hour_start,             &
     & year_end, month_end, day_end, hour_end,                     &
     & vort_name, u_name, v_name, psea_name, land_name,            &
-    & thelevel, proj, vert_grid, nx1, nx2, ny1, ny2,              &
+    & vor_lvl, steer_lvl_btm, steer_lvl_top,                      &
+    & proj, vert_grid, nx1, nx2, ny1, ny2,                        &
     & smth_type, nsmth_x, nsmth_y, r_smth,                        &
     & zeta_max0, zeta_min0, int_zeta_min0, gamma,                 &
     & d_cf_min, size_synop, del_psea_min, distance_ec,            &
@@ -45,6 +46,8 @@ program main
   real(wp)         , allocatable :: land_mask(:, :) 
 
   integer :: lvl_idx
+  integer :: steer_idx_btm, steer_idx_top
+  integer :: nsteer_lvl
   integer :: kt
 
   character(len=nf90_max_name), dimension(4) :: DIM_NAMES 
@@ -52,7 +55,7 @@ program main
 
   type(datetime) :: calendar_start  
   type(datetime) :: dt_start, dt_end
-  type(datetime) :: dt_min, dt_max ! within a file
+  type(datetime) :: dt_min !, dt_max ! within a file
   type(timedelta) :: td
   integer :: time_idx
 
@@ -64,10 +67,11 @@ program main
   call get_config_params()
 #ifdef debug
   print*, datadir, &
-    & year_start, month_start, day_start,                         &
-    & year_end, month_end, day_end,                               &
+    & year_start, month_start, day_start, hour_start,             &
+    & year_end, month_end, day_end, hour_end,                     &
     & vort_name, u_name, v_name, psea_name, land_name,            &
-    & thelevel, proj, vert_grid, nx1, nx2, ny1, ny2,              &
+    & vor_lvl, steer_lvl_btm, steer_lvl_top,                      &
+    & proj, vert_grid, nx1, nx2, ny1, ny2,                        &
     & smth_type, nsmth_x, nsmth_y, r_smth,                        &
     & zeta_max0, zeta_min0, int_zeta_min0, gamma,                 &
     & d_cf_min, size_synop, del_psea_min, distance_ec,            &
@@ -111,19 +115,16 @@ program main
   deallocate(time_temp)
 
   allocate(time(0:ntime-1))
-  allocate(lvls(0:nlvls-1))
+  allocate(lvls(nlvls))
   allocate(lats(0:nlats-1))
   allocate(lons(0:nlons-1))
-  allocate(vor      (0:nlons-1, 0:nlats-1, 0:ntime-1))
-  allocate(u        (0:nlons-1, 0:nlats-1, 0:nlvls-1, 0:ntime-1))
-  allocate(v        (0:nlons-1, 0:nlats-1, 0:nlvls-1, 0:ntime-1))
-  allocate(psea     (0:nlons-1, 0:nlats-1, 0:ntime-1))
-  allocate(land_mask(0:nlons-1, 0:nlats-1))
 
   call get_coords(nc_file_name, DIM_NAMES, lons, lats, lvls, &
     & time, time_idx, ntime)
-  lvl_idx = minloc(abs(lvls - thelevel), 1)  ! must be before reversing lvls
-  lvls = lvls(nlvls-1:0:-1)
+  lvl_idx = minloc(abs(lvls - vor_lvl), 1)
+  steer_idx_btm = minloc(abs(lvls - steer_lvl_btm), 1)
+  steer_idx_top = minloc(abs(lvls - steer_lvl_top), 1)
+  nsteer_lvl = steer_idx_btm - steer_idx_top + 1
   lats = lats(nlats-1:0:-1)
   lon0 = lons(0)
   lat0 = lats(0)
@@ -131,23 +132,35 @@ program main
   lonin = lons(1) - lons(0)
   latin = lats(1) - lats(0)
 
+  ! Define array sizes
+  allocate(vor      (0:nlons-1, 0:nlats-1, 0:ntime-1))
+  allocate(u        (0:nlons-1, 0:nlats-1, nsteer_lvl, 0:ntime-1))
+  allocate(v        (0:nlons-1, 0:nlats-1, nsteer_lvl, 0:ntime-1))
+  allocate(psea     (0:nlons-1, 0:nlats-1, 0:ntime-1))
+  allocate(land_mask(0:nlons-1, 0:nlats-1))
   ! Read vorticity at the specified level
   call get_one_level(nc_file_name, vort_name, lvl_idx, time_idx, ntime, vor)
   vor = vor(:, nlats-1:0:-1, :)
   ! print*, shape(vor), minval(vor(:, :, 0)), maxval(vor(:, :, 0))
+  ! print*, shape(vor), minval(vor), maxval(vor)
 
   write(nc_file_name, '(A,A,A,I4.4,A,I2.2,A,A,A)') trim(datadir), '/', &
                                                  & 'era5.an.pl.', year_start, '.', &
                                                  & month_start, '.', &
                                                  & trim(u_name), '.nc'
-  call get_data_4d(nc_file_name, u_name, time_idx, ntime, u)
+  call get_data_4d(nc_file_name, u_name, time_idx, ntime, &
+    & steer_idx_top, nsteer_lvl, u)
   u = u(:, nlats-1:0:-1, :, :)
+  ! print*, shape(u), minval(u(:, :, :, 0)), maxval(u(:, :, :, 0))
+
   write(nc_file_name, '(A,A,A,I4.4,A,I2.2,A,A,A)') trim(datadir), '/', &
                                                  & 'era5.an.pl.', year_start, '.', &
                                                  & month_start, '.', &
                                                  & trim(v_name), '.nc'
-  call get_data_4d(nc_file_name, v_name, time_idx, ntime, v)
+  call get_data_4d(nc_file_name, v_name, time_idx, ntime, &
+    & steer_idx_top, nsteer_lvl, v)
   v = v(:, nlats-1:0:-1, :, :)
+
   write(nc_file_name, '(A,A,A,I4.4,A,I2.2,A,A,A)') trim(datadir), '/', &
                                                  & 'era5.an.sfc.', year_start, '.', &
                                                  & month_start, '.', &
@@ -163,14 +176,12 @@ program main
   do kt = 0, ntime-1
     call apply_mask_2d(vor(0:nlons-1, 0:nlats-1, kt), nlons-1, nlats-1, land_mask)
   end do
-  print*, shape(vor), minval(vor), maxval(vor)
-  print*, shape(u), minval(u), maxval(u)
-  print*, shape(v), minval(v), maxval(v)
-  print*, shape(psea), minval(psea), maxval(psea)
+  ! print*, shape(v), minval(v), maxval(v)
+  ! print*, shape(psea), minval(psea), maxval(psea)
 
-  !!call tracking_main(vor, u, v, psea, &
-  !!  & nlons-1, nlats-1, nlvls, lvls, ntime, &
-  !!  & lons, lats, lonin, latin, del_t)
+  call tracking_main(vor, u, v, psea, &
+    & nlons-1, nlats-1, nsteer_lvl, lvls, ntime, &
+    & lons, lats, lonin, latin, del_t)
 
   deallocate(time)
   deallocate(lvls)

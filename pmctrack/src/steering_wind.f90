@@ -148,10 +148,6 @@ subroutine steering_wind_r(u,v,p,lon,lat,nx,ny,nz,nt,kt1,kt2,mi,mj,&
   theta_d = 0.
 
 
-  u_t0t1(0:nx,0:ny,1:nz)=0.5*(u(0:nx,0:ny,1:nz,kt1)+u(0:nx,0:ny,1:nz,kt2))
-  v_t0t1(0:nx,0:ny,1:nz)=0.5*(v(0:nx,0:ny,1:nz,kt1)+v(0:nx,0:ny,1:nz,kt2))
-
-
   do jj=-y_steer,y_steer
      do ii=-x_steer,x_steer
        if(mi+ii>=0.and.mi+ii<=nx.and.mj+jj>=0.and.mj+jj<=ny)then

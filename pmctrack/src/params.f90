@@ -11,15 +11,10 @@ module params
   character(len=256) :: v_name
   character(len=256) :: psea_name
   character(len=256) :: land_name
-  integer            :: year_start
-  integer            :: month_start
-  integer            :: day_start
-  integer            :: hour_start
-  integer            :: year_end
-  integer            :: month_end
-  integer            :: day_end
-  integer            :: hour_end
-  integer            :: thelevel
+  integer            :: year_start, month_start, day_start, hour_start
+  integer            :: year_end, month_end, day_end, hour_end
+  integer            :: vor_lvl
+  integer            :: steer_lvl_btm, steer_lvl_top
   integer            :: proj
   integer            :: vert_grid
   integer            :: nx1, nx2, ny1, ny2
@@ -89,7 +84,9 @@ contains
           case ('month_end'); read(buffer, *, iostat=ios) month_end
           case ('day_end'); read(buffer, *, iostat=ios) day_end
           case ('hour_end'); read(buffer, *, iostat=ios) hour_end
-          case ('thelevel'); read(buffer, *, iostat=ios) thelevel
+          case ('vor_lvl'); read(buffer, *, iostat=ios) vor_lvl
+          case ('steer_lvl_btm'); read(buffer, *, iostat=ios) steer_lvl_btm
+          case ('steer_lvl_top'); read(buffer, *, iostat=ios) steer_lvl_top
           case ('vort_name'); read(buffer, *, iostat=ios) vort_name
           case ('u_name'); read(buffer, *, iostat=ios) u_name
           case ('v_name'); read(buffer, *, iostat=ios) v_name
