@@ -1,83 +1,64 @@
 program main
-  use netcdf
   use datetime_module
 
   use types, only : wp
-  use params, only :  get_config_params, datadir,                 &
-    & year_start, month_start, day_start, hour_start,             &
-    & year_end, month_end, day_end, hour_end,                     &
-    & vort_name, u_name, v_name, psea_name, land_name,            &
-    & vor_lvl, steer_lvl_btm, steer_lvl_top,                      &
-    & proj, vert_grid, nx1, nx2, ny1, ny2,                        &
-    & smth_type, nsmth_x, nsmth_y, r_smth,                        &
-    & zeta_max0, zeta_min0, int_zeta_min0, gamma,                 &
-    & d_cf_min, size_synop, del_psea_min, distance_ec,            &
-    & steering_type, n_steering_x, n_steering_y, r_steering,      &
-    & track_type, del_lon, del_lat, del_r, period_min
+  use params, only : get_config_params, dbg, datadir,              &
+    & year_start, month_start, day_start, hour_start,              &
+    & year_end, month_end, day_end, hour_end,                      &
+    & vort_name, u_name, v_name, psea_name, land_name,             &
+    & vor_lvl, steer_lvl_btm, steer_lvl_top
   use nc_io, only : get_dims, get_time, get_coords, get_one_level, &
     & get_data_4d, get_data_3d, get_data_2d
   use utils, only : apply_mask_2d
 
   implicit none
-  
-  real(wp)           :: lon0
-  real(wp)           :: lat0
-  real(wp)           :: lonin
-  real(wp)           :: latin
-  real(wp)           :: del_t
-  integer            :: nt_per_file
 
-  character (len=256)            :: nc_file_name
-  character (len=*), parameter   :: LVL_NAME = "level"
-  character (len=*), parameter   :: LAT_NAME = "latitude"
-  character (len=*), parameter   :: LON_NAME = "longitude"
-  character (len=*), parameter   :: REC_NAME = "time"
-  integer                        :: ntime, nlvls, nlats, nlons
-  integer          , allocatable :: time_temp(:) 
-  integer          , allocatable :: time(:) 
-  integer          , allocatable :: lvls(:) 
-  real(wp)         , allocatable :: lats(:) 
-  real(wp)         , allocatable :: lons(:) 
+  character(len=*)                , parameter :: LVL_NAME = "level"
+  character(len=*)                , parameter :: LAT_NAME = "latitude"
+  character(len=*)                , parameter :: LON_NAME = "longitude"
+  character(len=*)                , parameter :: REC_NAME = "time"
+  character(len=256), dimension(4)            :: DIM_NAMES
+  character(len=256)                          :: nc_file_name
+  real(wp)                                    :: lonin
+  real(wp)                                    :: latin
+  real(wp)                                    :: del_t
+  integer                                     :: nt_per_file
+  ! Coordinate arrays
+  integer                                     :: ntime, nlvls, nlats, nlons
+  integer          , allocatable              :: time_temp(:)
+  integer          , allocatable              :: time(:)
+  integer          , allocatable              :: lvls(:)
+  real(wp)         , allocatable              :: lats(:)
+  real(wp)         , allocatable              :: lons(:)
+  ! Data arrays
+  real(wp)         , allocatable              :: vor(:, :, :)
+  real(wp)         , allocatable              :: psea(:, :, :)
+  real(wp)         , allocatable              :: u(:, :, :, :)
+  real(wp)         , allocatable              :: v(:, :, :, :)
+  real(wp)         , allocatable              :: land_mask(:, :)
 
-  real(wp)         , allocatable :: vor(:, :, :) 
-  real(wp)         , allocatable :: psea(:, :, :) 
-  real(wp)         , allocatable :: u(:, :, :, :) 
-  real(wp)         , allocatable :: v(:, :, :, :) 
-  real(wp)         , allocatable :: land_mask(:, :) 
+  ! Local variables
+  ! Indices
+  integer                                     :: lvl_idx
+  integer                                     :: steer_idx_btm, steer_idx_top
+  integer                                     :: nsteer_lvl
+  integer                                     :: kt
 
-  integer :: lvl_idx
-  integer :: steer_idx_btm, steer_idx_top
-  integer :: nsteer_lvl
-  integer :: kt
+  ! Time and date variables
+  type(datetime)                              :: calendar_start
+  type(datetime)                              :: dt_start, dt_end
+  type(datetime)                              :: dt_min ! within a file
+  type(timedelta)                             :: td
+  integer                                     :: time_idx
 
-  character(len=nf90_max_name), dimension(4) :: DIM_NAMES 
-  ! integer, dimension(4) :: DIMS
 
-  type(datetime) :: calendar_start  
-  type(datetime) :: dt_start, dt_end
-  type(datetime) :: dt_min !, dt_max ! within a file
-  type(timedelta) :: td
-  integer :: time_idx
-
+  ! Store dimension names in one array
   DIM_NAMES(1) = trim(REC_NAME)
-  DIM_NAMES(2) = trim(LVL_NAME) 
+  DIM_NAMES(2) = trim(LVL_NAME)
   DIM_NAMES(3) = trim(LAT_NAME)
   DIM_NAMES(4) = trim(LON_NAME)
 
   call get_config_params()
-#ifdef debug
-  print*, datadir, &
-    & year_start, month_start, day_start, hour_start,             &
-    & year_end, month_end, day_end, hour_end,                     &
-    & vort_name, u_name, v_name, psea_name, land_name,            &
-    & vor_lvl, steer_lvl_btm, steer_lvl_top,                      &
-    & proj, vert_grid, nx1, nx2, ny1, ny2,                        &
-    & smth_type, nsmth_x, nsmth_y, r_smth,                        &
-    & zeta_max0, zeta_min0, int_zeta_min0, gamma,                 &
-    & d_cf_min, size_synop, del_psea_min, distance_ec,            &
-    & steering_type, n_steering_x, n_steering_y, r_steering,      &
-    & track_type, del_lon, del_lat, del_r, period_min
-#endif
 
   ! Get dimensions from the vorticity file using first year and first month
   ! Assume all the other files are organised in the same way
@@ -106,15 +87,15 @@ program main
   td = timedelta(hours=time_temp(0))
   dt_min = calendar_start + td
   td = dt_start - dt_min
-  time_idx = int(td%total_seconds() / del_t) + 1 ! time_temp(0) + 
+  time_idx = int(td%total_seconds() / del_t) + 1 ! time_temp(0) +
   print*, 'Start date: ', time_idx
 
   if (month_end > month_start) then
-   print*,'' 
+   print*,''
   end if
   deallocate(time_temp)
 
-  allocate(time(0:ntime-1))
+  allocate(time(ntime))
   allocate(lvls(nlvls))
   allocate(lats(0:nlats-1))
   allocate(lons(0:nlons-1))
@@ -125,18 +106,17 @@ program main
   steer_idx_btm = minloc(abs(lvls - steer_lvl_btm), 1)
   steer_idx_top = minloc(abs(lvls - steer_lvl_top), 1)
   nsteer_lvl = steer_idx_btm - steer_idx_top + 1
+  !lvls = lvls(nlvls:1:-1)
   lats = lats(nlats-1:0:-1)
-  lon0 = lons(0)
-  lat0 = lats(0)
-  ! Calculate grid spacing and time increment assuming the grid is uniform
+  ! Calculate grid spacing assuming the grid is uniform
   lonin = lons(1) - lons(0)
   latin = lats(1) - lats(0)
 
   ! Define array sizes
-  allocate(vor      (0:nlons-1, 0:nlats-1, 0:ntime-1))
-  allocate(u        (0:nlons-1, 0:nlats-1, nsteer_lvl, 0:ntime-1))
-  allocate(v        (0:nlons-1, 0:nlats-1, nsteer_lvl, 0:ntime-1))
-  allocate(psea     (0:nlons-1, 0:nlats-1, 0:ntime-1))
+  allocate(vor      (0:nlons-1, 0:nlats-1, ntime))
+  allocate(u        (0:nlons-1, 0:nlats-1, nsteer_lvl, ntime))
+  allocate(v        (0:nlons-1, 0:nlats-1, nsteer_lvl, ntime))
+  allocate(psea     (0:nlons-1, 0:nlats-1, ntime))
   allocate(land_mask(0:nlons-1, 0:nlats-1))
   ! Read vorticity at the specified level
   call get_one_level(nc_file_name, vort_name, lvl_idx, time_idx, ntime, vor)
@@ -173,14 +153,17 @@ program main
   call get_data_2d(nc_file_name, land_name, land_mask)
   land_mask = land_mask(:, nlats-1:0:-1)
 
-  do kt = 0, ntime-1
-    call apply_mask_2d(vor(0:nlons-1, 0:nlats-1, kt), nlons-1, nlats-1, land_mask)
+  do kt = 1, ntime
+    call apply_mask_2d(vor(:, :, kt), nlons-1, nlats-1, land_mask)
   end do
   ! print*, shape(v), minval(v), maxval(v)
   ! print*, shape(psea), minval(psea), maxval(psea)
+  ! print*, lvls
 
+  !write (*,*)'nx=', nx, 'ny=', ny,' nt=', nt, 'nz=', nz
+  !write (*,*)'nx1=', nx1, 'nx2=', nx2, 'ny1=', ny1, 'ny2=', ny2
   call tracking_main(vor, u, v, psea, &
-    & nlons-1, nlats-1, nsteer_lvl, lvls, ntime, &
+    & nlons-1, nlats-1, nsteer_lvl, lvls(1:nsteer_lvl), ntime, &
     & lons, lats, lonin, latin, del_t)
 
   deallocate(time)

@@ -1,14 +1,14 @@
 subroutine tracking_main(vor,u,v,psea,&
      &nx,ny,nz,levs,nt,&
      &lons,lats,lonin,latin,del_t)
-    
+
   use types, only : wp
   use constants, only : ikilo, rkilo, fillval, nmax, kmax, pmax
   use params, only : proj, vert_grid, nx1, nx2, ny1, ny2, &
-    & smth_type, steering_type, track_type, outdir 
+    & smth_type, steering_type, track_type, outdir
 
   implicit none
- 
+
   integer,intent (in) ::nx,ny,nz,nt
   real(4),intent (in)::vor(0:nx,0:ny,1:nt)
   real(4),intent (in)::u(0:nx,0:ny,1:nz,1:nt),v(0:nx,0:ny,1:nz,1:nt)
@@ -31,7 +31,7 @@ subroutine tracking_main(vor,u,v,psea,&
   real(4),allocatable::s_part(:,:)
   integer (4),allocatable::mi(:,:),mj(:,:)
   integer (4),allocatable::mtype(:,:),z_min_size(:,:)
-  
+
   real(4),allocatable::onelat(:,:),onelon(:,:),vor_one(:,:)
 
   real(4),allocatable::u_vor_f(:,:),v_vor_f(:,:)
@@ -50,9 +50,6 @@ subroutine tracking_main(vor,u,v,psea,&
   character (100) :: fname_out, fname_loc, fname_track
 
 
-  write (*,*)'nx=',nx,'ny=',ny,'nt=',nt,'nz=',nz
-  write (*,*)'nx1=',nx1,'nx2=',nx2,'ny1=',ny1,'ny2=',ny2
-
   allocate(lon(0:nx))
   allocate(lat(0:ny))
 
@@ -68,47 +65,7 @@ subroutine tracking_main(vor,u,v,psea,&
   ny12=ny2-ny1
 
 
-  !Read data
 
-!  write (*,*)"allocate time" 
-  ! Time
-
-  if(proj==2)then
-    write (*,*)'Cartesian coordinate'
-  elseif(proj==1)then
-    write (*,*)'Geographical coordinate'
-  else
-    write (*,*)'Coordinate system not supported'
-  end if
-
-  if(vert_grid==1)then
-    write (*,*)'pressure levels'
-  elseif(vert_grid==2)then
-    write (*,*)'height levels'
-  else
-    write (*,*)'vertical coordinate system not supported'
-  end if
-
-
-  if(smth_type==1)then 
-    write (*,*)'smth latlon'
-  elseif(smth_type==2)then
-    write (*,*)'smth radius'
-  end if
-
-  if(steering_type==1)then 
-    write (*,*)'calculate steering wind in latlon coordinate'
-  elseif(steering_type==2)then
-    write (*,*)'calculate steering wind in radius'
-  end if
-
-  if(track_type==1)then
-    write (*,*)'Use del_lon,del_lat'
-
-  elseif(track_type==2)then
-    write (*,*)'Use radius'
-  end if
-  
   allocate(vor_smth(nx1:nx2,ny1:ny2,nt))
   allocate(vor_part(nx1:nx2,ny1:ny2,nt))
   allocate(vor_part_r(nx1:nx2,ny1:ny2))
@@ -132,7 +89,7 @@ subroutine tracking_main(vor,u,v,psea,&
   do kt=1,nt
 
 
-    if(smth_type==1)then 
+    if(smth_type==1)then
 !      write (*,*)'smth latlon'
       call smth(vor(0:nx,0:ny,kt),nx,ny,vor_smth(nx1:nx2,ny1:ny2,kt))
     elseif(smth_type==2)then
@@ -143,12 +100,12 @@ subroutine tracking_main(vor,u,v,psea,&
 
 
     write (fname_out,'(A,A,A,I4.4,A)')trim(outdir),'/','vor_out_',kt,'.dat'
-    open(12,file=fname_out,form='unformatted',access='sequential')    
+    open(12,file=fname_out,form='unformatted',access='sequential')
     write (12)vor(nx1:nx2,ny1:ny2,kt)
     write (12)vor_smth(nx1:nx2,ny1:ny2,kt)
-  
-  
-  
+
+
+
     write (*,'(A,I4.4,A,I2.2,A,I2.2,A,I2.2,A,I2.2)')'Detecting vortex at kt = ',kt
 
     call vor_partition(vor_smth(nx1:nx2,ny1:ny2,kt),&
@@ -172,7 +129,7 @@ subroutine tracking_main(vor,u,v,psea,&
      call synop_check(mlon(:,kt),mlat(:,kt),n_max(kt),minlon(:,kt),minlat(:,kt),n_min(kt),mtype(:,kt))
     end if
 
- 
+
 
     vor_part_r = fillval
 
@@ -187,7 +144,7 @@ subroutine tracking_main(vor,u,v,psea,&
     write (12)vor_part_r(nx1:nx2,ny1:ny2)
 
     write (fname_loc,'(A,A,A,I4.4,A)')trim(outdir),'/','vormax_loc_',kt,'.txt'
-    open(82,file=fname_loc,form='formatted')    
+    open(82,file=fname_loc,form='formatted')
 
 
     do i_max=1,n_max(kt)
@@ -201,7 +158,7 @@ subroutine tracking_main(vor,u,v,psea,&
         write (82,*)mlon(i_max,kt)/ikilo,mlat(i_max,kt)/ikilo,&
              &max_vor(i_max,kt)*ikilo,nint(s_part(i_max,kt)),mtype(i_max,kt)
       end if
- 
+
      if(proj==1)then
         write (*,*)mlon(i_max,kt),mlat(i_max,kt),&
              &max_vor(i_max,kt)*ikilo,nint(s_part(i_max,kt)),mtype(i_max,kt)
@@ -209,7 +166,7 @@ subroutine tracking_main(vor,u,v,psea,&
         write (*,*)mlon(i_max,kt)/ikilo,mlat(i_max,kt)/ikilo,&
              &max_vor(i_max,kt)*ikilo,nint(s_part(i_max,kt)),mtype(i_max,kt)
       end if
- 
+
 
 
    end do
@@ -223,8 +180,8 @@ subroutine tracking_main(vor,u,v,psea,&
     do i_max=1,n_max(kt)
 
 
-    if(steering_type==1)then 
- 
+    if(steering_type==1)then
+
       call steering_wind_f(u,v,&
            &levs,nx,ny,nz,nt,kt,&
            &mi(i_max,kt),mj(i_max,kt),&
@@ -308,7 +265,7 @@ subroutine tracking_main(vor,u,v,psea,&
          &vor_part(nx1:nx2,ny1:ny2,1:nt),nx12,ny12,lon(nx1:nx2),lat(ny1:ny2),&
          del_t)
   end if
-    
+
 
   allocate (vortex(vor_num,1:nt,4))
   allocate (vortex_type(vor_num,1:nt))
@@ -335,51 +292,51 @@ subroutine tracking_main(vor,u,v,psea,&
   ! --- check the track ---
 
   write (*,*) 'Check the track'
-  
+
   do i_vor_num=1,vor_num
     call track_check2(vortex(i_vor_num,:,:),vortex_flag(i_vor_num),nt)
  end do
 
-  
+
 !------------ out put ----------------------
 
 
     vor_merge_num=1
-    
+
     do i_vor_num=1,vor_num
       if(vortex_flag(i_vor_num)==1)then
-        
+
         if(vor_merge(i_vor_num)==0)then
           !        write (fname_track,'(A,I4.4,A)')'vortrack_',vor_num_out,'.txt'
           write (fname_track,'(A,A,A,I4.4,A,I4.4,A)')trim(outdir),'/','vortrack_',i_vor_num,&
              &'_',1,'.txt'
           !          if(vor_merge_num(i_vor_num)==1)then
-          !            vor_merge_num(i_vor_num)=vor_merge_num(i_vor_num)+1          
+          !            vor_merge_num(i_vor_num)=vor_merge_num(i_vor_num)+1
           !          end if
-          
+
         else
           vor_merge_num(vor_merge(i_vor_num))=&
-               &vor_merge_num(vor_merge(i_vor_num))+1          
-          
+               &vor_merge_num(vor_merge(i_vor_num))+1
+
           write (fname_track,'(A,A,A,I4.4,A,I4.4,A)')trim(outdir),'/','vortrack_',&
                &vor_merge(i_vor_num),'_'&
                &,vor_merge_num(vor_merge(i_vor_num)),'.txt'
-          !          write (*,*)vor_merge(i_vor_num),vor_merge_num(vor_merge(i_vor_num))                    
+          !          write (*,*)vor_merge(i_vor_num),vor_merge_num(vor_merge(i_vor_num))
         end if
-      
-    
-        open(67,file=fname_track,form='formatted')    
-        
+
+
+        open(67,file=fname_track,form='formatted')
+
         do kt=1,nt
           if(vortex(i_vor_num,kt,3)>0.0000001)then
             write (67,'(3f12.5,I6,f15.5,I3)')vortex(i_vor_num,kt,1),&
                  &vortex(i_vor_num,kt,2),vortex(i_vor_num,kt,3)*rkilo,&
                  &kt,vortex(i_vor_num,kt,4),vortex_type(i_vor_num,kt)
-            
+
           end if
-          
+
         end do
-    
+
         close (67)
 
       else
