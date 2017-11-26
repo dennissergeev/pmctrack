@@ -44,12 +44,14 @@ debug: FFLAGS += -O0 -g -fcheck=all -fbacktrace -Ddebug -Wall
 debug: $(TARGET)
 
 help:
-	@echo 'Makefile for the tracking code                '
-	@echo '                                              '
-	@echo 'Usage:                                        '
-	@echo '    make all     	Compile tracking code'
-	@echo '    make clean	        Clean the directory  '
-	@echo '                                              '
+	@echo 'Makefile for the tracking code                                 '
+	@echo '                                                               '
+	@echo 'Usage:                                                         '
+	@echo '    make all                              Compile tracking code'
+	@echo '    make debug                     Compile with debugging flags'
+	@echo '    make run                         Run the tracking algorithm'
+	@echo '    make clean                Clean the output and object files'
+	@echo '                                                               '
 
 $(TARGET): $(OBJ)
 	@mkdir -p $(OUTDIR)

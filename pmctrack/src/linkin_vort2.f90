@@ -260,8 +260,10 @@ subroutine linkin_vort2(mlon,mlat,mtype,u_vor_f,v_vor_f,nt,&
     
 
       !------- check the merger of the vortices -------  
-    do i_vor_num=1,vor_num      
+    do i_vor_num=1,vor_num
+#ifdef debug
       print*, 'linkin_vort2(259):', i_vor_num, kt, vor_index(i_vor_num, kt)
+#endif
       r_next_tmp=r_next(vor_index(i_vor_num,kt),kt)
           
       
