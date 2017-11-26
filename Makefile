@@ -50,7 +50,8 @@ help:
 	@echo '    make all                              Compile tracking code'
 	@echo '    make debug                     Compile with debugging flags'
 	@echo '    make run                         Run the tracking algorithm'
-	@echo '    make clean                Clean the output and object files'
+	@echo '    make clean           Remove the executable and object files'
+	@echo '    make purge                                Remove the output'
 	@echo '                                                               '
 
 $(TARGET): $(OBJ)
@@ -68,4 +69,5 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.f90
 clean:
 	-rm -f $(OBJDIR)/*[.o,.mod]
 	-rm -f $(TARGET)
+purge:
 	-rm -f $(OUTDIR)/vor*[.txt,.dat]
