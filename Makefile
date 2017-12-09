@@ -1,9 +1,9 @@
 #F90    = ifort
 #FFLAGS =  -convert little_endian -assume byterecl 
-F90         = gfortran
-FFLAGS      = -cpp -frecord-marker=4 -O3
-NETCDF_LIB  = -L/usr/lib -lnetcdff -lnetcdf #$(shell nc-config --flibs)
-NETCDF_INC  = -I/usr/include #$(shell nc-config --fflags)
+F90        = gfortran
+FFLAGS     = -cpp -frecord-marker=4 -O3
+NETCDF_LIB = -L/usr/lib -lnetcdff -lnetcdf #$(shell nc-config --flibs)
+NETCDF_INC = -I/usr/include #$(shell nc-config --fflags)
 
 INCS = ${NETCDF_INC}
 LIBS = ${NETCDF_LIB} 
@@ -14,6 +14,7 @@ LIBS = ${NETCDF_LIB}
 PROJNAME = pmctrack
 TARGET = track.out
 OUTDIR = output
+MODDIR = $(PROJNAME)/modules 
 SRCDIR = $(PROJNAME)/src
 OBJDIR = $(PROJNAME)/src/_precc
 OBJ = \
@@ -34,6 +35,8 @@ $(OBJDIR)/track_check.o \
 $(OBJDIR)/smth.o \
 $(OBJDIR)/tracking_main.o \
 $(OBJDIR)/main.o
+
+FFLAGS += -J $(MODDIR)
 
 all: $(TARGET)
 
@@ -60,6 +63,7 @@ $(TARGET): $(OBJ)
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.f90
 	@mkdir -p $(OBJDIR)
+	@mkdir -p $(MODDIR)
 	$(F90) $(FFLAGS) ${INCS} -c $< -o $@ 
 
 #.f.o:
@@ -67,7 +71,8 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.f90
 
 
 clean:
-	-rm -f $(OBJDIR)/*[.o,.mod]
+	-rm -f $(OBJDIR)/*.o
+	-rm -f $(MODDIR)/*.mod
 	-rm -f $(TARGET)
 purge:
 	-rm -f $(OUTDIR)/vor*[.txt,.dat]
