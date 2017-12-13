@@ -6,7 +6,8 @@ program main
     & year_start, month_start, day_start, hour_start,              &
     & year_end, month_end, day_end, hour_end,                      &
     & vort_name, u_name, v_name, psea_name, land_name,             &
-    & vor_lvl, steer_lvl_btm, steer_lvl_top
+    & vor_lvl, steer_lvl_btm, steer_lvl_top,                       &
+    & nx1, nx2, ny1, ny2
   use nc_io, only : get_dims, get_time, get_coords, get_one_level, &
     & get_data_4d, get_data_3d, get_data_2d
   use utils, only : apply_mask_2d
@@ -67,6 +68,10 @@ program main
                                                  & month_start, '.', &
                                                  & trim(vort_name), '.nc'
   call get_dims(nc_file_name, DIM_NAMES, nt_per_file, nlvls, nlats, nlons)
+  if (nx1 == -1) nx1 = 0
+  if (nx2 == -1) nx2 = nlons-1
+  if (ny1 == -1) ny1 = 0
+  if (ny2 == -1) ny2 = nlats-1
 
   ! Time & calendar
   allocate(time_temp(0:nt_per_file-1))
