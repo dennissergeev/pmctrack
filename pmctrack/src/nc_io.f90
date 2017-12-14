@@ -86,8 +86,8 @@ contains
   end subroutine get_coords
 
 
-  subroutine get_data_4d(nc_file_name, var_name, time_idx, nt, lvl_idx, nz, &
-    & var_data)
+  subroutine get_xyzt_from_xyzt(nc_file_name, var_name, time_idx, nt, &
+                              & lvl_idx, nz, var_data)
     implicit none
 
     character(len=*)              , intent(in)    :: nc_file_name
@@ -117,7 +117,40 @@ contains
     var_data = scale_factor * var_data + add_offset
 
     call check( nf90_close(ncid) )
-  end subroutine get_data_4d
+  end subroutine get_xyzt_from_xyzt
+
+
+  subroutine get_xyz_from_xyzt(nc_file_name, var_name, time_idx, &
+                             & lvl_idx, nz, var_data)
+    implicit none
+
+    character(len=*)              , intent(in)    :: nc_file_name
+    character(len=*)              , intent(in)    :: var_name
+    integer                       , intent(in)    :: time_idx
+    integer                       , intent(in)    :: lvl_idx
+    integer                       , intent(in)    :: nz
+    real(wp)                      , intent(inout) :: var_data(:, :, :)
+    ! Local variables
+    integer                                       :: ncid
+    integer                                       :: var_id
+    real(wp)                                      :: scale_factor, add_offset
+    integer                                       :: shp(3)
+
+    shp = shape(var_data)
+
+    call check( nf90_open(nc_file_name, nf90_nowrite, ncid) )
+    call check( nf90_inq_varid(ncid, var_name, var_id) )
+    call check( nf90_get_var(ncid, var_id, var_data,  &
+                             start=(/     1,      1, lvl_idx, time_idx/), &
+                             count=(/shp(1), shp(2),      nz,        1/)) )
+
+    call check( nf90_get_att(ncid, var_id, "scale_factor", scale_factor) )
+    call check( nf90_get_att(ncid, var_id, "add_offset", add_offset) )
+  
+    var_data = scale_factor * var_data + add_offset
+
+    call check( nf90_close(ncid) )
+  end subroutine get_xyz_from_xyzt
 
 
   subroutine get_data_3d(nc_file_name, var_name, time_idx, nt, var_data)
@@ -175,8 +208,70 @@ contains
   end subroutine get_data_2d
 
 
-  subroutine get_one_level(nc_file_name, var_name, lvl_idx, time_idx, nt, &
-    & var_data)
+  subroutine get_xy_from_xyzt(nc_file_name, var_name, lvl_idx, time_idx, &
+                            & var_data)
+    implicit none
+
+    character(len=*)              , intent(in)    :: nc_file_name
+    character(len=*)              , intent(in)    :: var_name
+    integer                       , intent(in)    :: lvl_idx
+    integer                       , intent(in)    :: time_idx
+    real(wp)                      , intent(inout) :: var_data(:, :)
+    ! Local variables
+    integer                                       :: ncid
+    integer                                       :: var_id
+    real(wp)                                      :: scale_factor, add_offset
+    integer                                       :: shp(2)
+
+    shp = shape(var_data)
+
+    call check( nf90_open(nc_file_name, nf90_nowrite, ncid) )
+
+    call check( nf90_inq_varid(ncid, var_name, var_id) )
+    call check( nf90_get_var(ncid, var_id, var_data,  &
+                             start=(/     1,      1, lvl_idx, time_idx/), &
+                             count=(/shp(1), shp(2),       1,       1/)) )
+    call check( nf90_get_att(ncid, var_id, "scale_factor", scale_factor) )
+    call check( nf90_get_att(ncid, var_id, "add_offset", add_offset) )
+  
+    var_data = scale_factor * var_data + add_offset
+
+    call check( nf90_close(ncid) )
+  end subroutine get_xy_from_xyzt
+
+
+  subroutine get_xy_from_xyt(nc_file_name, var_name, time_idx, var_data)
+    implicit none
+
+    character(len=*)              , intent(in)    :: nc_file_name
+    character(len=*)              , intent(in)    :: var_name
+    integer                       , intent(in)    :: time_idx
+    real(wp)                      , intent(inout) :: var_data(:, :)
+    ! Local variables
+    integer                                       :: ncid
+    integer                                       :: var_id
+    real(wp)                                      :: scale_factor, add_offset
+    integer                                       :: shp(2)
+
+    shp = shape(var_data)
+
+    call check( nf90_open(nc_file_name, nf90_nowrite, ncid) )
+
+    call check( nf90_inq_varid(ncid, var_name, var_id) )
+    call check( nf90_get_var(ncid, var_id, var_data,  &
+                             start=(/     1,      1, time_idx/), &
+                             count=(/shp(1), shp(2),       1/)) )
+    call check( nf90_get_att(ncid, var_id, "scale_factor", scale_factor) )
+    call check( nf90_get_att(ncid, var_id, "add_offset", add_offset) )
+  
+    var_data = scale_factor * var_data + add_offset
+
+    call check( nf90_close(ncid) )
+  end subroutine get_xy_from_xyt
+
+
+  subroutine get_xyt_from_xyzt(nc_file_name, var_name, lvl_idx, &
+                             & time_idx, nt, var_data)
     implicit none
 
     character(len=*)              , intent(in)    :: nc_file_name
@@ -205,7 +300,7 @@ contains
     var_data = scale_factor * var_data + add_offset
 
     call check( nf90_close(ncid) )
-  end subroutine get_one_level
+  end subroutine get_xyt_from_xyzt
 
 
   subroutine check(status)

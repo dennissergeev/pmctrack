@@ -52,10 +52,10 @@ SCRIPT = Path(__file__).basename().splitext()[0]
 #  ny1=30
 #  ny2=70
 # TODO: move to args?
-#xx = slice(1, -1)
-#yy = slice(1, -1)
-xx = slice(120, 290+1)
-yy = slice(30, 70+1)
+xx = slice(None, None)
+yy = slice(None, None)
+#xx = slice(10, 295+1)
+#yy = slice(30, 90+1)
 # Column names
 vor_loc_df_kw = dict(delimiter='\s+',
                      names=['lon', 'lat', 'vo', 'rad', 'vortex_type'])

@@ -4,44 +4,46 @@ module params
   implicit none
 
   character(len=*), parameter :: CONFIG_FILE = "settings.conf"
-  character(len=256) :: datadir
-  character(len=256) :: outdir
-  character(len=256) :: vort_name
-  character(len=256) :: u_name
-  character(len=256) :: v_name
-  character(len=256) :: psea_name
-  character(len=256) :: land_name
-  integer            :: year_start, month_start, day_start, hour_start
-  integer            :: year_end, month_end, day_end, hour_end
-  integer            :: vor_lvl
-  integer            :: steer_lvl_btm, steer_lvl_top
-  integer            :: proj
-  integer            :: vert_grid
-  integer            :: nx1, nx2, ny1, ny2
-  !integer            :: nt
-  !real(wp)           :: del_t
+  character(len=256)          :: datadir
+  character(len=256)          :: outdir
+  character(len=256)          :: vort_name
+  character(len=256)          :: u_name
+  character(len=256)          :: v_name
+  character(len=256)          :: psea_name
+  character(len=256)          :: land_name
+  character(len=256)          :: prefix_lvl
+  character(len=256)          :: prefix_sfc
+  integer                     :: year_start, month_start, day_start, hour_start
+  integer                     :: year_end, month_end, day_end, hour_end
+  integer                     :: vor_lvl
+  integer                     :: steer_lvl_btm, steer_lvl_top
+  integer                     :: proj
+  integer                     :: vert_grid
+  integer                     :: nx1, nx2, ny1, ny2
+  !integer                    :: nt
+  !real(wp)                   :: del_t
   ! parameter for smoothing of vorticity
-  integer            :: smth_type
-  integer            :: nsmth_x, nsmth_y
-  real(wp)           :: r_smth
+  integer                     :: smth_type
+  integer                     :: nsmth_x, nsmth_y
+  real(wp)                    :: r_smth
   ! parameter for detecting vortex
-  real(wp)           :: zeta_max0, zeta_min0
-  real(wp)           :: int_zeta_min0, gamma
+  real(wp)                    :: zeta_max0, zeta_min0
+  real(wp)                    :: int_zeta_min0, gamma
   ! parameter for excluding the synoptic scale disturbances
-  real(wp)           :: d_cf_min, size_synop
-  real(wp)           :: del_psea_min, distance_ec
+  real(wp)                    :: d_cf_min, size_synop
+  real(wp)                    :: del_psea_min, distance_ec
   ! parameter for calculating steering winds
-  integer            :: steering_type
-  integer            :: n_steering_x, n_steering_y
-  real(wp)           :: r_steering
+  integer                     :: steering_type
+  integer                     :: n_steering_x, n_steering_y
+  real(wp)                    :: r_steering
   ! parameter for linking vortex
-  integer            :: track_type
-  real(wp)           :: del_lon, del_lat, del_r
+  integer                     :: track_type
+  real(wp)                    :: del_lon, del_lat, del_r
   ! parameter for checking the track
-  integer            :: period_min
+  integer                     :: period_min
 
   ! Debug flag
-  logical            :: dbg
+  logical                     :: dbg
 
 contains
   subroutine get_config_params()
@@ -49,12 +51,12 @@ contains
     implicit none
 
     ! Local variables
-    integer, parameter              :: fh = 999
-    character(len=256)              :: buffer
-    character(len=256)              :: label
-    integer                         :: line
-    integer                         :: ios
-    integer                         :: sep
+    integer, parameter            :: fh = 999
+    character(len=256)            :: buffer
+    character(len=256)            :: label
+    integer                       :: line
+    integer                       :: ios
+    integer                       :: sep
 
 #ifdef debug
     dbg = .true.
@@ -103,6 +105,8 @@ contains
           case('v_name'); read(buffer, *, iostat=ios) v_name; if (dbg) write(*, *) v_name
           case('psea_name'); read(buffer, *, iostat=ios) psea_name; if (dbg) write(*, *) psea_name
           case('land_name'); read(buffer, *, iostat=ios) land_name; if (dbg) write(*, *) land_name
+          case('prefix_lvl'); read(buffer, *, iostat=ios) prefix_lvl; if (dbg) write(*, *) prefix_lvl
+          case('prefix_sfc'); read(buffer, *, iostat=ios) prefix_sfc; if (dbg) write(*, *) prefix_sfc
           case('proj'); read(buffer, *, iostat=ios) proj; if (dbg) write(*, *) proj
           case('vert_grid'); read(buffer, *, iostat=ios) vert_grid; if (dbg) write(*, *) vert_grid
           case('nx1'); read(buffer, *, iostat=ios) nx1; if (dbg) write(*, *) nx1

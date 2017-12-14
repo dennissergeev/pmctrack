@@ -8,6 +8,7 @@ implicit none
 real   (kind=wp), parameter :: fillval = 9.99e20_wp
 real   (kind=wp), parameter :: missval = -999.9_wp
 
+integer, parameter :: steer_nt = 2
 integer, parameter :: nmax = 300
 integer, parameter :: kmax = 1000
 integer, parameter :: pmax = 10000 

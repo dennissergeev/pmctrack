@@ -1,11 +1,29 @@
 module utils
 
 use types, only : wp
-use constants, only: missval
+use constants, only : missval
 
 implicit none
 
 contains
+
+  subroutine make_nc_file_name(nc_file_name, datadir, prefix, y, m, var_name)
+    implicit none
+
+    character(len=*)              , intent(inout) :: nc_file_name
+    character(len=*)              , intent(in)    :: datadir
+    character(len=*)              , intent(in)    :: prefix
+    character(len=*)              , intent(in)    :: var_name
+    integer                       , intent(in)    :: y
+    integer                       , intent(in)    :: m
+    
+    write(nc_file_name, '(A,A,A,I4.4,A,I2.2,A,A,A)') trim(datadir), '/',      &
+                                                   & trim(prefix),            &
+                                                   & y, '.',                  &
+                                                   & m, '.',                  &
+                                                   & trim(var_name), '.nc'
+  end subroutine make_nc_file_name
+
 
   subroutine apply_mask_2d(var, nx, ny, flag)
   
