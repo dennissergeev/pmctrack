@@ -10,7 +10,7 @@ program main
     & vort_name, u_name, v_name, psea_name, land_name,                        &
     & vor_lvl, steer_lvl_btm, steer_lvl_top,                                  &
     & nx1, nx2, ny1, ny2,                                                     &
-    & smth_type, proj
+    & smth_type, proj, steering_type
   use nc_io, only : get_dims, get_time, get_coords,                           &
     & get_xy_from_xyzt, get_xy_from_xyt, get_xyz_from_xyzt,                   &
     & get_data_2d
@@ -65,6 +65,8 @@ program main
   real(wp)         , allocatable              :: z_min_size(:)
   real(wp)         , allocatable              :: s_part(:)
   real(wp)         , allocatable              :: mtype(:)
+  real(wp)         , allocatable              :: u_vor_f(:)
+  real(wp)         , allocatable              :: v_vor_f(:)
 
   ! Local variables
   ! work
@@ -193,6 +195,8 @@ program main
   allocate(z_min_size(                  nmax))
   allocate(mi        (                  nmax));      mi = 0
   allocate(mj        (                  nmax));      mj = 0
+  allocate(u_vor_f   (                  nmax)); u_vor_f = fillval
+  allocate(v_vor_f   (                  nmax)); v_vor_f = fillval
 
   write(nc_file_name, '(A,A,A,A)') trim(datadir), '/', trim(land_name), '.nc'
   call get_data_2d(nc_file_name, land_name, land_mask)
@@ -251,7 +255,7 @@ program main
     endif
 
 
-    write(fname_bin, '(A,A,A,I4.4,A)') trim(outdir), '/',                     & 
+    write(fname_bin, '(A,A,A,I4.4,A)') trim(outdir), '/',                     &
                                      & 'vor_out_', kt, '.dat'
     open(unit=fh_bin, file=fname_bin, form='unformatted', access='sequential')
     write(unit=fh_bin) vor(nx1:nx2,ny1:ny2)
@@ -326,7 +330,40 @@ program main
                     & mtype(i_max)
         endif
       endif
-    enddo
+      !
+      ! ----- calculate steering wind -----!
+      !
+      if (steering_type == 1) then
+        write(*, *) "NotImplementedError"; stop
+        !call steering_wind_f(u,v,&
+        !     &levs,nx,ny,nz,nt,kt,&
+        !     &mi(i_max,kt),mj(i_max,kt),&
+        !     &u_vor_f(i_max,kt),v_vor_f(i_max,kt))
+
+        !call steering_wind_b(u,v,&
+        !     &levs,nx,ny,nz,nt,kt,&
+        !     &mi(i_max,kt),mj(i_max,kt),&
+        !     &u_vor_b(i_max,kt),v_vor_b(i_max,kt))
+      elseif (steering_type == 2) then
+        if (kt < ntime) then
+          ! Forward
+          call steering_wind_r(u, v,                                          &
+                             & lvls(1:nsteer_lvl), lons, lats,                &
+                             & nx, ny, nsteer_lvl,                            &
+                             & steer_nt, 1, 2,                                &
+                             & mi(i_max), mj(i_max),                          &
+                             & u_vor_f(i_max), v_vor_f(i_max))
+        endif
+        !if (kt > 1) then
+        !  ! Backward
+        !  call steering_wind_r(u, v,     &
+        !       &lvls, lons,lats,nx,ny,nz,nt,kt,kt-1,&
+        !       &mi(i_max,kt),mj(i_max,kt),&
+        !       &u_vor_b(i_max,kt),v_vor_b(i_max,kt))
+        !endif
+      endif
+
+    enddo ! i_max loop
     close(unit=fh_maxloc)
 
     close(unit=fh_bin)
@@ -365,5 +402,7 @@ program main
   deallocate(z_min_size)
   deallocate(mi        )
   deallocate(mj        )
+  deallocate(u_vor_f   )
+  deallocate(v_vor_f   )
 
 end program main
