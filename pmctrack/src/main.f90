@@ -2,14 +2,15 @@ program main
   use datetime_module
 
   use types, only : wp
-  use constants, only : fillval, steer_nt
+  use constants, only : fillval, steer_nt, nmax
   use params, only : get_config_params, dbg,                                  &
     & datadir, outdir, prefix_sfc, prefix_lvl,                                &
     & year_start, month_start, day_start, hour_start,                         &
     & year_end, month_end, day_end, hour_end,                                 &
     & vort_name, u_name, v_name, psea_name, land_name,                        &
     & vor_lvl, steer_lvl_btm, steer_lvl_top,                                  &
-    & nx1, nx2, ny1, ny2
+    & nx1, nx2, ny1, ny2,                                                     &
+    & smth_type
   use nc_io, only : get_dims, get_time, get_coords,                           &
     & get_xy_from_xyzt, get_xy_from_xyt, get_xyz_from_xyzt,                   &
     & get_data_2d
@@ -30,7 +31,9 @@ program main
   real(wp)                                    :: time_step_s
   integer                                     :: nt_per_file
   ! Coordinate arrays
-  integer                                     :: ntime, nlvls, ny, nx
+  integer                                     :: ntime, nlvls, nlats, nlons
+  integer                                     :: ny, nx
+  integer                                     :: ny12, nx12
   integer          , allocatable              :: time_temp(:)
   integer          , allocatable              :: time(:)
   integer          , allocatable              :: lvls(:)
@@ -49,8 +52,19 @@ program main
 
   ! Local arrays
   real(wp)         , allocatable              :: vor_smth(:, :)
+  integer(4)       , allocatable              :: vor_part(:, :)
+  real(wp)         , allocatable              :: vor_part_r(:, :)
+  real(wp)         , allocatable              :: mlat(:), mlon(:)
+  real(wp)         , allocatable              :: max_vor(:)
+  real(wp)         , allocatable              :: minlat(:), minlon(:)
+  real(wp)         , allocatable              :: z_min(:)
+  real(wp)         , allocatable              :: z_min_size(:)
+  real(wp)         , allocatable              :: s_part(:)
+  real(wp)         , allocatable              :: mtype(:)
 
   ! Local variables
+  ! work
+  integer                                     :: n_min, n_max
   ! Indices
   integer                                     :: lvl_idx
   integer                                     :: steer_idx_btm, steer_idx_top
@@ -91,11 +105,15 @@ program main
   idt = dt_start
   call make_nc_file_name(nc_file_name, datadir, prefix_lvl, &
                        & idt%year, idt%month, vort_name)
-  call get_dims(nc_file_name, DIM_NAMES, nt_per_file, nlvls, ny, nx)
+  call get_dims(nc_file_name, DIM_NAMES, nt_per_file, nlvls, nlats, nlons)
+  nx = nlons - 1
+  ny = nlats - 1
   if (nx1 == -1) nx1 = 0
-  if (nx2 == -1) nx2 = nx-1
+  if (nx2 == -1) nx2 = nx
   if (ny1 == -1) ny1 = 0
-  if (ny2 == -1) ny2 = ny-1
+  if (ny2 == -1) ny2 = ny
+  nx12 = nx2 - nx1
+  ny12 = ny2 - ny1
 
   ! Time & calendar
   allocate(time_temp(0:nt_per_file-1))
@@ -117,8 +135,8 @@ program main
   ! Assume space coordinates are the same for all files
   allocate(time(1))
   allocate(lvls(nlvls))
-  allocate(lats(0:ny-1))
-  allocate(lons(0:nx-1))
+  allocate(lats(0:ny))
+  allocate(lons(0:nx))
 
   call get_coords(nc_file_name, DIM_NAMES, lons, lats, lvls, &
     & time, 1, 1)
@@ -128,34 +146,48 @@ program main
   steer_idx_top = minloc(abs(lvls - steer_lvl_top), 1)
   nsteer_lvl = steer_idx_btm - steer_idx_top + 1
   !lvls = lvls(nlvls:1:-1)
-  lats = lats(ny-1:0:-1)
+  lats = lats(ny:0:-1)
   ! Calculate grid spacing assuming the grid is uniform
   lonin = lons(1) - lons(0)
   latin = lats(1) - lats(0)
 
   ! Define input array sizes
-  allocate(vor      (0:nx-1, 0:ny-1))
-  allocate(u        (0:nx-1, 0:ny-1, nsteer_lvl, steer_nt))
-  allocate(v        (0:nx-1, 0:ny-1, nsteer_lvl, steer_nt))
-  allocate(psea     (0:nx-1, 0:ny-1))
-  allocate(land_mask(0:nx-1, 0:ny-1))
+  allocate(vor      (0:nx, 0:ny))
+  allocate(u        (0:nx, 0:ny, nsteer_lvl, steer_nt))
+  allocate(v        (0:nx, 0:ny, nsteer_lvl, steer_nt))
+  allocate(psea     (0:nx, 0:ny))
+  allocate(land_mask(0:nx, 0:ny))
 
   vor = fillval
   u = fillval
   v = fillval
   psea = fillval
 
+  print*,'size(vor)', shape(vor)
+  print*,'nx', nx, 'ny', ny
+
   ! Allocate work arrays
-  allocate(vor_smth(nx1:nx2, ny1:ny2))
+  allocate(vor_smth  (nx1:nx2, ny1:ny2      ))
+  allocate(vor_part  (nx1:nx2, ny1:ny2      ))
+  allocate(vor_part_r(nx1:nx2, ny1:ny2      ))
+  allocate(mlat      (                  nmax))
+  allocate(mlon      (                  nmax))
+  allocate(max_vor   (                  nmax))
+  allocate(s_part    (                  nmax))
+  allocate(mtype     (                  nmax))
+  allocate(minlat    (                  nmax))
+  allocate(minlon    (                  nmax))
+  allocate(z_min     (                  nmax))
+  allocate(z_min_size(                  nmax))
 
   write(nc_file_name, '(A,A,A,A)') trim(datadir), '/', trim(land_name), '.nc'
   call get_data_2d(nc_file_name, land_name, land_mask)
-  land_mask = land_mask(:, ny-1:0:-1)
+  land_mask = land_mask(:, ny:0:-1)
 
   do kt = 1, ntime ! including both start and end dates
     call make_nc_file_name(nc_file_name, datadir, prefix_lvl, &
                          & idt%year, idt%month, vort_name)
-    call get_dims(nc_file_name, DIM_NAMES, nt_per_file, nlvls, ny, nx)
+    call get_dims(nc_file_name, DIM_NAMES, nt_per_file, nlvls, nlats, nlons)
     allocate(time_temp(0:nt_per_file-1))
     call get_time(nc_file_name, REC_NAME, time_temp, time_step_s, cal_start)
     del_t = (time_temp(1) - time_temp(0)) * time_step_s
@@ -167,14 +199,14 @@ program main
     print*, kt, 'idt=', idt, 'time_idx=', time_idx
     ! Read vorticity at the specified level
     call get_xy_from_xyzt(nc_file_name, vort_name, lvl_idx, time_idx, vor)
-    vor(:, :) = vor(:, ny-1:0:-1)
-    call apply_mask_2d(vor, nx-1, ny-1, land_mask)
+    vor(:, :) = vor(:, ny:0:-1)
+    call apply_mask_2d(vor, nx, ny, land_mask)
 
     ! Read sea level pressure
     call make_nc_file_name(nc_file_name, datadir, prefix_sfc, &
                          & idt%year, idt%month, psea_name)
     call get_xy_from_xyt(nc_file_name, psea_name, time_idx, psea)
-    psea(:, :) = 1e-2 * psea(:, ny-1:0:-1)
+    psea(:, :) = 1e-2 * psea(:, ny:0:-1)
 
     if (kt > 1 .and. mod(kt, steer_nt) == 0) then
       ! TODO: ensure all times are read in
@@ -190,33 +222,52 @@ program main
         call get_xyz_from_xyzt(nc_file_name, v_name, time_idx, &
                              & steer_idx_top, nsteer_lvl, v(:, :, :, kt2))
       enddo
-      u(:, :, :, :) = u(:, ny-1:0:-1, :, :)
-      v(:, :, :, :) = v(:, ny-1:0:-1, :, :)
+      u(:, :, :, :) = u(:, ny:0:-1, :, :)
+      v(:, :, :, :) = v(:, ny:0:-1, :, :)
     end if
 
     if (smth_type == 1) then
       call smth(vor(0:nx, 0:ny), nx, ny, vor_smth(nx1:nx2, ny1:ny2))
-    elseif (smth_type==2) then
-      call smth_r(vor(0:nx, 0:ny), nx, ny, lon(0:nx), lat(0:ny),              &
+    elseif (smth_type == 2) then
+      call smth_r(vor(0:nx, 0:ny), nx, ny, lons(0:nx), lats(0:ny),            &
                 & vor_smth(nx1:nx2, ny1:ny2))
     else
-      vor_smth(nx1:nx2,ny1:ny2,kt) = vor(nx1:nx2,ny1:ny2,kt)
+      ! No smoothing
+      vor_smth(nx1:nx2, ny1:ny2) = vor(nx1:nx2, ny1:ny2)
     end if
 
 
-    write (fname_out,'(A,A,A,I4.4,A)')trim(outdir),'/','vor_out_',kt,'.dat'
-    open(12,file=fname_out,form='unformatted',access='sequential')
-    write (12)vor(nx1:nx2,ny1:ny2)
-    write (12)vor_smth(nx1:nx2,ny1:ny2)
+    write (fname_out, '(A,A,A,I4.4,A)') trim(outdir), '/', 'vor_out_', kt, '.dat'
+    open(12, file=fname_out, form='unformatted', access='sequential')
+    write(12) vor(nx1:nx2,ny1:ny2)
+    write(12) vor_smth(nx1:nx2,ny1:ny2)
+
+    write (*,'(A,I4.4)') 'Detecting vortex at kt = ', kt
+
+    call vor_partition(vor_smth(nx1:nx2, ny1:ny2),                            &
+                     & nx12, ny12,                                            &
+                     & mlat(:), mlon(:),                                      &
+                     & max_vor(:), mtype(:), n_max,                           &
+                     & lats(ny1:ny2), lons(nx1:nx2),                          &
+                     & vor_part(nx1:nx2, ny1:ny2), s_part(:))
+    if (n_max >= 1) then
+      call min_z(psea(nx1:nx2, ny1:ny2),                                      &
+               & nx12, ny12,                                                  &
+               & minlat(:), minlon(:),                                        &
+               & z_min(:), n_min, lats(ny1:ny2), lons(nx1:nx2),               &
+               & z_min_size(:))
+    else
+      n_min = 0
+    endif
+
+    if (maxval(mtype(:)) >= 1) then
+      call synop_check(mlon(:), mlat(:), n_max,                               &
+                     & minlon(:), minlat(:), n_min, mtype(:))
+    endif
 
 
-    write (*,'(A,I4.4,A,I2.2,A,I2.2,A,I2.2,A,I2.2)')'Detecting vortex at kt = ',kt
 
     close(12)
-
-
-
-
     idt_pair(1) = idt
     idt = idt + timedelta(hours=del_t / time_step_s)
     idt_pair(2) = idt
@@ -238,6 +289,17 @@ program main
   deallocate(psea)
   deallocate(land_mask)
 
-  deallocate(vor_smth)
+  deallocate(vor_smth  )
+  deallocate(vor_part  )
+  deallocate(vor_part_r)
+  deallocate(mlat      )
+  deallocate(mlon      )
+  deallocate(max_vor   )
+  deallocate(s_part    )
+  deallocate(mtype     )
+  deallocate(minlat    )
+  deallocate(minlon    )
+  deallocate(z_min     )
+  deallocate(z_min_size)
 
 end program main
