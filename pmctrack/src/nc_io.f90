@@ -1,6 +1,7 @@
 module nc_io
 
   use netcdf
+  use datetime_module
   use types, only : wp
 
 contains
@@ -34,20 +35,51 @@ contains
   end subroutine get_dims
 
 
-  subroutine get_time(nc_file_name, time_name, time)
+  subroutine get_time(nc_file_name, time_name, time, time_step_s, cal_start)
     implicit none
 
     character(len=*)              , intent(in)    :: nc_file_name
     character(len=*)              , intent(in)    :: time_name
-    integer                       , intent(inout) :: time(:) 
+    integer                       , intent(out)   :: time(:) 
+    real(wp)                      , intent(out)   :: time_step_s
+    type(datetime)                , intent(out)   :: cal_start
     ! Local variables
     integer                                       :: ncid
     integer                                       :: var_id
+    character(len=256)                            :: units
+    character(len=256)                            :: units_date
+    character(len=*), parameter                   :: cal_fmt = "since %Y-%m-%d %H:%M:%S"
+    integer                                       :: i
 
     call check( nf90_open(nc_file_name, nf90_nowrite, ncid) )
 
     call check( nf90_inq_varid(ncid, time_name, var_id) )
     call check( nf90_get_var(ncid, var_id, time) )
+
+    call check( nf90_get_att(ncid, var_id, "units", units) )
+
+    ! "hours since 1900-01-01 00:00:0.0"
+    units_date = trim(units)
+    i = scan(units_date, ' ')
+    units = trim(units_date(1:i-1))
+    if (units == "days") then
+      time_step_s = 24 * 3600.
+    elseif (units == "hours") then
+      time_step_s = 3600.
+    elseif (units == "seconds") then
+      time_step_s = 1.
+    else
+      write(*, *) 'CalendarParseError: unrecognised units'
+      stop
+    endif
+   
+    i = scan(trim(units_date(i+1:)), ' ')
+    units_date = trim(units_date(i+1:))
+    cal_start = strptime(units_date, cal_fmt)
+    if (.not. cal_start%isValid()) then
+      write(*, *) 'CalendarParseError: calendar start', cal_start, ' is not valid'
+      stop
+    endif
 
     call check( nf90_close(ncid) )
   end subroutine get_time

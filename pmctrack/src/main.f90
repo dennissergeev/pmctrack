@@ -26,6 +26,7 @@ program main
   real(wp)                                    :: lonin
   real(wp)                                    :: latin
   real(wp)                                    :: del_t
+  real(wp)                                    :: time_step_s
   integer                                     :: nt_per_file
   ! Coordinate arrays
   integer                                     :: ntime, nlvls, nlats, nlons
@@ -53,7 +54,7 @@ program main
   integer                                     :: kt, kt2
 
   ! Time and date variables
-  type(datetime)                              :: calendar_start
+  type(datetime)                              :: cal_start
   type(datetime)                              :: dt_start, dt_end
   type(datetime)                              :: dt_min ! within a file
   type(timedelta)                             :: td
@@ -70,7 +71,7 @@ program main
 
   call get_config_params()
 
-  calendar_start = datetime(1900, 1, 1)  ! TODO: define automatically
+  ! cal_start = datetime(1900, 1, 1)  ! TODO: define automatically
   dt_start = datetime(year_start, month_start, day_start, hour_start)
   if (.not. dt_start%isValid()) then
     write(*, *) 'Start date ', dt_start, ' is not valid'
@@ -95,9 +96,9 @@ program main
 
   ! Time & calendar
   allocate(time_temp(0:nt_per_file-1))
-  call get_time(nc_file_name, REC_NAME, time_temp)
+  call get_time(nc_file_name, REC_NAME, time_temp, time_step_s, cal_start)
 
-  del_t = (time_temp(1) - time_temp(0)) * 3600
+  del_t = (time_temp(1) - time_temp(0)) * time_step_s
   print*, 'time_temp', time_temp(0)
   print*, 'del_t', del_t
   td = dt_end - dt_start
@@ -105,7 +106,7 @@ program main
   print*, 'ntime=', ntime
 
   td = timedelta(hours=time_temp(0))
-  dt_min = calendar_start + td
+  dt_min = cal_start + td
   td = dt_start - dt_min
   time_idx = int(td%total_seconds() / del_t) + 1 ! time_temp(0) +
   deallocate(time_temp)
@@ -154,11 +155,11 @@ program main
                          & idt%year, idt%month, vort_name)
     call get_dims(nc_file_name, DIM_NAMES, nt_per_file, nlvls, nlats, nlons)
     allocate(time_temp(0:nt_per_file-1))
-    call get_time(nc_file_name, REC_NAME, time_temp)
-    del_t = (time_temp(1) - time_temp(0)) * 3600
+    call get_time(nc_file_name, REC_NAME, time_temp, time_step_s, cal_start)
+    del_t = (time_temp(1) - time_temp(0)) * time_step_s
     td = timedelta(hours=time_temp(0))
     deallocate(time_temp)
-    dt_min = calendar_start + td ! Start date time of each file
+    dt_min = cal_start + td ! Start date time of each file
     td = idt - dt_min
     time_idx = int(td%total_seconds() / del_t) + 1
     print*, kt, 'idt=', idt, 'time_idx=', time_idx
@@ -171,9 +172,10 @@ program main
     call make_nc_file_name(nc_file_name, datadir, prefix_sfc, &
                          & idt%year, idt%month, psea_name)
     call get_xy_from_xyt(nc_file_name, psea_name, time_idx, psea)
-    psea_ft(:, :, kt) = psea(:, nlats-1:0:-1)
+    psea_ft(:, :, kt) = 1e-2 * psea(:, nlats-1:0:-1)
 
     if (kt > 1 .and. mod(kt, steer_nt) == 0) then
+      ! TODO: ensure all times are read in
       ! Read u- and v-winds
       do kt2 = 1, steer_nt
         call make_nc_file_name(nc_file_name, datadir, prefix_lvl, &
@@ -191,38 +193,13 @@ program main
     end if
 
     idt_pair(1) = idt
-    idt = idt + timedelta(hours=del_t / 3600)
+    idt = idt + timedelta(hours=del_t / time_step_s)
     idt_pair(2) = idt
   enddo
   print*, minval(vor_ft), maxval(vor_ft)
   print*, minval(u_ft), maxval(u_ft)
   print*, minval(v_ft), maxval(v_ft)
   print*, minval(psea_ft), maxval(psea_ft)
-
-  ! print*, shape(vor), minval(vor(:, :, 0)), maxval(vor(:, :, 0))
-  ! print*, shape(vor), minval(vor), maxval(vor)
-
-  !! print*, shape(u), minval(u(:, :, :, 0)), maxval(u(:, :, :, 0))
-
-  !write(nc_file_name, '(A,A,A,I4.4,A,I2.2,A,A,A)') trim(datadir), '/', &
-  !                                               & 'era5.an.pl.', year_start, '.', &
-  !                                               & month_start, '.', &
-  !                                               & trim(v_name), '.nc'
-  !call get_data_4d(nc_file_name, v_name, time_idx, ntime, &
-  !  & steer_idx_top, nsteer_lvl, v)
-  !v = v(:, nlats-1:0:-1, :, :)
-
-  !write(nc_file_name, '(A,A,A,I4.4,A,I2.2,A,A,A)') trim(datadir), '/', &
-  !                                               & 'era5.an.sfc.', year_start, '.', &
-  !                                               & month_start, '.', &
-  !                                               & trim(psea_name), '.nc'
-  !call get_data_3d(nc_file_name, psea_name, time_idx, ntime, psea)
-  !psea = psea(:, nlats-1:0:-1, :)
-  !psea = 1e-2 * psea
-
-  ! print*, shape(v), minval(v), maxval(v)
-  ! print*, shape(psea), minval(psea), maxval(psea)
-  ! print*, lvls
 
   !write (*,*)'nx=', nx, 'ny=', ny,' nt=', nt, 'nz=', nz
   !write (*,*)'nx1=', nx1, 'nx2=', nx2, 'ny1=', ny1, 'ny2=', ny2
