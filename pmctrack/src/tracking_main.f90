@@ -106,7 +106,6 @@ subroutine tracking_main(vor,u,v,psea,&
     write (12)vor_smth(nx1:nx2,ny1:ny2,kt)
 
 
-
     write (*,'(A,I4.4,A,I2.2,A,I2.2,A,I2.2,A,I2.2)')'Detecting vortex at kt = ',kt
 
     call vor_partition(vor_smth(nx1:nx2,ny1:ny2,kt),&
@@ -281,7 +280,7 @@ subroutine tracking_main(vor,u,v,psea,&
 
 
   do i_vor_num=1,vor_num
-    call track_check2(vortex(i_vor_num,:,1:3),vortex_flag(i_vor_num),nt)
+    call check_track(vortex(i_vor_num,:,1:3),vortex_flag(i_vor_num),nt)
   end do
 
 

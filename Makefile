@@ -31,7 +31,7 @@ $(OBJDIR)/min_z.o \
 $(OBJDIR)/steering_wind.o \
 $(OBJDIR)/linkin_vort2.o \
 $(OBJDIR)/linkin_vort.o \
-$(OBJDIR)/track_check.o \
+$(OBJDIR)/check_track.o \
 $(OBJDIR)/smth.o \
 $(OBJDIR)/tracking_main.o \
 $(OBJDIR)/main.o

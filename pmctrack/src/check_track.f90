@@ -1,4 +1,4 @@
-subroutine track_check2(vortex,vortex_flag,nt)
+subroutine check_track(vortex,vortex_flag,nt)
 
   use types, only : wp
   use params, only : period_min
@@ -39,4 +39,4 @@ subroutine track_check2(vortex,vortex_flag,nt)
   endif
     
   return
-end subroutine track_check2
+end subroutine check_track
