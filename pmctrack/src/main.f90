@@ -2,7 +2,7 @@ program main
   use datetime_module
 
   use types, only : wp
-  use constants, only : fillval, steer_nt, nmax
+  use constants, only : fillval, steer_nt, nmax, rkilo
   use params, only : get_config_params, dbg,                                  &
     & datadir, outdir, prefix_sfc, prefix_lvl,                                &
     & year_start, month_start, day_start, hour_start,                         &
@@ -10,7 +10,7 @@ program main
     & vort_name, u_name, v_name, psea_name, land_name,                        &
     & vor_lvl, steer_lvl_btm, steer_lvl_top,                                  &
     & nx1, nx2, ny1, ny2,                                                     &
-    & smth_type
+    & smth_type, proj
   use nc_io, only : get_dims, get_time, get_coords,                           &
     & get_xy_from_xyzt, get_xy_from_xyt, get_xyz_from_xyzt,                   &
     & get_data_2d
@@ -24,12 +24,15 @@ program main
   character(len=*)                , parameter :: REC_NAME = "time"
   character(len=256), dimension(4)            :: DIM_NAMES
   character(len=256)                          :: nc_file_name
-  character(len=256)                          :: fname_out
+  character(len=256)                          :: fname_bin
+  character(len=256)                          :: fname_vormaxloc
   real(wp)                                    :: lonin
   real(wp)                                    :: latin
   real(wp)                                    :: del_t
   real(wp)                                    :: time_step_s
   integer                                     :: nt_per_file
+  real(wp)                                    :: lon0
+  real(wp)                                    :: lat0
   ! Coordinate arrays
   integer                                     :: ntime, nlvls, nlats, nlons
   integer                                     :: ny, nx
@@ -55,6 +58,7 @@ program main
   integer(4)       , allocatable              :: vor_part(:, :)
   real(wp)         , allocatable              :: vor_part_r(:, :)
   real(wp)         , allocatable              :: mlat(:), mlon(:)
+  integer(4)       , allocatable              :: mi(:), mj(:)
   real(wp)         , allocatable              :: max_vor(:)
   real(wp)         , allocatable              :: minlat(:), minlon(:)
   real(wp)         , allocatable              :: z_min(:)
@@ -70,6 +74,8 @@ program main
   integer                                     :: steer_idx_btm, steer_idx_top
   integer                                     :: nsteer_lvl
   integer                                     :: kt, kt2
+  integer                                     :: i, j
+  integer                                     :: i_max
 
   ! Time and date variables
   type(datetime)                              :: cal_start
@@ -79,6 +85,10 @@ program main
   integer                                     :: time_idx
   type(datetime)                              :: idt
   type(datetime)                              :: idt_pair(steer_nt)
+
+  ! IO units
+  integer                         , parameter :: fh_bin = 998
+  integer                         , parameter :: fh_maxloc = 997
 
 
   ! Store dimension names in one array
@@ -148,6 +158,8 @@ program main
   !lvls = lvls(nlvls:1:-1)
   lats = lats(ny:0:-1)
   ! Calculate grid spacing assuming the grid is uniform
+  lon0 = lons(0)
+  lat0 = lats(0)
   lonin = lons(1) - lons(0)
   latin = lats(1) - lats(0)
 
@@ -179,6 +191,8 @@ program main
   allocate(minlon    (                  nmax))
   allocate(z_min     (                  nmax))
   allocate(z_min_size(                  nmax))
+  allocate(mi        (                  nmax));      mi = 0
+  allocate(mj        (                  nmax));      mj = 0
 
   write(nc_file_name, '(A,A,A,A)') trim(datadir), '/', trim(land_name), '.nc'
   call get_data_2d(nc_file_name, land_name, land_mask)
@@ -224,7 +238,7 @@ program main
       enddo
       u(:, :, :, :) = u(:, ny:0:-1, :, :)
       v(:, :, :, :) = v(:, ny:0:-1, :, :)
-    end if
+    endif
 
     if (smth_type == 1) then
       call smth(vor(0:nx, 0:ny), nx, ny, vor_smth(nx1:nx2, ny1:ny2))
@@ -234,13 +248,14 @@ program main
     else
       ! No smoothing
       vor_smth(nx1:nx2, ny1:ny2) = vor(nx1:nx2, ny1:ny2)
-    end if
+    endif
 
 
-    write (fname_out, '(A,A,A,I4.4,A)') trim(outdir), '/', 'vor_out_', kt, '.dat'
-    open(12, file=fname_out, form='unformatted', access='sequential')
-    write(12) vor(nx1:nx2,ny1:ny2)
-    write(12) vor_smth(nx1:nx2,ny1:ny2)
+    write(fname_bin, '(A,A,A,I4.4,A)') trim(outdir), '/',                     & 
+                                     & 'vor_out_', kt, '.dat'
+    open(unit=fh_bin, file=fname_bin, form='unformatted', access='sequential')
+    write(unit=fh_bin) vor(nx1:nx2,ny1:ny2)
+    write(unit=fh_bin) vor_smth(nx1:nx2,ny1:ny2)
 
     write (*,'(A,I4.4)') 'Detecting vortex at kt = ', kt
 
@@ -265,9 +280,56 @@ program main
                      & minlon(:), minlat(:), n_min, mtype(:))
     endif
 
+    ! Save vor_part to a dummy array and write it to unformatted output
+    vor_part_r = fillval
+    ! vor_part_r(nx1, ny2)=-1.
+    do j = ny1, ny2
+      do i = nx1, nx2
+        if (vor_part(i, j) /= 0.) then
+          vor_part_r(i, j) = vor_part(i, j)
+        endif
+      enddo
+    enddo
+    write(unit=fh_bin) vor_part_r(nx1:nx2, ny1:ny2)
 
 
-    close(12)
+    write(fname_vormaxloc, '(A,A,A,I4.4,A)') trim(outdir), '/',               &
+                                           & 'vormax_loc_', kt, '.txt'
+    open(unit=fh_maxloc, file=fname_vormaxloc, form='formatted')
+    do i_max = 1, n_max
+      mi(i_max) = nint((mlon(i_max) - lon0) / lonin)
+      mj(i_max) = nint((mlat(i_max) - lat0) / latin)
+      if (proj == 1) then
+        write(unit=fh_maxloc, fmt=*) mlon(i_max),                             &
+                                  & mlat(i_max),                              &
+                                  & max_vor(i_max)*rkilo,                     &
+                                  & nint(s_part(i_max)),                      &
+                                  & mtype(i_max)
+        if (dbg) then
+          write(*, *) mlon(i_max),                                            &
+                    & mlat(i_max),                                            &
+                    & max_vor(i_max)*rkilo,                                   &
+                    & nint(s_part(i_max)),                                    &
+                    & mtype(i_max)
+        endif
+      elseif (proj == 2) then
+        write(unit=fh_maxloc, fmt=*) mlon(i_max)/rkilo,                       &
+                                  & mlat(i_max)/rkilo,                        &
+                                  & max_vor(i_max)*rkilo,                     &
+                                  & nint(s_part(i_max)),                      &
+                                  & mtype(i_max)
+        if (dbg) then
+          write(*, *) mlon(i_max)/rkilo,                                      &
+                    & mlat(i_max)/rkilo,                                      &
+                    & max_vor(i_max)*rkilo,                                   &
+                    & nint(s_part(i_max)),                                    &
+                    & mtype(i_max)
+        endif
+      endif
+    enddo
+    close(unit=fh_maxloc)
+
+    close(unit=fh_bin)
     idt_pair(1) = idt
     idt = idt + timedelta(hours=del_t / time_step_s)
     idt_pair(2) = idt
@@ -301,5 +363,7 @@ program main
   deallocate(minlon    )
   deallocate(z_min     )
   deallocate(z_min_size)
+  deallocate(mi        )
+  deallocate(mj        )
 
 end program main
