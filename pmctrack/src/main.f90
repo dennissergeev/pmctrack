@@ -56,7 +56,7 @@ program main
   ! Local arrays
   real(wp)         , allocatable              :: vor_smth(:, :)
   integer(4)       , allocatable              :: vor_part(:, :)
-  real(wp)         , allocatable              :: vor_part_r(:, :)
+  real(wp)         , allocatable              :: dummy(:, :)
   real(wp)         , allocatable              :: mlat(:), mlon(:)
   integer(4)       , allocatable              :: mi(:), mj(:)
   real(wp)         , allocatable              :: max_vor(:)
@@ -183,7 +183,7 @@ program main
   ! Allocate work arrays
   allocate(vor_smth  (nx1:nx2, ny1:ny2      ))
   allocate(vor_part  (nx1:nx2, ny1:ny2      ))
-  allocate(vor_part_r(nx1:nx2, ny1:ny2      ))
+  allocate(dummy     (nx1:nx2, ny1:ny2      ))
   allocate(mlat      (                  nmax))
   allocate(mlon      (                  nmax))
   allocate(max_vor   (                  nmax))
@@ -285,16 +285,16 @@ program main
     endif
 
     ! Save vor_part to a dummy array and write it to unformatted output
-    vor_part_r = fillval
-    ! vor_part_r(nx1, ny2)=-1.
+    dummy = fillval
+    ! dummy(nx1, ny2)=-1.
     do j = ny1, ny2
       do i = nx1, nx2
         if (vor_part(i, j) /= 0.) then
-          vor_part_r(i, j) = vor_part(i, j)
+          dummy(i, j) = vor_part(i, j)
         endif
       enddo
     enddo
-    write(unit=fh_bin) vor_part_r(nx1:nx2, ny1:ny2)
+    write(unit=fh_bin) dummy(nx1:nx2, ny1:ny2)
 
 
     write(fname_vormaxloc, '(A,A,A,I4.4,A)') trim(outdir), '/',               &
@@ -366,6 +366,36 @@ program main
     enddo ! i_max loop
     close(unit=fh_maxloc)
 
+    !---- output steeering wind ----!
+    dummy = fillval
+    do i_max=1, n_max
+      dummy(mi(i_max), mj(i_max)) = u_vor_f(i_max)
+    end do
+    write(unit=fh_bin) dummy(nx1:nx2, ny1:ny2)
+    dummy = fillval
+    do i_max=1, n_max
+      dummy(mi(i_max), mj(i_max)) = v_vor_f(i_max)
+    end do
+    write(unit=fh_bin) dummy(nx1:nx2, ny1:ny2)
+
+    !     dummy=fillval
+    
+    !     do i_max=1,n_max(kt)
+    !       dummy(mi(i_max,kt),mj(i_max,kt))=-u_vor_b(i_max,kt)
+    !     end do
+    
+    !     write (12)dummy(nx1:nx2,ny1:ny2)
+    
+    !     dummy=fillval
+    
+    !     do i_max=1,n_max(kt)
+    !       dummy(mi(i_max,kt),mj(i_max,kt))=-v_vor_b(i_max,kt)
+    !     end do
+    
+    !     write (12)dummy(nx1:nx2,ny1:ny2)
+    ! SLP output
+    write(unit=fh_bin) psea(nx1:nx2, ny1:ny2)
+
     close(unit=fh_bin)
     idt_pair(1) = idt
     idt = idt + timedelta(hours=del_t / time_step_s)
@@ -390,7 +420,7 @@ program main
 
   deallocate(vor_smth  )
   deallocate(vor_part  )
-  deallocate(vor_part_r)
+  deallocate(dummy     )
   deallocate(mlat      )
   deallocate(mlon      )
   deallocate(max_vor   )
