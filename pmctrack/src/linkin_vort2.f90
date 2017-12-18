@@ -14,32 +14,29 @@ subroutine linkin_vort2(mlon, mlat, mtype, u_vor_f, v_vor_f, nt,              &
 
   integer    , intent(in)  :: nt, nx, ny
   real   (wp), intent(in)  :: del_t
-  integer    , intent(in)  :: n_max    (                 nt)
-  real   (wp), intent(in)  :: mlon     (nmax,            nt)
-  real   (wp), intent(in)  :: mlat     (nmax,            nt)
-  integer    , intent(in)  :: mtype    (nmax,            nt)
-  real   (wp), intent(in)  :: u_vor_f  (nmax,            nt)
-  real   (wp), intent(in)  :: v_vor_f  (nmax,            nt)
-  real   (wp), intent(in)  :: lon      (     0:nx          )
-  real   (wp), intent(in)  :: lat      (           0:ny    )
-  integer    , intent(in)  :: vor_part (     0:nx, 0:ny, nt)
-  integer    , intent(out) :: vor_index(pmax,            nt)
-  integer    , intent(out) :: vor_merge(pmax               )
+  integer    , intent(in)  :: n_max        (                 nt)
+  real   (wp), intent(in)  :: mlon         (nmax,            nt)
+  real   (wp), intent(in)  :: mlat         (nmax,            nt)
+  integer    , intent(in)  :: mtype        (nmax,            nt)
+  real   (wp), intent(in)  :: u_vor_f      (nmax,            nt)
+  real   (wp), intent(in)  :: v_vor_f      (nmax,            nt)
+  real   (wp), intent(in)  :: lon          (     0:nx          )
+  real   (wp), intent(in)  :: lat          (           0:ny    )
+  integer    , intent(in)  :: vor_part     (     0:nx, 0:ny, nt)
+  integer    , intent(out) :: vor_index    (pmax,            nt) ! TODO: change to nmax?
+  integer    , intent(out) :: vor_merge    (pmax               )
   integer    , intent(out) :: vor_num
   ! Local variables
   integer                  :: kt
   integer                  :: i_max, i_max1
-  integer                  :: i_next   (nmax,            nt)
-  real   (wp)              :: r_next   (0:nmax,          nt)
+  integer                  :: i_next       (nmax,            nt)
+  real   (wp)              :: r_next     (0:nmax,            nt) ! TODO: check!
   real   (wp)              :: r_next_tmp
-  integer                  :: vor_part_s(nmax)
+  integer                  :: vor_part_s   (nmax               )
   integer                  :: i, j
-
   integer                  :: i_vor_num, i_vor_num2
-
-  logical                  :: vor_prev_flag(nmax, nt)
-  integer                  :: vor_prev_idx(nmax, nt)
-
+  logical                  :: vor_prev_flag(nmax,            nt)
+  integer                  :: vor_prev_idx (nmax,            nt)
   real   (wp)              :: e_mv_lon, e_mv_lat
   real   (wp)              :: e_mlon, e_mlat
   real   (wp)              :: r_c_min
@@ -53,25 +50,23 @@ subroutine linkin_vort2(mlon, mlat, mtype, u_vor_f, v_vor_f, nt,              &
 
   r_next = fillval
 
-  vor_merge=0
+  vor_merge = 0
+  vor_index = 0
+  vor_num = 0
 
-  vor_index=0
-  vor_num=0
+  i_next = 0
 
-  i_next=0
-
-  vor_prev_flag(1:nmax,1:nt)=.false.
-  vor_prev_idx=0
+  vor_prev_flag(1:nmax, 1:nt) = .false.
+  vor_prev_idx = 0
 
   do kt = 1, nt-1 ! Time loop
 
-
-    do i_max=1,n_max(kt)
-      do i_vor_num=1,vor_num           
-        if(i_max==vor_index(i_vor_num,kt))then 
+    do i_max = 1, n_max(kt)
+      do i_vor_num = 1, vor_num           
+        if (i_max == vor_index(i_vor_num, kt)) then 
           !The vortex labeled as i_max at kt  existed at kt-1
-          vor_prev_flag(i_max,kt) = .true.
-          vor_prev_idx(i_max,kt) = vor_index(i_vor_num,kt-1)
+          vor_prev_flag(i_max, kt) = .true.
+          vor_prev_idx(i_max, kt) = vor_index(i_vor_num, kt-1)
         end if
       end do
     end do
@@ -287,5 +282,4 @@ subroutine linkin_vort2(mlon, mlat, mtype, u_vor_f, v_vor_f, nt,              &
 
   end do  ! Time loop 
 
-  return
 end subroutine linkin_vort2
