@@ -44,10 +44,10 @@ subroutine linkin_vort2(mlon, mlat, mtype, u_vor_f, v_vor_f, nt,              &
   real   (wp)              :: r_c_min
   real   (wp)              :: r_tmp, theta_tmp
   ! NEW VARIABLES
-  real   (wp)              :: dist
+  real   (wp)              :: max_dist
 
 
-  r_c_min = del_r * 1.e3    
+  max_dist = del_r * 1.e3    
 
   r_tmp = 0.
   theta_tmp = 0.
@@ -81,6 +81,7 @@ subroutine linkin_vort2(mlon, mlat, mtype, u_vor_f, v_vor_f, nt,              &
     ! t=kt -> t=kt+1
     do i_max = 1, n_max(kt)
 
+      ! Calculate distance travelled by the vortex
       if (proj==1) then
         e_mv_lon = (u_vor_f(i_max, kt) * del_t / (ra * cosd(mlat(i_max,kt)))) * rad2deg        
         e_mv_lat = (v_vor_f(i_max, kt) * del_t / ra                         ) * rad2deg
@@ -94,9 +95,11 @@ subroutine linkin_vort2(mlon, mlat, mtype, u_vor_f, v_vor_f, nt,              &
         
       ! -------- Tracking by estimation of movement ------
 
+      r_c_min = max_dist
       do i_max1 = 1, n_max(kt+1)
 
-        ! Calculate distance travelled by the vortex
+        ! Compare the distance travelled by vortex
+        ! with the one estimated by steering winds
         if (proj == 1) then
           r_tmp = great_circle(mlon(i_max1, kt+1), e_mlon,                  &
                              & mlat(i_max1, kt+1), e_mlat, ra)
@@ -115,7 +118,6 @@ subroutine linkin_vort2(mlon, mlat, mtype, u_vor_f, v_vor_f, nt,              &
         endif
 
         if (r_tmp <= r_c_min) then
-          ! write (78,*)kt,mlon(i_max,kt),mlat(i_max,kt),mlon(i_max1,kt+1),mlat(i_max1,kt+1),r_tmp*1.0e-3
           i_next(i_max) = i_max1
           r_c_min = r_tmp
           r_next(i_max) = r_tmp
@@ -130,7 +132,6 @@ subroutine linkin_vort2(mlon, mlat, mtype, u_vor_f, v_vor_f, nt,              &
         
         do j =0, ny
           do i = 0, nx
-            ! Calculate distance travelled by the vortex
             if (proj == 1) then
               r_tmp = great_circle(lon(i), e_mlon,                            &
                                  & lat(j), e_mlat, ra)
@@ -151,7 +152,7 @@ subroutine linkin_vort2(mlon, mlat, mtype, u_vor_f, v_vor_f, nt,              &
               r_tmp = sqrt((lon(i)-e_mlon)**2 + (lat(j)-e_mlat)**2)
             endif
           
-            if (r_tmp <= r_c_min) then
+            if (r_tmp <= max_dist) then
               if (vor_part(i, j, kt+1) > 0) then
                 vor_part_s(vor_part(i, j, kt+1)) = vor_part_s(vor_part(i, j, kt+1)) + 1
               endif
@@ -182,9 +183,9 @@ subroutine linkin_vort2(mlon, mlat, mtype, u_vor_f, v_vor_f, nt,              &
           endif
 
 
-          if (r_next(i_max) <= 2.0 * r_c_min) exit
+          if (r_next(i_max) <= 2.0 * max_dist) exit
           if (mtype(i_next(i_max), kt+1) >= 1) exit
-          if (r_next(i_max) > 2.0 * r_c_min) then
+          if (r_next(i_max) > 2.0 * max_dist) then
             vor_part_s(i_next(i_max)) = 0
             i_next(i_max) = 0
           endif
