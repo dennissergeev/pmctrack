@@ -3,47 +3,47 @@ module params
 
   implicit none
 
-  character(len=*), parameter :: CONFIG_FILE = "settings.conf"
-  character(len=256)          :: datadir
-  character(len=256)          :: outdir
-  character(len=256)          :: vort_name
-  character(len=256)          :: u_name
-  character(len=256)          :: v_name
-  character(len=256)          :: psea_name
-  character(len=256)          :: land_name
-  character(len=256)          :: prefix_lvl
-  character(len=256)          :: prefix_sfc
-  integer                     :: year_start, month_start, day_start, hour_start
-  integer                     :: year_end, month_end, day_end, hour_end
-  integer                     :: vor_lvl
-  integer                     :: steer_lvl_btm, steer_lvl_top
-  integer                     :: proj
-  integer                     :: vert_grid
-  integer                     :: nx1, nx2, ny1, ny2
-  !integer                    :: nt
-  !real(wp)                   :: del_t
+  character(len=*), parameter   :: CONFIG_FILE = "settings.conf"
+  character(len=256), protected :: datadir
+  character(len=256), protected :: outdir
+  character(len=256), protected :: vort_name
+  character(len=256), protected :: u_name
+  character(len=256), protected :: v_name
+  character(len=256), protected :: psea_name
+  character(len=256), protected :: land_name
+  character(len=256), protected :: prefix_lvl
+  character(len=256), protected :: prefix_sfc
+  integer           , protected :: year_start, month_start, day_start, hour_start
+  integer           , protected :: year_end, month_end, day_end, hour_end
+  integer           , protected :: vor_lvl
+  integer           , protected :: steer_lvl_btm, steer_lvl_top
+  integer           , protected :: proj
+  integer           , protected :: vert_grid
+  integer                       :: nx1, nx2, ny1, ny2
+  !integer          , protected:: nt
+  !real(wp)         , protected:: del_t
   ! parameter for smoothing of vorticity
-  integer                     :: smth_type
-  integer                     :: nsmth_x, nsmth_y
-  real(wp)                    :: r_smth
+  integer           , protected :: smth_type
+  integer           , protected :: nsmth_x, nsmth_y
+  real(wp)          , protected :: r_smth
   ! parameter for detecting vortex
-  real(wp)                    :: zeta_max0, zeta_min0
-  real(wp)                    :: int_zeta_min0, gamma
+  real(wp)          , protected :: zeta_max0, zeta_min0
+  real(wp)          , protected :: int_zeta_min0, gamma
   ! parameter for excluding the synoptic scale disturbances
-  real(wp)                    :: d_cf_min, size_synop
-  real(wp)                    :: del_psea_min, distance_ec
+  real(wp)          , protected :: d_cf_min, size_synop
+  real(wp)          , protected :: del_psea_min, distance_ec
   ! parameter for calculating steering winds
-  integer                     :: steering_type
-  integer                     :: n_steering_x, n_steering_y
-  real(wp)                    :: r_steering
+  integer           , protected :: steering_type
+  integer           , protected :: n_steering_x, n_steering_y
+  real(wp)          , protected :: r_steering
   ! parameter for linking vortex
-  integer                     :: track_type
-  real(wp)                    :: del_lon, del_lat, del_r
+  integer           , protected :: track_type
+  real(wp)          , protected :: del_lon, del_lat, del_r
   ! parameter for checking the track
-  integer                     :: period_min
-
+  integer           , protected :: period_min
+                              
   ! Debug flag
-  logical                     :: dbg
+  logical           , protected :: dbg
 
 contains
   subroutine get_config_params()
