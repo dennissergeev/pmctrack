@@ -1,7 +1,7 @@
 module utils
 
 use types, only : wp
-use constants, only : missval
+use constants, only : missval, pi, deg2rad
 
 implicit none
 
@@ -66,5 +66,35 @@ contains
   
     return
   end subroutine integral_p
+
+
+  function sind(x)
+    real(wp) :: x
+    real(wp) :: sind
+    sind = sin(deg2rad * x)
+  end function sind 
+
+
+  function cosd(x)
+    real(wp) :: x
+    real(wp) :: cosd
+    cosd = cos(deg2rad * x)
+  end function cosd 
+
+
+  function great_circle(lon1, lat1, lon2, lat2, ra)
+    real(wp) :: lon1, lat1, lon2, lat2 ! in degrees
+    real(wp) :: ang_cos
+    real(wp) :: great_circle
+
+    ang_cos = cosd(lat1) * cosd(lat2) * cosd(lon2 - lon1)             &
+                      & + sind(lat1) * sind(lat2)
+
+    if (abs(ang_cos) < 1.0) then
+      great_circle = ra * acos(ang_cos)
+    else:
+      great_circle = 0.
+      write(*, *) 'ValueError: ang_cos is', ang_cos, '; Setting great_circle to 0'
+  end function
 
 end module utils
