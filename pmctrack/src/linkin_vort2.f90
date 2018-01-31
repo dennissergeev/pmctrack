@@ -67,6 +67,7 @@ subroutine linkin_vort2(mlon, mlat, mtype, u_vor_f, v_vor_f, nt,              &
 
   do kt = 1, nt-1 ! Time loop
 
+    ! Skipped on the first iteration: vor_num=0
     do i_max = 1, n_max(kt)
       do i_vor_num = 1, vor_num           
         if (i_max == vor_index(i_vor_num, kt)) then 
@@ -77,17 +78,15 @@ subroutine linkin_vort2(mlon, mlat, mtype, u_vor_f, v_vor_f, nt,              &
       enddo
     enddo
 
-
     ! t=kt -> t=kt+1
-
     do i_max = 1, n_max(kt)
 
       if (proj==1) then
-        e_mv_lon = (u_vor_f(i_max,kt) * del_t / (ra * cosd(mlat(i_max,kt)))) * rad2deg        
-        e_mv_lat = (v_vor_f(i_max,kt) * del_t / ra) * rad2deg
+        e_mv_lon = (u_vor_f(i_max, kt) * del_t / (ra * cosd(mlat(i_max,kt)))) * rad2deg        
+        e_mv_lat = (v_vor_f(i_max, kt) * del_t / ra                         ) * rad2deg
       elseif (proj==2) then
-        e_mv_lon = u_vor_f(i_max,kt) * del_t
-        e_mv_lat = v_vor_f(i_max,kt) * del_t
+        e_mv_lon = u_vor_f(i_max, kt) * del_t
+        e_mv_lat = v_vor_f(i_max, kt) * del_t
       endif
 
       e_mlon = mlon(i_max, kt) + e_mv_lon        
@@ -97,7 +96,8 @@ subroutine linkin_vort2(mlon, mlat, mtype, u_vor_f, v_vor_f, nt,              &
 
       do i_max1 = 1, n_max(kt+1)
 
-        if(proj==1)then
+        ! Calculate distance travelled by the vortex
+        if (proj == 1) then
           r_tmp = great_circle(mlon(i_max1, kt+1), e_mlon,                  &
                              & mlat(i_max1, kt+1), e_mlat, ra)
             ! dist = cosd(e_mlat)*cosd(mlat(i_max1, kt+1))                    &
@@ -109,15 +109,13 @@ subroutine linkin_vort2(mlon, mlat, mtype, u_vor_f, v_vor_f, nt,              &
             !   theta_tmp = 0.0
             ! endif
             ! r_tmp = ra * theta_tmp
-
-        elseif (proj==2) then
-          r_tmp=sqrt( (mlon(i_max1,kt+1)-e_mlon)**2                         &
-                     +(mlat(i_max1,kt+1)-e_mlat)**2)
+        elseif (proj == 2) then
+          r_tmp=sqrt( (mlon(i_max1,kt+1) - e_mlon)**2                         &
+                     +(mlat(i_max1,kt+1) - e_mlat)**2)
         endif
 
         if (r_tmp <= r_c_min) then
           ! write (78,*)kt,mlon(i_max,kt),mlat(i_max,kt),mlon(i_max1,kt+1),mlat(i_max1,kt+1),r_tmp*1.0e-3
-
           i_next(i_max) = i_max1
           r_c_min = r_tmp
           r_next(i_max) = r_tmp
@@ -132,8 +130,8 @@ subroutine linkin_vort2(mlon, mlat, mtype, u_vor_f, v_vor_f, nt,              &
         
         do j =0, ny
           do i = 0, nx
-            !if(abs(e_mlon-lon(i))<=del_lon.and.abs(e_mlat-lat(j))<=del_lat)then
-            if(proj==1)then
+            ! Calculate distance travelled by the vortex
+            if (proj == 1) then
               r_tmp = great_circle(lon(i), e_mlon,                            &
                                  & lat(j), e_mlat, ra)
               ! if(abs(cos(pi/180*e_mlat)*cos(pi/180*lat(j))&
@@ -149,17 +147,15 @@ subroutine linkin_vort2(mlon, mlat, mtype, u_vor_f, v_vor_f, nt,              &
               ! endif
               ! r_tmp=ra*theta_tmp
  
-            elseif(proj==2)then
-              r_tmp=sqrt((lon(i)-e_mlon)**2+(lat(j)-e_mlat)**2)
+            elseif (proj == 2) then
+              r_tmp = sqrt((lon(i)-e_mlon)**2 + (lat(j)-e_mlat)**2)
             endif
-          
           
             if (r_tmp <= r_c_min) then
               if (vor_part(i, j, kt+1) > 0) then
                 vor_part_s(vor_part(i, j, kt+1)) = vor_part_s(vor_part(i, j, kt+1)) + 1
               endif
             endif
-          !  endif
           enddo
         enddo
 
@@ -211,8 +207,8 @@ subroutine linkin_vort2(mlon, mlat, mtype, u_vor_f, v_vor_f, nt,              &
           enddo
         else ! The vortex appear at kt
           vor_num = vor_num + 1
-          vor_index(vor_num,kt) = i_max
-          vor_index(vor_num,kt+1) = i_next(i_max)
+          vor_index(vor_num, kt) = i_max
+          vor_index(vor_num, kt+1) = i_next(i_max)
         endif
       endif ! i_next > 0
     enddo ! i_max loop

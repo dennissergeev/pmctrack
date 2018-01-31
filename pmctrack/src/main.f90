@@ -56,8 +56,10 @@ program main
   ! Local arrays
   real(wp)         , allocatable              :: vor_smth(:, :)
   integer(4)       , allocatable              :: vor_part(:, :)
+  integer(4)       , allocatable              :: vor_part_prev(:, :)
   real(wp)         , allocatable              :: dummy(:, :)
   real(wp)         , allocatable              :: mlat(:), mlon(:)
+  real(wp)         , allocatable              :: mlat_prev(:), mlon_prev(:)
   integer(4)       , allocatable              :: mi(:), mj(:)
   real(wp)         , allocatable              :: max_vor(:)
   real(wp)         , allocatable              :: minlat(:), minlon(:)
@@ -67,10 +69,14 @@ program main
   real(wp)         , allocatable              :: mtype(:)
   real(wp)         , allocatable              :: u_vor_f(:)
   real(wp)         , allocatable              :: v_vor_f(:)
+  real(wp)         , allocatable              :: u_vor_f_prev(:)
+  real(wp)         , allocatable              :: v_vor_f_prev(:)
 
   ! Local variables
   ! work
-  integer                                     :: n_min, n_max
+  integer                                     :: n_min
+  integer                                     :: n_max
+  integer                                     :: n_max_prev
   ! Indices
   integer                                     :: lvl_idx
   integer                                     :: steer_idx_btm, steer_idx_top
@@ -181,22 +187,27 @@ program main
   print*,'nx', nx, 'ny', ny
 
   ! Allocate work arrays
-  allocate(vor_smth  (nx1:nx2, ny1:ny2      ))
-  allocate(vor_part  (nx1:nx2, ny1:ny2      ))
-  allocate(dummy     (nx1:nx2, ny1:ny2      ))
-  allocate(mlat      (                  nmax))
-  allocate(mlon      (                  nmax))
-  allocate(max_vor   (                  nmax))
-  allocate(s_part    (                  nmax))
-  allocate(mtype     (                  nmax))
-  allocate(minlat    (                  nmax))
-  allocate(minlon    (                  nmax))
-  allocate(z_min     (                  nmax))
-  allocate(z_min_size(                  nmax))
-  allocate(mi        (                  nmax));      mi = 0
-  allocate(mj        (                  nmax));      mj = 0
-  allocate(u_vor_f   (                  nmax)); u_vor_f = fillval
-  allocate(v_vor_f   (                  nmax)); v_vor_f = fillval
+  allocate(vor_smth     (nx1:nx2, ny1:ny2      ))
+  allocate(vor_part     (nx1:nx2, ny1:ny2      )); vor_part = 0
+  allocate(vor_part_prev(nx1:nx2, ny1:ny2      )); vor_part_prev = 0
+  allocate(dummy        (nx1:nx2, ny1:ny2      ))
+  allocate(mlat         (                  nmax)); mlat = fillval
+  allocate(mlon         (                  nmax)); mlon = fillval
+  allocate(mlat_prev    (                  nmax)); mlat_prev = fillval
+  allocate(mlon_prev    (                  nmax)); mlon_prev = fillval
+  allocate(max_vor      (                  nmax))
+  allocate(s_part       (                  nmax))
+  allocate(mtype        (                  nmax)); mtype = fillval
+  allocate(minlat       (                  nmax))
+  allocate(minlon       (                  nmax))
+  allocate(z_min        (                  nmax))
+  allocate(z_min_size   (                  nmax))
+  allocate(mi           (                  nmax));      mi = 0
+  allocate(mj           (                  nmax));      mj = 0
+  allocate(u_vor_f      (                  nmax)); u_vor_f = fillval
+  allocate(v_vor_f      (                  nmax)); v_vor_f = fillval
+  allocate(u_vor_f_prev (                  nmax)); u_vor_f_prev = fillval
+  allocate(v_vor_f_prev (                  nmax)); v_vor_f_prev = fillval
 
   write(nc_file_name, '(A,A,A,A)') trim(datadir), '/', trim(land_name), '.nc'
   call get_data_2d(nc_file_name, land_name, land_mask)
@@ -362,7 +373,6 @@ program main
         !       &u_vor_b(i_max,kt),v_vor_b(i_max,kt))
         !endif
       endif
-
     enddo ! i_max loop
     close(unit=fh_maxloc)
 
@@ -400,7 +410,19 @@ program main
     idt_pair(1) = idt
     idt = idt + timedelta(hours=del_t / time_step_s)
     idt_pair(2) = idt
-  enddo
+
+    
+
+  enddo ! Time loop
+
+  print*, '==================================================================='
+  print*, 'mlon', shape(mlon), mlon
+  print*, '==================================================================='
+  print*, 'mtype', shape(mtype), mtype
+  print*, '==================================================================='
+  print*, 'vor_part.shape', shape(vor_part)
+  print*, '==================================================================='
+  print*, 'n_max', n_max
 
   !write (*,*)'nx=', nx, 'ny=', ny,' nt=', nt, 'nz=', nz
   !write (*,*)'nx1=', nx1, 'nx2=', nx2, 'ny1=', ny1, 'ny2=', ny2
@@ -418,21 +440,26 @@ program main
   deallocate(psea)
   deallocate(land_mask)
 
-  deallocate(vor_smth  )
-  deallocate(vor_part  )
-  deallocate(dummy     )
-  deallocate(mlat      )
-  deallocate(mlon      )
-  deallocate(max_vor   )
-  deallocate(s_part    )
-  deallocate(mtype     )
-  deallocate(minlat    )
-  deallocate(minlon    )
-  deallocate(z_min     )
-  deallocate(z_min_size)
-  deallocate(mi        )
-  deallocate(mj        )
-  deallocate(u_vor_f   )
-  deallocate(v_vor_f   )
+  deallocate(vor_smth     )
+  deallocate(vor_part     )
+  deallocate(vor_part_prev)
+  deallocate(dummy        )
+  deallocate(mlat         )
+  deallocate(mlon         )
+  deallocate(mlat_prev    )
+  deallocate(mlon_prev    )
+  deallocate(max_vor      )
+  deallocate(s_part       )
+  deallocate(mtype        )
+  deallocate(minlat       )
+  deallocate(minlon       )
+  deallocate(z_min        )
+  deallocate(z_min_size   )
+  deallocate(mi           )
+  deallocate(mj           )
+  deallocate(u_vor_f      )
+  deallocate(v_vor_f      )
+  deallocate(u_vor_f_prev )
+  deallocate(v_vor_f_prev )
 
 end program main
