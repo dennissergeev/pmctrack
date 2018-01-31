@@ -31,13 +31,13 @@ subroutine linkin_vort2(mlon, mlat, mtype, u_vor_f, v_vor_f, nt,              &
   ! Local variables
   integer                  :: kt
   integer                  :: i_max, i_max1
-  integer                  :: i_next       (nmax,            nt)
-  real   (wp)              :: r_next     (0:nmax,            nt) ! TODO: check!
+  integer                  :: i_next       (nmax               )
+  real   (wp)              :: r_next     (0:nmax               ) ! TODO: check!
   real   (wp)              :: r_next_tmp
   integer                  :: vor_part_s   (nmax               )
   integer                  :: i, j
   integer                  :: i_vor_num, i_vor_num2
-  logical                  :: vor_prev_flag(nmax,            nt)
+  logical                  :: vor_prev_flag(nmax)
   ! integer                  :: vor_prev_idx (nmax,            nt)
   real   (wp)              :: e_mv_lon, e_mv_lat
   real   (wp)              :: e_mlon, e_mlat
@@ -46,6 +46,8 @@ subroutine linkin_vort2(mlon, mlat, mtype, u_vor_f, v_vor_f, nt,              &
   ! NEW VARIABLES
   real   (wp)              :: dist
 
+
+  r_c_min = del_r * 1.e3    
 
   r_tmp = 0.
   theta_tmp = 0.
@@ -60,7 +62,7 @@ subroutine linkin_vort2(mlon, mlat, mtype, u_vor_f, v_vor_f, nt,              &
 
   i_next = 0
 
-  vor_prev_flag(1:nmax, 1:nt) = .false.
+  vor_prev_flag(1:nmax) = .false.
   ! vor_prev_idx = 0
 
   do kt = 1, nt-1 ! Time loop
@@ -69,7 +71,7 @@ subroutine linkin_vort2(mlon, mlat, mtype, u_vor_f, v_vor_f, nt,              &
       do i_vor_num = 1, vor_num           
         if (i_max == vor_index(i_vor_num, kt)) then 
           ! The vortex labeled as i_max at kt  existed at kt-1
-          vor_prev_flag(i_max, kt) = .true.
+          vor_prev_flag(i_max) = .true.
           ! vor_prev_idx(i_max, kt) = vor_index(i_vor_num, kt-1)
         endif
       enddo
@@ -81,19 +83,18 @@ subroutine linkin_vort2(mlon, mlat, mtype, u_vor_f, v_vor_f, nt,              &
     do i_max = 1, n_max(kt)
 
       if (proj==1) then
-        e_mv_lon=(u_vor_f(i_max,kt)*del_t/(ra*cosd(mlat(i_max,kt))))*rad2deg        
-        e_mv_lat=(v_vor_f(i_max,kt)*del_t/ra)*rad2deg
+        e_mv_lon = (u_vor_f(i_max,kt) * del_t / (ra * cosd(mlat(i_max,kt)))) * rad2deg        
+        e_mv_lat = (v_vor_f(i_max,kt) * del_t / ra) * rad2deg
       elseif (proj==2) then
-        e_mv_lon=u_vor_f(i_max,kt)*del_t
-        e_mv_lat=v_vor_f(i_max,kt)*del_t
+        e_mv_lon = u_vor_f(i_max,kt) * del_t
+        e_mv_lat = v_vor_f(i_max,kt) * del_t
       endif
 
-      e_mlon=mlon(i_max,kt)+e_mv_lon        
-      e_mlat=mlat(i_max,kt)+e_mv_lat
+      e_mlon = mlon(i_max, kt) + e_mv_lon        
+      e_mlat = mlat(i_max, kt) + e_mv_lat
         
       ! -------- Tracking by estimation of movement ------
 
-      r_c_min = del_r * 1.e3    
       do i_max1 = 1, n_max(kt+1)
 
         if(proj==1)then
@@ -117,9 +118,9 @@ subroutine linkin_vort2(mlon, mlat, mtype, u_vor_f, v_vor_f, nt,              &
         if (r_tmp <= r_c_min) then
           ! write (78,*)kt,mlon(i_max,kt),mlat(i_max,kt),mlon(i_max1,kt+1),mlat(i_max1,kt+1),r_tmp*1.0e-3
 
-          i_next(i_max, kt) = i_max1
+          i_next(i_max) = i_max1
           r_c_min = r_tmp
-          r_next(i_max, kt) = r_tmp
+          r_next(i_max) = r_tmp
         endif
       enddo
 
@@ -127,7 +128,7 @@ subroutine linkin_vort2(mlon, mlat, mtype, u_vor_f, v_vor_f, nt,              &
 
       vor_part_s = 0
 
-      if (i_next(i_max, kt) == 0) then
+      if (i_next(i_max) == 0) then
         
         do j =0, ny
           do i = 0, nx
@@ -153,7 +154,7 @@ subroutine linkin_vort2(mlon, mlat, mtype, u_vor_f, v_vor_f, nt,              &
             endif
           
           
-            if (r_tmp <= del_r * 1.0e3) then
+            if (r_tmp <= r_c_min) then
               if (vor_part(i, j, kt+1) > 0) then
                 vor_part_s(vor_part(i, j, kt+1)) = vor_part_s(vor_part(i, j, kt+1)) + 1
               endif
@@ -166,52 +167,52 @@ subroutine linkin_vort2(mlon, mlat, mtype, u_vor_f, v_vor_f, nt,              &
         do ! "while loop"
           if (maxval(vor_part_s) == 0) exit
           
-          i_next(i_max,kt)=maxloc(vor_part_s,1)          
+          i_next(i_max) = maxloc(vor_part_s, 1)          
           
           if (proj == 1) then
-            if (e_mlon /= mlon(i_next(i_max, kt), kt+1))then
-              r_next(i_max, kt) = great_circle(mlon(i_next(i_max,kt),kt+1), e_mlon, &
-                                             & mlat(i_next(i_max,kt),kt+1), e_mlat, ra)
+            if (e_mlon /= mlon(i_next(i_max), kt+1))then
+              r_next(i_max) = great_circle(mlon(i_next(i_max), kt+1), e_mlon, &
+                                         & mlat(i_next(i_max), kt+1), e_mlat, ra)
               ! r_next(i_max, kt) =ra*&
-              !      &acos(cos(pi/180*e_mlat)*cos(pi/180*mlat(i_next(i_max,kt),kt+1))&
-              !      &*cos(pi/180*(e_mlon-mlon(i_next(i_max,kt),kt+1)))&
-              !      &+sin(pi/180*e_mlat)*sin(pi/180*mlat(i_next(i_max,kt),kt+1)))
+              !      &acos(cos(pi/180*e_mlat)*cos(pi/180*mlat(i_next(i_max),kt+1))&
+              !      &*cos(pi/180*(e_mlon-mlon(i_next(i_max),kt+1)))&
+              !      &+sin(pi/180*e_mlat)*sin(pi/180*mlat(i_next(i_max),kt+1)))
             else
-              r_next(i_max, kt) = ra * pi/180 * (e_mlat - mlat(i_next(i_max, kt), kt+1))
+              r_next(i_max) = ra * pi/180 * (e_mlat - mlat(i_next(i_max), kt+1))
             endif
           elseif (proj == 2) then
-            r_next(i_max,kt)=sqrt((e_mlon-mlon(i_next(i_max,kt),kt+1))**2+&
-                                  &(e_mlat-mlat(i_next(i_max,kt),kt+1))**2)
+            r_next(i_max) = sqrt((e_mlon - mlon(i_next(i_max), kt+1))**2      &
+                              & +(e_mlat - mlat(i_next(i_max), kt+1))**2)
           endif
 
 
-          if (r_next(i_max, kt) <= 2.0 * del_r * 1.0e3) exit
-          if (mtype(i_next(i_max, kt), kt+1) >= 1) exit
-          if (r_next(i_max, kt) > 2.0 * del_r * 1.0e3) then
-            vor_part_s(i_next(i_max, kt)) = 0
-            i_next(i_max,kt) = 0
+          if (r_next(i_max) <= 2.0 * r_c_min) exit
+          if (mtype(i_next(i_max), kt+1) >= 1) exit
+          if (r_next(i_max) > 2.0 * r_c_min) then
+            vor_part_s(i_next(i_max)) = 0
+            i_next(i_max) = 0
           endif
         enddo ! "while loop"
-      endif  ! if (i_next(i_max, kt) == 0) condition
+      endif  ! i_next(i_max) == 0
     enddo ! i_max loop
 
     ! ------------- Connecting vortex(kt)to vortex(kt+1) ------------------
     do i_max=1, n_max(kt)
-      if (i_next(i_max, kt) > 0) then
+      if (i_next(i_max) > 0) then
         write (*,'(A,I4,A,I4,A,I4,A,I4)') "Vortex labeled as ", i_max, ' at ' &
-             & , kt, ' is connected to vortex ', i_next(i_max, kt), ' at ', kt + 1
+             & , kt, ' is connected to vortex ', i_next(i_max), ' at ', kt + 1
 
-        if (vor_prev_flag(i_max, kt)) then  ! The vortex existed at kt-1
+        if (vor_prev_flag(i_max)) then  ! The vortex existed at kt-1
           write (*,'(A,I4,A,I4,A)') "Vortex labeled as ", i_max, ' at ', kt, ' existed at kt-1'
           do i_vor_num = 1, vor_num
             if (vor_index(i_vor_num, kt) == i_max) then 
-              vor_index(i_vor_num,kt+1)=i_next(i_max,kt)
+              vor_index(i_vor_num, kt+1) = i_next(i_max)
             endif
           enddo
         else ! The vortex appear at kt
-          vor_num=vor_num+1
-          vor_index(vor_num,kt)=i_max
-          vor_index(vor_num,kt+1)=i_next(i_max,kt)
+          vor_num = vor_num + 1
+          vor_index(vor_num,kt) = i_max
+          vor_index(vor_num,kt+1) = i_next(i_max)
         endif
       endif ! i_next > 0
     enddo ! i_max loop
@@ -222,7 +223,7 @@ subroutine linkin_vort2(mlon, mlat, mtype, u_vor_f, v_vor_f, nt,              &
       if (dbg) then
         print*, 'linkin_vort2(229):', i_vor_num, kt, vor_index(i_vor_num, kt)
       endif
-      r_next_tmp = r_next(vor_index(i_vor_num, kt), kt)
+      r_next_tmp = r_next(vor_index(i_vor_num, kt))
           
       do i_vor_num2 = 1, vor_num
         if (vor_index(i_vor_num, kt+1) == vor_index(i_vor_num2, kt+1)         &
@@ -231,9 +232,9 @@ subroutine linkin_vort2(mlon, mlat, mtype, u_vor_f, v_vor_f, nt,              &
           if (vor_merge(i_vor_num) /= i_vor_num2 &
             & .and. vor_merge(i_vor_num2) == 0) then
             
-            if (r_next_tmp > r_next(vor_index(i_vor_num2, kt), kt)) then 
+            if (r_next_tmp > r_next(vor_index(i_vor_num2, kt))) then 
               vor_merge(i_vor_num) = i_vor_num2
-              r_next_tmp = r_next(vor_index(i_vor_num2, kt), kt)
+              r_next_tmp = r_next(vor_index(i_vor_num2, kt))
             endif
             
             if (vor_merge(i_vor_num) > 0) then
