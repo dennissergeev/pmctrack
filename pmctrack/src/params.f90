@@ -19,7 +19,7 @@ module params
   integer           , protected :: steer_lvl_btm, steer_lvl_top
   integer           , protected :: proj
   integer           , protected :: vert_grid
-  integer                       :: nx1, nx2, ny1, ny2
+  integer           , protected :: nx1, nx2, ny1, ny2
   !integer          , protected:: nt
   !real(wp)         , protected:: del_t
   ! parameter for smoothing of vorticity
@@ -180,4 +180,15 @@ contains
       write (*,*)'Use radius to connect vortices'
     end if
   end subroutine get_config_params
+
+
+  subroutine set_bounds_auto(nx, ny)
+
+    integer, intent(in) :: nx, ny
+
+    if (nx1 == -1) nx1 = 0
+    if (nx2 == -1) nx2 = nx
+    if (ny1 == -1) ny1 = 0
+    if (ny2 == -1) ny2 = ny
+  end subroutine set_bounds_auto
 end module params

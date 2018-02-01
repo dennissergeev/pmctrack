@@ -3,7 +3,7 @@ program main
 
   use types, only : wp
   use constants, only : fillval, steer_nt, nmax, pmax, rkilo
-  use params, only : get_config_params, dbg,                                  &
+  use params, only : get_config_params, set_bounds_auto, dbg,                 &
     & datadir, outdir, prefix_sfc, prefix_lvl,                                &
     & year_start, month_start, day_start, hour_start,                         &
     & year_end, month_end, day_end, hour_end,                                 &
@@ -56,7 +56,6 @@ program main
   ! Local arrays
   real(wp)         , allocatable              :: vor_smth(:, :)
   integer(4)       , allocatable              :: vor_part(:, :)
-  integer(4)       , allocatable              :: vor_part_prev(:, :)
   real(wp)         , allocatable              :: dummy(:, :)
   real(wp)         , allocatable              :: mlat(:), mlon(:)
   real(wp)         , allocatable              :: mlat_prev(:), mlon_prev(:)
@@ -73,6 +72,9 @@ program main
   real(wp)         , allocatable              :: v_vor_f_prev(:)
   real(wp)         , allocatable              :: vor_merge(:)
   real(wp)         , allocatable              :: vor_index(:)
+  real(wp)         , allocatable              :: vortex(:, :)
+  integer          , allocatable              :: vortex_type(:)
+  integer          , allocatable              :: vortex_flag(:)
 
   ! Local variables
   ! work
@@ -129,10 +131,7 @@ program main
   call get_dims(nc_file_name, DIM_NAMES, nt_per_file, nlvls, nlats, nlons)
   nx = nlons - 1
   ny = nlats - 1
-  if (nx1 == -1) nx1 = 0
-  if (nx2 == -1) nx2 = nx
-  if (ny1 == -1) ny1 = 0
-  if (ny2 == -1) ny2 = ny
+  call set_bounds_auto(nx, ny)
   nx12 = nx2 - nx1
   ny12 = ny2 - ny1
 
@@ -192,7 +191,6 @@ program main
   ! Allocate work arrays
   allocate(vor_smth     (nx1:nx2, ny1:ny2      ))
   allocate(vor_part     (nx1:nx2, ny1:ny2      )); vor_part = 0
-  allocate(vor_part_prev(nx1:nx2, ny1:ny2      )); vor_part_prev = 0
   allocate(dummy        (nx1:nx2, ny1:ny2      ))
   allocate(mlat         (                  nmax)); mlat = fillval
   allocate(mlon         (                  nmax)); mlon = fillval
@@ -211,8 +209,10 @@ program main
   allocate(v_vor_f      (                  nmax)); v_vor_f = fillval
   allocate(u_vor_f_prev (                  nmax)); u_vor_f_prev = fillval
   allocate(v_vor_f_prev (                  nmax)); v_vor_f_prev = fillval
-  allocate(vor_index    (                  pmax));
+  allocate(vor_index    (                  pmax)); vor_index = 0
   allocate(vor_merge    (                  pmax));
+
+  vor_num = 0
 
   write(nc_file_name, '(A,A,A,A)') trim(datadir), '/', trim(land_name), '.nc'
   call get_data_2d(nc_file_name, land_name, land_mask)
@@ -277,7 +277,7 @@ program main
     write(unit=fh_bin) vor(nx1:nx2,ny1:ny2)
     write(unit=fh_bin) vor_smth(nx1:nx2,ny1:ny2)
 
-    write (*,'(A,I4.4)') 'Detecting vortex at kt = ', kt
+    ! write (*,'(A,I4.4)') 'Detecting vortex at kt = ', kt
 
     call vor_partition(vor_smth(nx1:nx2, ny1:ny2),                            &
                      & nx12, ny12,                                            &
@@ -424,20 +424,28 @@ program main
        ! WIP       
        call link_vort_rad(nx12, ny12, lons(nx1:nx2), lats(ny1:ny2), del_t, mtype, &
                         & mlon_prev, mlat_prev, mlon, mlat,                       &
-                        & u_vor_f_prev, v_vor_f_prev, u_vor_f, v_vor_f,           &
-                        & vor_part_prev(nx1:nx2, ny1:ny2), vor_part(nx1:nx2, ny1:ny2), &
+                        & u_vor_f_prev, v_vor_f_prev,                             &
+                        & vor_part(nx1:nx2, ny1:ny2),                             &
                         & n_max_prev, n_max,                                      &
                         & vor_num, vor_index, vor_merge)
  
       endif
     endif
+
+    print*, '>>>', vor_num
+
+    allocate(vortex     (vor_num, 4))
+    allocate(vortex_type(vor_num   ))
+    allocate(vortex_flag(vor_num   ))
     
     n_max_prev = n_max
     mlon_prev = mlon
     mlat_prev = mlat
     u_vor_f_prev = u_vor_f 
     v_vor_f_prev = v_vor_f 
-    vor_part_prev = vor_part
+    deallocate(vortex     )
+    deallocate(vortex_type)
+    deallocate(vortex_flag)
   enddo ! Time loop
 
   print*, '==================================================================='
@@ -471,7 +479,6 @@ program main
 
   deallocate(vor_smth     )
   deallocate(vor_part     )
-  deallocate(vor_part_prev)
   deallocate(dummy        )
   deallocate(mlat         )
   deallocate(mlon         )
