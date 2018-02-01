@@ -3,8 +3,7 @@ subroutine vor_partition(vor_in, nx, ny, &
      & n_max_out, lat, lon, vor_part_max, s_part_out)
 
 use constants, only: pi, ra, rkilo, fillval, nmax, pmax, mx, my
-use params, only : proj, d_cf_min, size_synop, &
-  & zeta_max0, zeta_min0, int_zeta_min0, gamma
+use params, only : proj, zeta_max0, zeta_min0, int_zeta_min0, gamma
 
 implicit none 
 
@@ -135,9 +134,9 @@ do
     if(p==0)exit
     mi_tmp=surround8_buf(1,p)
     mj_tmp=surround8_buf(2,p)
-#ifdef debug
-    print*, 'vor_partition(143):', mi_tmp, mj_tmp
-#endif
+!#ifdef debug
+!    print*, 'vor_partition(143):', mi_tmp, mj_tmp
+!#endif
     p=p-1
 
     do m=1,8
@@ -164,7 +163,7 @@ do
 
 !--------------- Check cold front and synoptic low----------------
     call cf_synop_check(vor_in(0:nx,0:ny),vor_part(0:nx,0:ny),n_part,nx,ny,proj,&
-         &lon(0:nx),lat(0:ny),mtype_part(n_part),d_cf_min,size_synop)
+         &lon(0:nx),lat(0:ny),mtype_part(n_part))
 
       n_max=n_max+1         
       buf_mij(1,n_max)=mi

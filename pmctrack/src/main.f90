@@ -2,7 +2,7 @@ program main
   use datetime_module
 
   use types, only : wp
-  use constants, only : fillval, steer_nt, nmax, rkilo
+  use constants, only : fillval, steer_nt, nmax, pmax, rkilo
   use params, only : get_config_params, dbg,                                  &
     & datadir, outdir, prefix_sfc, prefix_lvl,                                &
     & year_start, month_start, day_start, hour_start,                         &
@@ -10,7 +10,7 @@ program main
     & vort_name, u_name, v_name, psea_name, land_name,                        &
     & vor_lvl, steer_lvl_btm, steer_lvl_top,                                  &
     & nx1, nx2, ny1, ny2,                                                     &
-    & smth_type, proj, steering_type
+    & smth_type, proj, steering_type, track_type
   use nc_io, only : get_dims, get_time, get_coords,                           &
     & get_xy_from_xyzt, get_xy_from_xyt, get_xyz_from_xyzt,                   &
     & get_data_2d
@@ -71,12 +71,15 @@ program main
   real(wp)         , allocatable              :: v_vor_f(:)
   real(wp)         , allocatable              :: u_vor_f_prev(:)
   real(wp)         , allocatable              :: v_vor_f_prev(:)
+  real(wp)         , allocatable              :: vor_merge(:)
+  real(wp)         , allocatable              :: vor_index(:)
 
   ! Local variables
   ! work
   integer                                     :: n_min
   integer                                     :: n_max
   integer                                     :: n_max_prev
+  integer                                     :: vor_num
   ! Indices
   integer                                     :: lvl_idx
   integer                                     :: steer_idx_btm, steer_idx_top
@@ -208,6 +211,8 @@ program main
   allocate(v_vor_f      (                  nmax)); v_vor_f = fillval
   allocate(u_vor_f_prev (                  nmax)); u_vor_f_prev = fillval
   allocate(v_vor_f_prev (                  nmax)); v_vor_f_prev = fillval
+  allocate(vor_index    (                  pmax));
+  allocate(vor_merge    (                  pmax));
 
   write(nc_file_name, '(A,A,A,A)') trim(datadir), '/', trim(land_name), '.nc'
   call get_data_2d(nc_file_name, land_name, land_mask)
@@ -411,8 +416,28 @@ program main
     idt = idt + timedelta(hours=del_t / time_step_s)
     idt_pair(2) = idt
 
+    ! Link vortices
+    if (kt > 1) then
+      if (track_type == 1) then
+        write(*, *) "NotImplementedError"; stop
+      elseif (track_type == 2) then
+       ! WIP       
+       call link_vort_rad(nx12, ny12, lons(nx1:nx2), lats(ny1:ny2), del_t, mtype, &
+                        & mlon_prev, mlat_prev, mlon, mlat,                       &
+                        & u_vor_f_prev, v_vor_f_prev, u_vor_f, v_vor_f,           &
+                        & vor_part_prev(nx1:nx2, ny1:ny2), vor_part(nx1:nx2, ny1:ny2), &
+                        & n_max_prev, n_max,                                      &
+                        & vor_num, vor_index, vor_merge)
+ 
+      endif
+    endif
     
-
+    n_max_prev = n_max
+    mlon_prev = mlon
+    mlat_prev = mlat
+    u_vor_f_prev = u_vor_f 
+    v_vor_f_prev = v_vor_f 
+    vor_part_prev = vor_part
   enddo ! Time loop
 
   print*, '==================================================================='
@@ -423,6 +448,10 @@ program main
   print*, 'vor_part.shape', shape(vor_part)
   print*, '==================================================================='
   print*, 'n_max', n_max
+  print*, '==================================================================='
+  ! print*, 'vor_index', vor_index
+  !print*, '==================================================================='
+  !print*, 'vor_merge', vor_merge
 
   !write (*,*)'nx=', nx, 'ny=', ny,' nt=', nt, 'nz=', nz
   !write (*,*)'nx1=', nx1, 'nx2=', nx2, 'ny1=', ny1, 'ny2=', ny2
@@ -461,5 +490,7 @@ program main
   deallocate(v_vor_f      )
   deallocate(u_vor_f_prev )
   deallocate(v_vor_f_prev )
+  deallocate(vor_merge    )
+  deallocate(vor_index    )
 
 end program main
