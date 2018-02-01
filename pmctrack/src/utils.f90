@@ -8,7 +8,6 @@ implicit none
 contains
 
   subroutine make_nc_file_name(nc_file_name, datadir, prefix, y, m, var_name)
-    implicit none
 
     character(len=*)              , intent(inout) :: nc_file_name
     character(len=*)              , intent(in)    :: datadir
@@ -26,8 +25,6 @@ contains
 
 
   subroutine apply_mask_2d(var, nx, ny, flag)
-  
-    implicit none
   
     integer(4), intent (in)    :: nx, ny
     real   (4), intent (inout) :: var (0:nx, 0:ny)
@@ -47,25 +44,21 @@ contains
   end subroutine apply_mask_2d
   
   
-  subroutine integral_p(var,int,nz,p)
-  
-    implicit none
-  
-    integer ,intent (in)::nz
-    real (4),intent (in)::var(nz)
-    real (4),intent (in)::p(nz)
-    real (4),intent (out)::int
-    integer ::k
+  function integral_p(var, p, nz)
+    integer , intent (in)  :: nz
+    real(wp), intent (in)  :: var(nz)
+    real(wp), intent (in)  :: p  (nz)
+    real(wp)               :: integral_p
+    integer                :: k
     
-    int=0.
+    integral_p = 0.
   
-    do k=1,nz-1
-       int=int+0.5*(var(k)+var(k+1))*(p(k)-p(k+1))
+    do k = 1, nz-1
+      integral_p = integral_p + 0.5 * (var(k) + var(k+1)) * (p(k) - p(k+1))
     end do
-    int=int/(p(1)-p(nz))
+    integral_p = integral_p / (p(1) - p(nz))
   
-    return
-  end subroutine integral_p
+  end function integral_p
 
 
   function sind(x)
@@ -84,6 +77,7 @@ contains
 
   function great_circle(lon1, lat1, lon2, lat2, ra)
     real(wp) :: lon1, lat1, lon2, lat2 ! in degrees
+    real(wp) :: ra
     real(wp) :: ang_cos
     real(wp) :: great_circle
 
@@ -92,9 +86,10 @@ contains
 
     if (abs(ang_cos) < 1.0) then
       great_circle = ra * acos(ang_cos)
-    else:
+    else
       great_circle = 0.
       write(*, *) 'ValueError: ang_cos is', ang_cos, '; Setting great_circle to 0'
+    endif
   end function
 
 end module utils

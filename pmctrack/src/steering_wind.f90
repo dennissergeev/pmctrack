@@ -36,8 +36,8 @@ subroutine steering_wind_f(u,v,p,nx,ny,nz,nt,kt,mi,mj,u_vor,v_vor)
   do jj=-n_steering_y,n_steering_y
      do ii=-n_steering_x,n_steering_x
         if(mi+ii>=0.and.mi+ii<=nx.and.mj+jj>=0.and.mj+jj<=ny)then
-           call integral_p(u_t0t1(mi+ii,mj+jj,1:nz),u_int(mi+ii,mj+jj),nz,p)
-           call integral_p(v_t0t1(mi+ii,mj+jj,1:nz),v_int(mi+ii,mj+jj),nz,p)
+           u_int(mi+ii,mj+jj) = integral_p(u_t0t1(mi+ii,mj+jj,1:nz), p, nz)
+           v_int(mi+ii,mj+jj) = integral_p(v_t0t1(mi+ii,mj+jj,1:nz), p, nz)
            u_vor=u_vor+u_int(mi+ii,mj+jj)
            v_vor=v_vor+v_int(mi+ii,mj+jj)
            n_steering_s=n_steering_s+1
@@ -91,8 +91,8 @@ subroutine steering_wind_b(u,v,p,nx,ny,nz,nt,kt,mi,mj,u_vor,v_vor)
   do jj=-n_steering_y,n_steering_y
      do ii=-n_steering_x,n_steering_x
         if(mi+ii>=0.and.mi+ii<=nx.and.mj+jj>=0.and.mj+jj<=ny)then
-           call integral_p(u_t0t1(mi+ii,mj+jj,1:nz),u_int(mi+ii,mj+jj),nz,p)
-           call integral_p(v_t0t1(mi+ii,mj+jj,1:nz),v_int(mi+ii,mj+jj),nz,p)
+           u_int(mi+ii,mj+jj) = integral_p(u_t0t1(mi+ii,mj+jj,1:nz), p, nz)
+           v_int(mi+ii,mj+jj) = integral_p(v_t0t1(mi+ii,mj+jj,1:nz), p, nz)
            u_vor=u_vor+u_int(mi+ii,mj+jj)
            v_vor=v_vor+v_int(mi+ii,mj+jj)
            n_steering_s=n_steering_s+1
@@ -168,8 +168,8 @@ subroutine steering_wind_r(u,v,p,lon,lat,nx,ny,nz,nt,kt1,kt2,mi,mj,&
          d=sqrt((ii*lonin)**2+(jj*latin)**2)
        end if
        if(d<=r_steering*1.0e3)then
-         call integral_p(u_t0t1(mi+ii,mj+jj,1:nz),u_int(mi+ii,mj+jj),nz,p)
-         call integral_p(v_t0t1(mi+ii,mj+jj,1:nz),v_int(mi+ii,mj+jj),nz,p)
+         u_int(mi+ii,mj+jj) = integral_p(u_t0t1(mi+ii,mj+jj,1:nz), p, nz)
+         v_int(mi+ii,mj+jj) = integral_p(v_t0t1(mi+ii,mj+jj,1:nz), p, nz)
          if(proj==1)then
            u_vor=u_vor+u_int(mi+ii,mj+jj)*cos(pi/180*lat(mj+jj))
            v_vor=v_vor+v_int(mi+ii,mj+jj)*cos(pi/180*lat(mj+jj))
