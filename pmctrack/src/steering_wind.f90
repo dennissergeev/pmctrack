@@ -110,8 +110,9 @@ subroutine steering_wind_b(u,v,p,nx,ny,nz,nt,kt,mi,mj,u_vor,v_vor)
 end subroutine steering_wind_b
 
 
-subroutine steering_wind_r(u,v,p,lon,lat,nx,ny,nz,nt,mi,mj,&
-     &u_vor,v_vor)
+subroutine steering_wind_r(u, v, p, lon, lat,                                 &
+  &                        nx, ny, nz, nt, mi, mj,                            &
+  &                        u_vor, v_vor)
 
   use types, only : wp
   use constants, only: pi, ra, rkilo
@@ -142,16 +143,17 @@ subroutine steering_wind_r(u,v,p,lon,lat,nx,ny,nz,nt,mi,mj,&
   real(wp)               :: lonin, latin
   integer                :: x_steer, y_steer
   integer                :: kt1, kt2
+  integer                :: add_xy
 
   kt1 = 1
   kt2 = nt ! should be 2
+  add_xy = 0 ! TODO: check why it was +5
 
-  lonin = lon(2) - lon(1)
-  latin = lat(2) - lat(1)
+  lonin = abs(lon(1) - lon(0))
+  latin = abs(lat(1) - lat(0))
 
-  x_steer = nint(r_steering * rkilo / (ra * lonin * deg2rad * cosd(lat(mj))) + 5)
-  y_steer = nint(r_steering * rkilo / (ra * latin * deg2rad) + 5)
-  ! TODO: check why +5
+  x_steer = nint(r_steering * rkilo / (ra * lonin * deg2rad * cosd(lat(mj))) + add_xy)
+  y_steer = nint(r_steering * rkilo / (ra * latin * deg2rad) + add_xy)
 
   ! print*, '-> x_steer', x_steer
   ! print*, '-> y_steer', y_steer
@@ -166,8 +168,8 @@ subroutine steering_wind_r(u,v,p,lon,lat,nx,ny,nz,nt,mi,mj,&
   ! print*, '-> u_t1', minval(u(0:nx, 0:ny, 1:nz, kt2)), maxval(u(0:nx, 0:ny, 1:nz, kt2))
   ! print*, '-> min u1-u0', minval(u(0:nx, 0:ny, 1:nz, kt2) - u(0:nx, 0:ny, 1:nz, kt1))
   ! print*, '-> max u1-u0', maxval(u(0:nx, 0:ny, 1:nz, kt2) - u(0:nx, 0:ny, 1:nz, kt2))
-  ! u_t0t1 = 0.5 * (u(0:nx, 0:ny, 1:nz, kt1) + u(0:nx, 0:ny, 1:nz, kt2))
-  ! v_t0t1 = 0.5 * (v(0:nx, 0:ny, 1:nz, kt1) + v(0:nx, 0:ny, 1:nz, kt2))
+  u_t0t1 = 0.5 * (u(0:nx, 0:ny, 1:nz, kt1) + u(0:nx, 0:ny, 1:nz, kt2))
+  v_t0t1 = 0.5 * (v(0:nx, 0:ny, 1:nz, kt1) + v(0:nx, 0:ny, 1:nz, kt2))
   ! print*, '-> u_t0t1', minval(u_t0t1), maxval(u_t0t1)
   ! print*, '-> v_t0t1', minval(v_t0t1), maxval(v_t0t1)
 
@@ -185,6 +187,7 @@ subroutine steering_wind_r(u,v,p,lon,lat,nx,ny,nz,nt,mi,mj,&
         if(d <= r_steering * rkilo)then
           u_int(mi+ii, mj+jj) = integral_p(u_t0t1(mi+ii, mj+jj, 1:nz), p, nz)
           v_int(mi+ii, mj+jj) = integral_p(v_t0t1(mi+ii, mj+jj, 1:nz), p, nz)
+          ! print*, '--->', lon(mi+ii), lat(mj+jj), u_int(mi+ii, mj+jj), v_int(mi+ii, mj+jj)
           if (proj == 1) then
             u_vor = u_vor + u_int(mi+ii, mj+jj) * cosd(lat(mj+jj))
             v_vor = v_vor + v_int(mi+ii, mj+jj) * cosd(lat(mj+jj))
