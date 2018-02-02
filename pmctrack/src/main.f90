@@ -163,7 +163,6 @@ program main
 
   call get_coords(nc_file_name, DIM_NAMES, lons, lats, lvls, &
     & time, 1, 1)
-  print*,lvls
   lvl_idx = minloc(abs(lvls - vor_lvl), 1)
   steer_idx_btm = minloc(abs(lvls - steer_lvl_btm), 1)
   steer_idx_top = minloc(abs(lvls - steer_lvl_top), 1)
@@ -187,9 +186,6 @@ program main
   u = fillval
   v = fillval
   psea = fillval
-
-  print*,'size(vor)', shape(vor)
-  print*,'nx', nx, 'ny', ny
 
   ! Allocate work arrays
   allocate(vor_smth     (nx1:nx2, ny1:ny2      ))
@@ -247,18 +243,21 @@ program main
     call get_xy_from_xyt(nc_file_name, psea_name, time_idx, psea)
     psea(:, :) = 1e-2 * psea(:, ny:0:-1)
 
-    if (kt > 1 .and. mod(kt, steer_nt) == 0) then
+    idt_pair(1) = idt
+    idt_pair(2) = idt + timedelta(hours=del_t / time_step_s)
+    ! if (kt > 1 .and. mod(kt, steer_nt) == 0) then
+    if (kt < ntime) then
       ! TODO: ensure all times are read in
       ! Read u- and v-winds
       do kt2 = 1, steer_nt
         call make_nc_file_name(nc_file_name, datadir, prefix_lvl, &
                              & idt_pair(kt2)%year, idt_pair(kt2)%month, u_name)
-        call get_xyz_from_xyzt(nc_file_name, u_name, time_idx, &
+        call get_xyz_from_xyzt(nc_file_name, u_name, time_idx+kt2-1, &
                              & steer_idx_top, nsteer_lvl, u(:, :, :, kt2))
 
         call make_nc_file_name(nc_file_name, datadir, prefix_lvl, &
                              & idt_pair(kt2)%year, idt_pair(kt2)%month, v_name)
-        call get_xyz_from_xyzt(nc_file_name, v_name, time_idx, &
+        call get_xyz_from_xyzt(nc_file_name, v_name, time_idx+kt2-1, &
                              & steer_idx_top, nsteer_lvl, v(:, :, :, kt2))
       enddo
       u(:, :, :, :) = u(:, ny:0:-1, :, :)
@@ -371,8 +370,7 @@ program main
           ! Forward
           call steering_wind_r(u, v,                                          &
                              & lvls(1:nsteer_lvl), lons, lats,                &
-                             & nx, ny, nsteer_lvl,                            &
-                             & steer_nt, 1, 2,                                &
+                             & nx, ny, nsteer_lvl, steer_nt,                  &
                              & mi(i_max), mj(i_max),                          &
                              & u_vor_f(i_max), v_vor_f(i_max))
         endif
@@ -418,9 +416,9 @@ program main
     write(unit=fh_bin) psea(nx1:nx2, ny1:ny2)
 
     close(unit=fh_bin)
-    idt_pair(1) = idt
+    ! idt_pair(1) = idt
     idt = idt + timedelta(hours=del_t / time_step_s)
-    idt_pair(2) = idt
+    ! idt_pair(2) = idt
 
     ! Link vortices
     if (kt > 1) then
@@ -504,17 +502,17 @@ program main
   enddo ! MAIN TIME LOOP ------------------------------------------------------
 
   print*, '==================================================================='
-  print*, 'mlon', shape(mlon), mlon
-  print*, '==================================================================='
-  print*, 'mtype', shape(mtype), mtype
-  print*, '==================================================================='
-  print*, 'vor_part.shape', shape(vor_part)
-  print*, '==================================================================='
-  print*, 'n_max', n_max
-  print*, '==================================================================='
+  ! print*, 'mlon', shape(mlon), mlon
+  ! print*, '==================================================================='
+  ! print*, 'mtype', shape(mtype), mtype
+  ! print*, '==================================================================='
+  ! print*, 'vor_part.shape', shape(vor_part)
+  ! print*, '==================================================================='
+  ! print*, 'n_max', n_max
+  ! print*, '==================================================================='
   ! print*, 'vor_index', vor_index
-  !print*, '==================================================================='
-  !print*, 'vor_merge', vor_merge
+  ! print*, '==================================================================='
+  ! print*, 'vor_merge', vor_merge
 
   !write (*,*)'nx=', nx, 'ny=', ny,' nt=', nt, 'nz=', nz
   !write (*,*)'nx1=', nx1, 'nx2=', nx2, 'ny1=', ny1, 'ny2=', ny2
