@@ -26,6 +26,7 @@ program main
   character(len=256)                          :: nc_file_name
   character(len=256)                          :: fname_bin
   character(len=256)                          :: fname_vormaxloc
+  character(len=256)                          :: fname_track
   real(wp)                                    :: lonin
   real(wp)                                    :: latin
   real(wp)                                    :: del_t
@@ -65,18 +66,18 @@ program main
   real(wp)         , allocatable              :: z_min(:)
   real(wp)         , allocatable              :: z_min_size(:)
   real(wp)         , allocatable              :: s_part(:)
-  real(wp)         , allocatable              :: mtype(:)
+  integer          , allocatable              :: mtype(:)
   real(wp)         , allocatable              :: u_vor_f(:)
   real(wp)         , allocatable              :: v_vor_f(:)
   real(wp)         , allocatable              :: u_vor_f_prev(:)
   real(wp)         , allocatable              :: v_vor_f_prev(:)
-  real(wp)         , allocatable              :: vor_merge(:)
-  real(wp)         , allocatable              :: vor_index(:)
+  integer          , allocatable              :: vor_merge(:)
+  integer          , allocatable              :: vor_index(:)
   real(wp)         , allocatable              :: vortex(:, :)
   integer          , allocatable              :: vortex_type(:)
-  integer          , allocatable              :: vortex_flag(:)
+  integer          , allocatable              :: vor_merge_num(:)
 
-  ! Local variables
+  ! Local scalars
   ! work
   integer                                     :: n_min
   integer                                     :: n_max
@@ -89,6 +90,7 @@ program main
   integer                                     :: kt, kt2
   integer                                     :: i, j
   integer                                     :: i_max
+  integer                                     :: i_vor_num
 
   ! Time and date variables
   type(datetime)                              :: cal_start
@@ -102,6 +104,7 @@ program main
   ! IO units
   integer                         , parameter :: fh_bin = 998
   integer                         , parameter :: fh_maxloc = 997
+  integer                         , parameter :: fh_track = 996
 
 
   ! Store dimension names in one array
@@ -198,7 +201,7 @@ program main
   allocate(mlon_prev    (                  nmax)); mlon_prev = fillval
   allocate(max_vor      (                  nmax))
   allocate(s_part       (                  nmax))
-  allocate(mtype        (                  nmax)); mtype = fillval
+  allocate(mtype        (                  nmax)); mtype = -999 
   allocate(minlat       (                  nmax))
   allocate(minlon       (                  nmax))
   allocate(z_min        (                  nmax))
@@ -211,6 +214,7 @@ program main
   allocate(v_vor_f_prev (                  nmax)); v_vor_f_prev = fillval
   allocate(vor_index    (                  pmax)); vor_index = 0
   allocate(vor_merge    (                  pmax));
+  allocate(vor_merge_num(                  pmax));
 
   vor_num = 0
 
@@ -218,6 +222,7 @@ program main
   call get_data_2d(nc_file_name, land_name, land_mask)
   land_mask = land_mask(:, ny:0:-1)
 
+  ! MAIN TIME LOOP ------------------------------------------------------------
   do kt = 1, ntime ! including both start and end dates
     call make_nc_file_name(nc_file_name, datadir, prefix_lvl, &
                          & idt%year, idt%month, vort_name)
@@ -294,6 +299,7 @@ program main
     else
       n_min = 0
     endif
+    ! print*, 'N_MIN=', n_min
 
     if (maxval(mtype(:)) >= 1) then
       call synop_check(mlon(:), mlat(:), n_max,                               &
@@ -422,6 +428,7 @@ program main
         write(*, *) "NotImplementedError"; stop
       elseif (track_type == 2) then
        ! WIP       
+       
        call link_vort_rad(nx12, ny12, lons(nx1:nx2), lats(ny1:ny2), del_t, mtype, &
                         & mlon_prev, mlat_prev, mlon, mlat,                       &
                         & u_vor_f_prev, v_vor_f_prev,                             &
@@ -432,21 +439,69 @@ program main
       endif
     endif
 
-    print*, '>>>', vor_num
-
     allocate(vortex     (vor_num, 4))
     allocate(vortex_type(vor_num   ))
-    allocate(vortex_flag(vor_num   ))
-    
+    vortex = 0.
+
+    do i_vor_num = 1, vor_num
+      if (vor_index(i_vor_num) > 0) then
+        if (proj == 1) then
+          vortex(i_vor_num, 1) = mlon(vor_index(i_vor_num))
+          vortex(i_vor_num, 2) = mlat(vor_index(i_vor_num))
+        elseif (proj == 2) then
+          vortex(i_vor_num, 1) = mlon(vor_index(i_vor_num)) / rkilo
+          vortex(i_vor_num, 2) = mlat(vor_index(i_vor_num)) / rkilo
+        endif
+        vortex(i_vor_num, 3) = max_vor(vor_index(i_vor_num))
+        vortex(i_vor_num, 4) = s_part(vor_index(i_vor_num))
+        vortex_type(i_vor_num) = mtype(vor_index(i_vor_num))
+      end if
+
+      ! --- check the track ---
+      ! call check_track(vortex(i_vor_num, 1:3), vortex_flag(i_vor_num))
+      ! disabled, because requires full track in time
+      ! So it's easier to filter them out when analysing the full output 
+    enddo
+
+    !------------ vortrack out put ----------------------
+
+    vor_merge_num(:) = 1
+    do i_vor_num = 1, vor_num
+      if (vor_merge(i_vor_num) == 0) then
+        write(fname_track, '(A,A,A,I4.4,A,I4.4,A)') trim(outdir), '/',        &
+                                                 & 'vortrack_', i_vor_num,    &
+                                                 & '_', 1, '.txt'
+      else
+        vor_merge_num(vor_merge(i_vor_num)) = &
+          & vor_merge_num(vor_merge(i_vor_num)) + 1
+
+        write (fname_track, '(A,A,A,I4.4,A,I4.4,A)') trim(outdir), '/',                         &
+                                                   & 'vortrack_',                               &
+                                                   & vor_merge(i_vor_num), '_',                 &
+                                                   & vor_merge_num(vor_merge(i_vor_num)), '.txt'
+        !          write (*,*)vor_merge(i_vor_num),vor_merge_num(vor_merge(i_vor_num))
+      end if
+
+
+      open(unit=fh_track, file=fname_track, form='formatted',                 &
+         & access='append', status='unknown')
+
+      write(unit=fh_track, fmt='(3f12.5,I6,f15.5,I3)') vortex(i_vor_num, 1),  &
+           & vortex(i_vor_num, 2), vortex(i_vor_num, 3) * rkilo,              &
+           & kt, vortex(i_vor_num, 4), vortex_type(i_vor_num)
+
+      close(unit=fh_track)
+    end do
+    deallocate(vortex     )
+    deallocate(vortex_type)
+
+    ! Save for the next time step    
     n_max_prev = n_max
     mlon_prev = mlon
     mlat_prev = mlat
     u_vor_f_prev = u_vor_f 
     v_vor_f_prev = v_vor_f 
-    deallocate(vortex     )
-    deallocate(vortex_type)
-    deallocate(vortex_flag)
-  enddo ! Time loop
+  enddo ! MAIN TIME LOOP ------------------------------------------------------
 
   print*, '==================================================================='
   print*, 'mlon', shape(mlon), mlon
@@ -500,4 +555,5 @@ program main
   deallocate(vor_merge    )
   deallocate(vor_index    )
 
+  write(*, *) 'Owari'
 end program main

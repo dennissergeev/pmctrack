@@ -1,39 +1,41 @@
 subroutine min_z(z, nx, ny, minlat, minlon, &
   &              z_min, n_min, lat, lon, type_min)
  
-  use constants, only: fillval, nmax, pmax4, mx, my
+  use types, only : wp
+  use constants, only : fillval, nmax, pmax4, mx, my
   use params, only : del_psea_min
 
   implicit none 
-  integer(4),intent (in)::nx,ny
-  real(4),intent (in)::lon(0:nx),lat(0:ny)
-  real(4),intent (in)::z(0:nx,0:ny)
-  real(4),intent (out)::minlat(nmax),minlon(nmax),z_min(nmax)
-  integer ,intent (out)::n_min,type_min(nmax)
-  integer (4)::i,j,m ! ii
-  integer (4)::i_min
 
+  integer , intent(in)  :: nx, ny
+  real(wp), intent(in)  :: lon     (0:nx          )
+  real(wp), intent(in)  :: lat     (      0:ny    )
+  real(wp), intent(in)  :: z       (0:nx, 0:ny    )
+  real(wp), intent(out) :: minlat  (          nmax)
+  real(wp), intent(out) :: minlon  (          nmax)
+  real(wp), intent(out) :: z_min   (          nmax) ! TODO: check the size
+  integer , intent(out) :: n_min
+  integer , intent(out) :: type_min(          nmax)
+  ! Local variables
+  real(wp)              :: z_tmp   (0:nx, 0:ny    )
+  real(wp)              :: z_part_r(0:nx, 0:ny    )
+  integer               :: z_part  (0:nx, 0:ny    )
+  integer               :: zp_tmp  (0:nx, 0:ny    )
+  integer               :: mi, mj, mij(2)
+  integer               :: mi_tmp, mj_tmp
+  real(wp)              :: tmp_min, min0, max0
+  real(wp)              :: zmin_tmp
+  integer               :: n_part
+  integer               :: s_part
+  integer               :: var_part_tmp(1:2, 1:pmax4)
+  integer               :: p
+  integer               :: buf_mij (2,        nmax) ! TODO: check the size
+  logical               :: mij_flag
+  integer               :: i, j, m
+  integer               :: i_min
 
-  real(4)::z_tmp(0:nx,0:ny),z_part_r(0:nx,0:ny)
-  integer (4)::z_part(0:nx,0:ny),z_part_tmp(0:nx,0:ny)
-
-  integer (4)::mi,mj,mij(2),mi_tmp,mj_tmp
-
-  real(4)::min,min0,max
-
-  real(4)::zmin_tmp
   
-  integer (4)::n_part
-  integer (4)::s_part
-
-
-  integer (4)::var_part_tmp(1:2,1:pmax4)
-  integer (4)::p=0
-  integer (4)::buf_mij(2,nmax)
-  logical(4)::mij_flag
- 
-  
-
+  p = 0
   minlat=0
   minlon=0
   z_min=0
@@ -44,23 +46,22 @@ subroutine min_z(z, nx, ny, minlat, minlon, &
   n_part=0
  
   z_part=0
-  z_part_tmp=0
+  zp_tmp=0
 
   buf_mij=-1
 
-
-  do j=0,ny
-    do i=0,nx
-        z_tmp(i,j)=z(i,j)
+  do j = 0, ny
+    do i = 0, nx
+      z_tmp(i,j) = z(i,j)
     end do
   end do
 
-  max=maxval(z)
+  max0=maxval(z)
   min0=minval(z)
 
-  write (*,*)'psea max min0',max,min0
+  ! write (*,*)'psea max0 min0',max0,min0
 
-  zmin_tmp=max
+  zmin_tmp=max0
 
   do
     zmin_tmp=zmin_tmp-0.1
@@ -69,15 +70,15 @@ subroutine min_z(z, nx, ny, minlat, minlon, &
       s_part=0
 
       p=0
-      min=minval(z_tmp)
-      mij=minloc(z_tmp)
+      tmp_min=minval(z_tmp)
+       mij=minloc(z_tmp)
       mi=mij(1)-1
       mj=mij(2)-1
       
-      if(min>=zmin_tmp)exit
+      if(tmp_min>=zmin_tmp)exit
 
       n_part=n_part+1
-      z_part_tmp(mi,mj)=n_part
+      zp_tmp(mi,mj)=n_part
       z_tmp(mi,mj)=fillval
 
       s_part=s_part+1
@@ -86,7 +87,7 @@ subroutine min_z(z, nx, ny, minlat, minlon, &
       do m=1,8
         if(mi+mx(m)>=0.and.mi+mx(m)<=nx.and.mj+my(m)>=0.and.mj+my(m)<=ny)then
           if(z_tmp(mi+mx(m),mj+my(m))<zmin_tmp)then  
-            z_part_tmp(mi+mx(m),mj+my(m))=n_part
+            zp_tmp(mi+mx(m),mj+my(m))=n_part
             z_tmp(mi+mx(m),mj+my(m))=fillval
             
             s_part=s_part+1
@@ -112,8 +113,8 @@ subroutine min_z(z, nx, ny, minlat, minlon, &
           if(mi_tmp+mx(m)>=0.and.mi_tmp+mx(m)<=nx.and.mj_tmp+my(m)>=0.and.mj_tmp+my(m)<=ny)then
             
             if(z_tmp(mi_tmp+mx(m),mj_tmp+my(m))<zmin_tmp)then
-              if(z_part_tmp(mi_tmp+mx(m),mj_tmp+my(m))==0)then
-                z_part_tmp(mi_tmp+mx(m),mj_tmp+my(m))=n_part
+              if(zp_tmp(mi_tmp+mx(m),mj_tmp+my(m))==0)then
+                zp_tmp(mi_tmp+mx(m),mj_tmp+my(m))=n_part
                 z_tmp(mi_tmp+mx(m),mj_tmp+my(m))=fillval
 
             s_part=s_part+1
@@ -141,12 +142,12 @@ subroutine min_z(z, nx, ny, minlat, minlon, &
       end do
       
       if(mij_flag)then
-        if(zmin_tmp-min>del_psea_min)then
+        if(zmin_tmp-tmp_min>del_psea_min)then
           
 
           do j=0,ny
             do i=0,nx
-              if(z_part_tmp(i,j)==n_part.and.n_part/=1) z_part(i,j)=n_min
+              if(zp_tmp(i,j)==n_part.and.n_part/=1) z_part(i,j)=n_min
             end do
           end do
 
@@ -157,14 +158,14 @@ subroutine min_z(z, nx, ny, minlat, minlon, &
 
           minlon(n_min)=lon(mi)
           minlat(n_min)=lat(mj)
-          z_min(n_min)=min
+          z_min(n_min)=tmp_min
           type_min(n_min)=s_part
 
 
           !      write (*,*)(var_part(ii,1,n_min),ii=-l,l),(var_part(ii,2,n_min),ii=-l,l)
-          !     write (*,*)n_min,max,mlon(n_min),mlat(n_min)
+          !     write (*,*)n_min,max0,mlon(n_min),mlat(n_min)
 !          write (99,*)minlon(n_min),minlat(n_min),z_min(n_min)
-       !   write (*,*)minlon(n_min),minlat(n_min),z_min(n_min),zmin_tmp,min,del_psea_min
+       !   write (*,*)minlon(n_min),minlat(n_min),z_min(n_min),zmin_tmp,tmp_min,del_psea_min
 
 !          write (*,*)n_min,minlon(n_min),minlat(n_min)
           n_min=n_min+1         
@@ -181,15 +182,15 @@ subroutine min_z(z, nx, ny, minlat, minlon, &
    z_tmp=fillval
    do j=0,ny
      do i=0,nx
-!       if(z_part_tmp(i,j)>0.and.zs(i,j)<500.)then
-!        if(z_part_tmp(i,j)>0.and..not.land_flag(i,j))then
+!       if(zp_tmp(i,j)>0.and.zs(i,j)<500.)then
+!        if(zp_tmp(i,j)>0.and..not.land_flag(i,j))then
         z_tmp(i,j)=z(i,j)
          
 !       end if
      end do
    end do
 !   var_part_max=0
-   z_part_tmp=0
+   zp_tmp=0
 
 
    if(zmin_tmp<min0)exit
@@ -219,12 +220,12 @@ subroutine min_z(z, nx, ny, minlat, minlon, &
   zmin_tmp=z_min(1)
 
 
-  z_part_tmp=0
+  zp_tmp=0
   do
 
     zmin_tmp=zmin_tmp+1.
 
-    if(zmin_tmp>max)exit
+    if(zmin_tmp>max0)exit
 
 !    write (*,*)zmin_tmp
 
@@ -234,16 +235,16 @@ subroutine min_z(z, nx, ny, minlat, minlon, &
     s_part=0
 
     p=0
-    min=z_min(1)
+    tmp_min=z_min(1)
     mi=buf_mij(1,1)
     mj=buf_mij(2,1)
     
 !    write (*,*)minlon(1),minlat(1),z_min(1)
 !    write (*,*)lon(mi),lat(mj),z_tmp(mi,mj)
-    !      if(min>=zmin_tmp)exit
+    !      if(tmp_min>=zmin_tmp)exit
     
     n_part=1
-    z_part_tmp(mi,mj)=n_part
+    zp_tmp(mi,mj)=n_part
     z_tmp(mi,mj)=fillval
     
     s_part=s_part+1
@@ -253,7 +254,7 @@ subroutine min_z(z, nx, ny, minlat, minlon, &
     do m=1,8
       if(mi+mx(m)>=0.and.mi+mx(m)<=nx.and.mj+my(m)>=0.and.mj+my(m)<=ny)then
         if(z_tmp(mi+mx(m),mj+my(m))<zmin_tmp)then  
-          z_part_tmp(mi+mx(m),mj+my(m))=n_part
+          zp_tmp(mi+mx(m),mj+my(m))=n_part
           z_tmp(mi+mx(m),mj+my(m))=fillval
           
           s_part=s_part+1
@@ -279,8 +280,8 @@ subroutine min_z(z, nx, ny, minlat, minlon, &
         if(mi_tmp+mx(m)>=0.and.mi_tmp+mx(m)<=nx.and.mj_tmp+my(m)>=0.and.mj_tmp+my(m)<=ny)then
           
           if(z_tmp(mi_tmp+mx(m),mj_tmp+my(m))<zmin_tmp)then
-            if(z_part_tmp(mi_tmp+mx(m),mj_tmp+my(m))==0)then
-              z_part_tmp(mi_tmp+mx(m),mj_tmp+my(m))=n_part
+            if(zp_tmp(mi_tmp+mx(m),mj_tmp+my(m))==0)then
+              zp_tmp(mi_tmp+mx(m),mj_tmp+my(m))=n_part
               z_tmp(mi_tmp+mx(m),mj_tmp+my(m))=fillval
               
               s_part=s_part+1
@@ -302,7 +303,7 @@ subroutine min_z(z, nx, ny, minlat, minlon, &
       
     do j=0,ny
       do i=0,nx
-        if(z_part_tmp(i,j)==1)then
+        if(zp_tmp(i,j)==1)then
 
 !          write (*,*)lon(i),lat(j)
 
@@ -326,7 +327,7 @@ subroutine min_z(z, nx, ny, minlat, minlon, &
 
     do j=0,ny
       do i=0,nx
-        if(z_part_tmp(i,j)==1.and.z_part(i,j)<=1)z_part(i,j)=1
+        if(zp_tmp(i,j)==1.and.z_part(i,j)<=1)z_part(i,j)=1
       end do
     end do
     
@@ -335,15 +336,15 @@ subroutine min_z(z, nx, ny, minlat, minlon, &
 !   z_tmp=fillval
    do j=0,ny
      do i=0,nx
-!       if(z_part_tmp(i,j)>0.and.zs(i,j)<500.)then
-!        if(z_part_tmp(i,j)>0.and..not.land_flag(i,j))then
+!       if(zp_tmp(i,j)>0.and.zs(i,j)<500.)then
+!        if(zp_tmp(i,j)>0.and..not.land_flag(i,j))then
         z_tmp(i,j)=z(i,j)
          
 !       end if
      end do
    end do
 !   var_part_max=0
-   z_part_tmp=0
+   zp_tmp=0
 
  end do
 
