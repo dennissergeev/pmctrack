@@ -30,7 +30,7 @@ subroutine steering_wind_f(u,v,p,nx,ny,nz,nt,kt,mi,mj,u_vor,v_vor)
     else
        u_t0t1(0:nx,0:ny,1:nz)=u(0:nx,0:ny,1:nz,kt)
        v_t0t1(0:nx,0:ny,1:nz)=v(0:nx,0:ny,1:nz,kt)
-    end if
+    endif
 
 
   do jj=-n_steering_y,n_steering_y
@@ -42,9 +42,9 @@ subroutine steering_wind_f(u,v,p,nx,ny,nz,nt,kt,mi,mj,u_vor,v_vor)
            v_vor=v_vor+v_int(mi+ii,mj+jj)
            n_steering_s=n_steering_s+1
            
-        end if
-     end do
-  end do
+        endif
+     enddo
+  enddo
 
   u_vor=u_vor/n_steering_s
   v_vor=v_vor/n_steering_s
@@ -86,7 +86,7 @@ subroutine steering_wind_b(u,v,p,nx,ny,nz,nt,kt,mi,mj,u_vor,v_vor)
     else
        u_t0t1(0:nx,0:ny,1:nz)=u(0:nx,0:ny,1:nz,kt)
        v_t0t1(0:nx,0:ny,1:nz)=v(0:nx,0:ny,1:nz,kt)
-    end if
+    endif
 
   do jj=-n_steering_y,n_steering_y
      do ii=-n_steering_x,n_steering_x
@@ -97,9 +97,9 @@ subroutine steering_wind_b(u,v,p,nx,ny,nz,nt,kt,mi,mj,u_vor,v_vor)
            v_vor=v_vor+v_int(mi+ii,mj+jj)
            n_steering_s=n_steering_s+1
            
-        end if
-     end do
-  end do
+        endif
+     enddo
+  enddo
 
   u_vor=u_vor/n_steering_s
   v_vor=v_vor/n_steering_s
@@ -109,85 +109,101 @@ subroutine steering_wind_b(u,v,p,nx,ny,nz,nt,kt,mi,mj,u_vor,v_vor)
   return
 end subroutine steering_wind_b
 
-subroutine steering_wind_r(u,v,p,lon,lat,nx,ny,nz,nt,kt1,kt2,mi,mj,&
+
+subroutine steering_wind_r(u,v,p,lon,lat,nx,ny,nz,nt,mi,mj,&
      &u_vor,v_vor)
 
   use types, only : wp
-  use constants, only: pi, ra
+  use constants, only: pi, ra, rkilo
   use params, only : r_steering, proj
-  use utils, only : integral_p
+  use utils, only : integral_p, cosd, sind, great_circle, deg2rad
 
-  implicit none 
-  integer ,intent (in)::nx,ny,nz,nt,kt1,kt2
-  real(4) ,intent (in)::u(0:nx,0:ny,nz,nt),v(0:nx,0:ny,nz,nt)
-  real(4) ,intent (in)::p(nz),lon(0:nx),lat(0:ny)
-  integer (4),intent (in)::mi,mj
-  real (4),intent (out)::u_vor,v_vor
-  real(4) ::u_t0t1(0:nx,0:ny,nz),v_t0t1(0:nx,0:ny,nz)
-  real(4) ::u_int(0:nx,0:ny),v_int(0:nx,0:ny)
+  implicit none
+   
+  integer , intent (in)  :: nx, ny, nz, nt
+  real(wp), intent (in)  :: u     (0:nx, 0:ny, nz, nt)
+  real(wp), intent (in)  :: v     (0:nx, 0:ny, nz, nt)
+  real(wp), intent (in)  :: lon   (0:nx              )
+  real(wp), intent (in)  :: lat   (      0:ny        )
+  real(wp), intent (in)  :: p     (            nz    )
+  integer,  intent (in)  :: mi
+  integer,  intent (in)  :: mj
+  real(wp), intent (out) :: u_vor
+  real(wp), intent (out) :: v_vor
+  ! Local variables
+  real(wp)               :: u_t0t1(0:nx, 0:ny, nz    )
+  real(wp)               :: v_t0t1(0:nx, 0:ny, nz    )
+  real(wp)               :: u_int (0:nx, 0:ny        )
+  real(wp)               :: v_int (0:nx, 0:ny        )
 
-  real(4) ::s_tot
-  integer ::ii,jj
+  real(wp)               :: s_tot
+  integer                :: ii, jj
+  real(wp)               :: d, theta_d
+  real(wp)               :: lonin, latin
+  integer                :: x_steer, y_steer
+  integer                :: kt1, kt2
 
-  real(4)::d,theta_d
+  kt1 = 1
+  kt2 = nt ! should be 2
 
-  real(4)::lonin,latin
-  integer::x_steer,y_steer
+  lonin = lon(2) - lon(1)
+  latin = lat(2) - lat(1)
 
-  lonin=lon(2)-lon(1)
-  latin=lat(2)-lat(1)
+  x_steer = nint(r_steering * rkilo / (ra * lonin * deg2rad * cosd(lat(mj))) + 5)
+  y_steer = nint(r_steering * rkilo / (ra * latin * deg2rad) + 5)
+  ! TODO: check why +5
 
-  x_steer=nint(r_steering/(ra*lonin*pi/180.0*cos(lat(mj)*pi/180.0)*1.0e-3)+5)
-  y_steer=nint(r_steering/(ra*latin*pi/180.0*1.0e-3)+5)
-
+  ! print*, '-> x_steer', x_steer
+  ! print*, '-> y_steer', y_steer
  
-  u_vor=0.
-  v_vor=0.
-  s_tot=0.0
+  u_vor = 0.
+  v_vor = 0.
+  s_tot = 0.
   d = 0.
   theta_d = 0.
 
-  u_t0t1(0:nx,0:ny,1:nz)=0.5*(u(0:nx,0:ny,1:nz,kt1)+u(0:nx,0:ny,1:nz,kt2))
-  v_t0t1(0:nx,0:ny,1:nz)=0.5*(v(0:nx,0:ny,1:nz,kt1)+v(0:nx,0:ny,1:nz,kt2))
+  ! print*, '-> u_t0', minval(u(0:nx, 0:ny, 1:nz, kt1)), maxval(u(0:nx, 0:ny, 1:nz, kt1))
+  ! print*, '-> u_t1', minval(u(0:nx, 0:ny, 1:nz, kt2)), maxval(u(0:nx, 0:ny, 1:nz, kt2))
+  ! print*, '-> min u1-u0', minval(u(0:nx, 0:ny, 1:nz, kt2) - u(0:nx, 0:ny, 1:nz, kt1))
+  ! print*, '-> max u1-u0', maxval(u(0:nx, 0:ny, 1:nz, kt2) - u(0:nx, 0:ny, 1:nz, kt2))
+  ! u_t0t1 = 0.5 * (u(0:nx, 0:ny, 1:nz, kt1) + u(0:nx, 0:ny, 1:nz, kt2))
+  ! v_t0t1 = 0.5 * (v(0:nx, 0:ny, 1:nz, kt1) + v(0:nx, 0:ny, 1:nz, kt2))
+  ! print*, '-> u_t0t1', minval(u_t0t1), maxval(u_t0t1)
+  ! print*, '-> v_t0t1', minval(v_t0t1), maxval(v_t0t1)
 
+  do jj = -y_steer, y_steer
+    do ii = -x_steer, x_steer
+      if (      mi + ii >= 0 &
+        & .and. mi + ii <= nx & 
+        & .and. mj + jj >= 0 & 
+        & .and. mj + jj <= ny) then
+        if (proj == 1) then
+          d = great_circle(lon(mi), lon(mi+ii), lat(mj), lat(mj+jj), ra)
+        elseif (proj == 2) then
+          d = sqrt((ii * lonin)**2 + (jj * latin)**2)
+        endif
+        if(d <= r_steering * rkilo)then
+          u_int(mi+ii, mj+jj) = integral_p(u_t0t1(mi+ii, mj+jj, 1:nz), p, nz)
+          v_int(mi+ii, mj+jj) = integral_p(v_t0t1(mi+ii, mj+jj, 1:nz), p, nz)
+          if (proj == 1) then
+            u_vor = u_vor + u_int(mi+ii, mj+jj) * cosd(lat(mj+jj))
+            v_vor = v_vor + v_int(mi+ii, mj+jj) * cosd(lat(mj+jj))
+            s_tot = s_tot + cosd(lat(mj+jj))
+          elseif(proj==2)then
+            u_vor = u_vor + u_int(mi+ii, mj+jj)
+            v_vor = v_vor + v_int(mi+ii, mj+jj)
+            s_tot = s_tot + 1
+          endif
+        endif
+      endif
+    enddo
+  enddo
 
-  do jj=-y_steer,y_steer
-     do ii=-x_steer,x_steer
-       if(mi+ii>=0.and.mi+ii<=nx.and.mj+jj>=0.and.mj+jj<=ny)then
-       if(proj==1)then
-         if(ii/=0.and.jj/=0)then
-           theta_d=acos(cos(pi/180*lat(mj))*cos(pi/180*lat(mj+jj))&
-                &*cos(pi/180*(lon(mi)-lon(mi+ii)))&
-                &+sin(pi/180*lat(mj))*sin(pi/180*lat(mj+jj)))
-           d=ra*theta_d
-         else
-           d=0.0
-         endif
+  u_vor = u_vor / s_tot
+  v_vor = v_vor / s_tot
 
-       elseif(proj==2)then
-         d=sqrt((ii*lonin)**2+(jj*latin)**2)
-       end if
-       if(d<=r_steering*1.0e3)then
-         u_int(mi+ii,mj+jj) = integral_p(u_t0t1(mi+ii,mj+jj,1:nz), p, nz)
-         v_int(mi+ii,mj+jj) = integral_p(v_t0t1(mi+ii,mj+jj,1:nz), p, nz)
-         if(proj==1)then
-           u_vor=u_vor+u_int(mi+ii,mj+jj)*cos(pi/180*lat(mj+jj))
-           v_vor=v_vor+v_int(mi+ii,mj+jj)*cos(pi/180*lat(mj+jj))
-           s_tot=s_tot+cos(pi/180*lat(mj+jj))
-         elseif(proj==2)then
-           u_vor=u_vor+u_int(mi+ii,mj+jj)
-           v_vor=v_vor+v_int(mi+ii,mj+jj)
-           s_tot=s_tot+1
-         end if
-       end if
-     end if
-     end do
-  end do
+  !print*, u_vor,v_vor
 
-  u_vor=u_vor/s_tot
-  v_vor=v_vor/s_tot
+!  stop
 
-!  write (*,*)u_vor,v_vor
-
-  return
 end subroutine steering_wind_r

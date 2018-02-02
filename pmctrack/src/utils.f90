@@ -76,6 +76,7 @@ contains
 
 
   function great_circle(lon1, lon2, lat1, lat2, ra)
+    ! TODO: Double precision version
     real(wp) :: lon1, lat1, lon2, lat2 ! in degrees
     real(wp) :: ra
     real(wp) :: ang_cos
@@ -84,9 +85,9 @@ contains
     ang_cos = cosd(lat1) * cosd(lat2) * cosd(lon2 - lon1)             &
           & + sind(lat1) * sind(lat2)
 
-    if (abs(ang_cos) < 1.0) then
+    if (abs(ang_cos) <= 1.0) then
       great_circle = ra * acos(ang_cos)
-    else
+    else 
       great_circle = 0.
       write(*, *) 'ValueError: ang_cos is', ang_cos, '; Setting great_circle to 0'
     endif
