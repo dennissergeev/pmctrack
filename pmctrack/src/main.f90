@@ -186,10 +186,11 @@ program main
   u = fillval
   v = fillval
   psea = fillval
+  land_mask = -999
 
   ! Allocate work arrays
   allocate(vor_smth     (nx1:nx2, ny1:ny2      ))
-  allocate(vor_part     (nx1:nx2, ny1:ny2      )); vor_part = 0
+  allocate(vor_part     (nx1:nx2, ny1:ny2      )); vor_part = -999
   allocate(dummy        (nx1:nx2, ny1:ny2      ))
   allocate(mlat         (                  nmax)); mlat = fillval
   allocate(mlon         (                  nmax)); mlon = fillval
@@ -202,14 +203,14 @@ program main
   allocate(minlon       (                  nmax))
   allocate(z_min        (                  nmax))
   allocate(z_min_size   (                  nmax))
-  allocate(mi           (                  nmax));      mi = 0
-  allocate(mj           (                  nmax));      mj = 0
+  allocate(mi           (                  nmax));      mi = -999
+  allocate(mj           (                  nmax));      mj = -999
   allocate(u_vor_f      (                  nmax)); u_vor_f = fillval
   allocate(v_vor_f      (                  nmax)); v_vor_f = fillval
   allocate(u_vor_f_prev (                  nmax)); u_vor_f_prev = fillval
   allocate(v_vor_f_prev (                  nmax)); v_vor_f_prev = fillval
-  allocate(vor_index    (                  pmax)); vor_index = 0
-  allocate(vor_merge    (                  pmax));
+  allocate(vor_index    (                  pmax)); vor_index = -999
+  allocate(vor_merge    (                  pmax)); vor_merge = -999
   allocate(vor_merge_num(                  pmax));
 
   vor_num = 0
@@ -231,7 +232,13 @@ program main
     dt_min = cal_start + td ! Start date time of each file
     td = idt - dt_min
     time_idx = int(td%total_seconds() / del_t) + 1
+    print*,''
+    print*,'=================================================================='
+    print*,'=================================================================='
     print*, kt, 'idt=', idt, 'time_idx=', time_idx
+    print*,'=================================================================='
+    print*,'=================================================================='
+    print*,''
     ! Read vorticity at the specified level
     call get_xy_from_xyzt(nc_file_name, vort_name, lvl_idx, time_idx, vor)
     vor(:, :) = vor(:, ny:0:-1)
@@ -275,8 +282,8 @@ program main
     endif
 
 
-    write(fname_bin, '(A,A,A,I4.4,A)') trim(outdir), '/',                     &
-                                     & 'vor_out_', kt, '.dat'
+    write(fname_bin, '(A,A,A,A,A)') trim(outdir), '/',                     &
+                      & 'vor_out_', trim(idt%strftime('%Y%m%d%H%M')), '.dat'
     open(unit=fh_bin, file=fname_bin, form='unformatted', access='sequential')
     write(unit=fh_bin) vor(nx1:nx2,ny1:ny2)
     write(unit=fh_bin) vor_smth(nx1:nx2,ny1:ny2)
@@ -317,9 +324,8 @@ program main
     enddo
     write(unit=fh_bin) dummy(nx1:nx2, ny1:ny2)
 
-
-    write(fname_vormaxloc, '(A,A,A,I4.4,A)') trim(outdir), '/',               &
-                                           & 'vormax_loc_', kt, '.txt'
+    write(fname_vormaxloc, '(A,A,A,A,A)') trim(outdir), '/',               &
+                      & 'vormax_loc_', trim(idt%strftime('%Y%m%d%H%M')), '.txt'
     open(unit=fh_maxloc, file=fname_vormaxloc, form='formatted')
     do i_max = 1, n_max
       mi(i_max) = nint((mlon(i_max) - lon0) / lonin)
@@ -385,6 +391,8 @@ program main
     enddo ! i_max loop
     close(unit=fh_maxloc)
 
+    print*,'------------------------------------------------------------------'
+
     !---- output steeering wind ----!
     dummy = fillval
     do i_max=1, n_max
@@ -435,11 +443,18 @@ program main
                         & vor_num, vor_index, vor_merge)
  
       endif
+    else
+      do i_max = 1, n_max
+        vor_index(i_max) = i_max
+      enddo
+      vor_num = n_max
     endif
+
+    print*, 'main: vor_num=', vor_num
 
     allocate(vortex     (vor_num, 4))
     allocate(vortex_type(vor_num   ))
-    vortex = 0.
+    vortex = -999
 
     do i_vor_num = 1, vor_num
       if (vor_index(i_vor_num) > 0) then
@@ -463,37 +478,48 @@ program main
 
     !------------ vortrack out put ----------------------
 
+    print*,'main: vor_merge', vor_merge(1:5)
+
     vor_merge_num(:) = 1
     do i_vor_num = 1, vor_num
-      if (vor_merge(i_vor_num) == 0) then
-        write(fname_track, '(A,A,A,I4.4,A,I4.4,A)') trim(outdir), '/',        &
-                                                 & 'vortrack_', i_vor_num,    &
-                                                 & '_', 1, '.txt'
-      else
-        vor_merge_num(vor_merge(i_vor_num)) = &
-          & vor_merge_num(vor_merge(i_vor_num)) + 1
+      if (vor_index(i_vor_num) > 0) then ! TODO: check
+        print*,'main: i_vor_num', i_vor_num
+        if (vor_merge(i_vor_num) > 0) then ! TODO: check
+          print*, 'main: vor_merge>0'
+          vor_merge_num(vor_merge(i_vor_num)) = &
+            & vor_merge_num(vor_merge(i_vor_num)) + 1
 
-        write (fname_track, '(A,A,A,I4.4,A,I4.4,A)') trim(outdir), '/',                         &
-                                                   & 'vortrack_',                               &
-                                                   & vor_merge(i_vor_num), '_',                 &
-                                                   & vor_merge_num(vor_merge(i_vor_num)), '.txt'
-        !          write (*,*)vor_merge(i_vor_num),vor_merge_num(vor_merge(i_vor_num))
-      end if
+          write (fname_track, '(A,A,A,I4.4,A,I4.4,A)') trim(outdir), '/',                         &
+                                                     & 'vortrack_',                               &
+                                                     & vor_merge(i_vor_num), '_',                 &
+                                                     & vor_merge_num(vor_merge(i_vor_num)), '.txt'
+          !          write (*,*)vor_merge(i_vor_num),vor_merge_num(vor_merge(i_vor_num))
+        else  !if (vor_merge(i_vor_num) == 0) then
+          print*, 'main: vor_merge==0'
+          write(fname_track, '(A,A,A,I4.4,A,I4.4,A)') trim(outdir), '/',        &
+                                                   & 'vortrack_', i_vor_num,    &
+                                                   & '_', 1, '.txt'
+        end if
 
 
-      open(unit=fh_track, file=fname_track, form='formatted',                 &
-         & access='append', status='unknown')
+        open(unit=fh_track, file=fname_track, form='formatted',                 &
+           & access='append', status='unknown')
 
-      write(unit=fh_track, fmt='(3f12.5,I6,f15.5,I3)') vortex(i_vor_num, 1),  &
-           & vortex(i_vor_num, 2), vortex(i_vor_num, 3) * rkilo,              &
-           & kt, vortex(i_vor_num, 4), vortex_type(i_vor_num)
+        write(unit=fh_track, fmt='(3f12.5,A15,f15.5,I3)') vortex(i_vor_num, 1),  &
+             & vortex(i_vor_num, 2), vortex(i_vor_num, 3) * rkilo,             &
+             & trim(idt%strftime('%Y%m%d%H%M')), vortex(i_vor_num, 4),         &
+             & vortex_type(i_vor_num)
 
-      close(unit=fh_track)
+        close(unit=fh_track)
+      endif
     end do
     deallocate(vortex     )
     deallocate(vortex_type)
 
     ! Save for the next time step    
+    ! TODO: check this!!!!!!!!
+    if (kt == 0) then
+    endif
     n_max_prev = n_max
     mlon_prev = mlon
     mlat_prev = mlat

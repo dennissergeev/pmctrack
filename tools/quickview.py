@@ -41,7 +41,7 @@ PLOT_DIR = TRACK_RES_DIR / 'quickviews'
 ORIG_DATA_FILES = 'era5*2011.01*.nc'
 LAND_MASK_FILE = 'lsm.nc'
 VORTRACK_FILES = 'vortrack*.txt'
-VORMAX_FILES = 'vormax_loc_{kt:04d}.txt'
+VORMAX_FILES = 'vormax_loc_{kt:%Y%m%d%H%M}.txt'
 # Other paths
 LOGPATH = Path(__file__).dirname() / 'logs'
 SCRIPT = Path(__file__).basename().splitext()[0]
@@ -139,15 +139,15 @@ def plot_fields(fig, ax, lons, lats, vort, slp, lsm=None):
         ax.contourf(lons, lats, lsm, cmap='gray_r', alpha=0.25)
 
 
-def plot_tracks(fig, ax, counter):
+def plot_tracks(fig, ax, dt):
     """ Plot results of the tracking algorithm """
     # Plot tracks
     handles = []
     for fname in sorted(TRACK_RES_DIR.glob(VORTRACK_FILES)):
-        df_track = pd.read_csv(fname, **vortrack_df_kw)
-        if counter in df_track['kt'].values:
-            df_past = df_track[df_track['kt'] <= counter]
-            df_future = df_track[df_track['kt'] >= counter]
+        df_track = pd.read_csv(fname, parse_dates=['kt'], **vortrack_df_kw)
+        if dt in df_track['kt'].dt.to_pydatetime():
+            df_past = df_track[df_track['kt'].dt.to_pydatetime() <= dt]
+            df_future = df_track[df_track['kt'].dt.to_pydatetime() >= dt]
             h1 = ax.plot(df_past.lon[0], df_past.lat[0], **track_start_kw)
             h2 = ax.plot(df_past.lon, df_past.lat, **track_past_kw)
             h3 = ax.plot(df_future.lon, df_future.lat, **track_future_kw)
@@ -160,7 +160,7 @@ def plot_tracks(fig, ax, counter):
             plt.setp(h, path_effects=path_effects)
 
     # Plot vorticity centres at the given point
-    fname = TRACK_RES_DIR / VORMAX_FILES.format(kt=counter)
+    fname = TRACK_RES_DIR / VORMAX_FILES.format(kt=dt)
     if fname.exists():
         df = pd.read_csv(fname, **vor_loc_df_kw)
         ax.plot(df.lon, df.lat, **vor_loc_kw)
@@ -192,7 +192,7 @@ def main(args=None):
     utils._make_dir(output_dir, args.force)
 
     # Main time loop
-    for counter, idt in enumerate(time_span[:-1]):
+    for idt in time_span:
         logger.debug(f'Processing {idt:%Y-%m-%d %H:%M}')
         # Prepare data and coordinates
         lons, lats = iris.analysis.cartography.get_xy_grids(vort)
@@ -208,7 +208,7 @@ def main(args=None):
         anno_text = f'{idt: %b %d, %H%M}UTC'
         fig, ax = prep_canvas(anno_text=anno_text)
         plot_fields(fig, ax, lons, lats, vo_data, slp_data, lsm=lsm_data)
-        plot_tracks(fig, ax, counter+1)
+        plot_tracks(fig, ax, idt)
 
         imgname = imgname_mask.format(time=f'{idt:%Y%m%d%H%M}',
                                       fmt=fmt)
