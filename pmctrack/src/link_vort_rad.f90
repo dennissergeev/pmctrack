@@ -39,7 +39,6 @@ subroutine link_vort_rad(nx, ny, lon, lat, del_t, mtype,                      &
   integer                    :: i, j
   integer                    :: tmp, i_vor
   integer                    :: i_vor_num, i_vor_num2
-  logical                    :: vor_prev_flag(nmax             )
   logical                    :: vor_new_flag(nmax             )
   real   (wp)                :: e_mv_lon, e_mv_lat
   real   (wp)                :: e_mlon, e_mlat
@@ -65,7 +64,6 @@ subroutine link_vort_rad(nx, ny, lon, lat, del_t, mtype,                      &
 
   i_next = -999
 
-  vor_prev_flag(1:nmax) = .false.
   vor_new_flag(1:nmax) = .false.
 
   print*, '###################################################################'
@@ -75,17 +73,6 @@ subroutine link_vort_rad(nx, ny, lon, lat, del_t, mtype,                      &
   print*, '>>> n_max_prev, n_max',  n_max_prev, n_max
   print*, '>>> vor_idx_old',  vor_idx_old(1:5)
   print*, '>>> vor_num',  vor_num
-
-  ! Skipped on the first iteration: vor_num=0
-  do i_max = 1, n_max_prev
-    do i_vor_num = 1, vor_num
-      if (i_max == vor_idx_old(i_vor_num)) then
-        ! The vortex labeled as i_max at kt  existed at kt-1
-        print*, '>>>vor_prev_flag(i_max) = .true.', i_max, i_vor_num
-        vor_prev_flag(i_max) = .true.
-      endif
-    enddo
-  enddo
 
   ! t=kt -> t=kt+1
   do i_max = 1, n_max_prev ! Loop over vortices at the previous time step
@@ -191,34 +178,17 @@ subroutine link_vort_rad(nx, ny, lon, lat, del_t, mtype,                      &
   print*, r_next(1:5)
   print*, n_max_prev
   print*, i_next(1:5)
-  print*, vor_prev_flag(1:5)
   print*, vor_idx_old(1:5)
   print*, 'vor_num', vor_num
   print*, '*****************************************************************'
-  print*, '*****************************************************************'
-  print*, '*****************************************************************'
-  n_max_prev = 3
-  n_max = 1
-  i_next = -999
-  i_next(2) = 1
-  vor_idx_old = -999
-  vor_idx_old(1:3) = (/1,2,3/)
-  print*, vor_idx_old
-  stop
-  
 
   ! ------------- Connecting vortex (prev) to vortex (current) ----------------
-  ! tmp = vor_num
   do i_max1 = 1, n_max
-    tmp = tmp + 1
-    new_vor(tmp) = i_max1
     vor_new_flag(i_max1) = .true.
     do i_max = 1, n_max_prev
       ! print*, i_max1, i_max, i_next(i_max)
       if (i_max1 == i_next(i_max)) then
-        new_vor(tmp) = -999
         vor_new_flag(i_max1) = .false.
-        tmp = tmp - 1
       endif
     enddo
   enddo
@@ -228,12 +198,14 @@ subroutine link_vort_rad(nx, ny, lon, lat, del_t, mtype,                      &
       ! New vortex at the current time step
       vor_num = vor_num + 1
       vor_idx(vor_num) = i_max1
+      !vor_idx_old(vor_num) = 
     else
       do i_max = 1, n_max_prev
         do i_vor_num = 1, vor_num
           !print*, i_max1, i_max, i_vor_num, vor_num
           if (i_max == vor_idx_old(i_vor_num)) then
             vor_idx(i_vor_num) = i_next(i_max)
+            ! WHAT ABOUT vor_idx_old???
           endif
         enddo
       enddo
@@ -241,28 +213,28 @@ subroutine link_vort_rad(nx, ny, lon, lat, del_t, mtype,                      &
   enddo
 
 
-  do i_max = 1, n_max_prev ! ?????????????????
-    if (i_next(i_max) > 0) then
-      write (*,'(A,I4,A,I4,A,I4,A,I4)') 'Vortex labeled as ', i_max, &
-            & ' is connected to vortex ', i_next(i_max), ' at the next time step'
+  !do i_max = 1, n_max_prev ! ?????????????????
+  !  if (i_next(i_max) > 0) then
+  !    write (*,'(A,I4,A,I4,A,I4,A,I4)') 'Vortex labeled as ', i_max, &
+  !          & ' is connected to vortex ', i_next(i_max), ' at the next time step'
 
-      if (vor_prev_flag(i_max)) then  ! The vortex existed at kt-1
-        write (*,'(A,I4,A,I4,A)') 'Vortex labeled as ', i_max, ' existed at time step t-2'
-        do i_vor_num = 1, vor_num
-          if (vor_idx_old(i_vor_num) == i_max) then
-            vor_idx(i_vor_num) = i_next(i_max)
-          endif
-        enddo
-      else ! The vortex appears at kt
-        print*, 'vortex appears at the previous time step'
-        print*, '->', vor_num, i_max, i_next(i_max)
-        vor_num = vor_num + 1
-        vor_idx_old(vor_num) = i_max
-        vor_idx(vor_num) = i_next(i_max)
-        ! print*, '--->', vor_num, i_max, i_next(i_max)
-      endif
-    endif ! i_next > 0
-  enddo ! i_max loop
+  !    if (vor_prev_flag(i_max)) then  ! The vortex existed at kt-1
+  !      write (*,'(A,I4,A,I4,A)') 'Vortex labeled as ', i_max, ' existed at time step t-2'
+  !      do i_vor_num = 1, vor_num
+  !        if (vor_idx_old(i_vor_num) == i_max) then
+  !          vor_idx(i_vor_num) = i_next(i_max)
+  !        endif
+  !      enddo
+  !    else ! The vortex appears at kt
+  !      print*, 'vortex appears at the previous time step'
+  !      print*, '->', vor_num, i_max, i_next(i_max)
+  !      vor_num = vor_num + 1
+  !      vor_idx_old(vor_num) = i_max
+  !      vor_idx(vor_num) = i_next(i_max)
+  !      ! print*, '--->', vor_num, i_max, i_next(i_max)
+  !    endif
+  !  endif ! i_next > 0
+  !enddo ! i_max loop
 
   print*, 'VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV'
   print*, vor_num
@@ -281,7 +253,7 @@ subroutine link_vort_rad(nx, ny, lon, lat, del_t, mtype,                      &
           & .and. vor_idx(i_vor_num) > 0                              &
           & .and. i_vor_num /= i_vor_num2 &
           & .and. vor_merge(i_vor_num) /= i_vor_num2 &
-          & .and. vor_merge(i_vor_num2) == 0) then
+          & .and. vor_merge(i_vor_num2) < 1) then
 
             if (r_next_tmp > r_next(vor_idx_old(i_vor_num2))) then
               vor_merge(i_vor_num) = i_vor_num2
@@ -297,7 +269,7 @@ subroutine link_vort_rad(nx, ny, lon, lat, del_t, mtype,                      &
     endif
   enddo ! i_vor_num
 
-  print*, '>>> vor_idx',  vor_idx(1:5)
+  print*, '>>> vor_merge',  vor_merge(1:5)
   print*, '###################################################################'
 
 end subroutine link_vort_rad
