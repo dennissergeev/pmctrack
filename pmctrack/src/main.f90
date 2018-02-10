@@ -2,7 +2,7 @@ program main
   use datetime_module
 
   use types, only : wp
-  use constants, only : fillval, steer_nt, nmax, pmax, rkilo
+  use constants, only : fillval, steer_nt, nmax, pmax, rkilo, fh_bin, fh_maxloc
   use params, only : get_config_params, set_bounds_auto, dbg,                 &
     & datadir, outdir, prefix_sfc, prefix_lvl,                                &
     & year_start, month_start, day_start, hour_start,                         &
@@ -14,7 +14,7 @@ program main
   use nc_io, only : get_dims, get_time, get_coords,                           &
     & get_xy_from_xyzt, get_xy_from_xyt, get_xyz_from_xyzt,                   &
     & get_data_2d
-  use utils, only : apply_mask_2d, make_nc_file_name
+  use utils, only : apply_mask_2d, make_nc_file_name, write_vortrack
 
   implicit none
 
@@ -26,7 +26,6 @@ program main
   character(len=256)                          :: nc_file_name
   character(len=256)                          :: fname_bin
   character(len=256)                          :: fname_vormaxloc
-  character(len=256)                          :: fname_track
   real(wp)                                    :: lonin
   real(wp)                                    :: latin
   real(wp)                                    :: del_t
@@ -102,11 +101,6 @@ program main
   type(datetime)                              :: idt
   type(datetime)                              :: idt_pair(steer_nt)
 
-  ! IO units
-  integer                         , parameter :: fh_bin = 998
-  integer                         , parameter :: fh_maxloc = 997
-  integer                         , parameter :: fh_track = 996
-
 
   ! Store dimension names in one array
   DIM_NAMES(1) = trim(REC_NAME)
@@ -144,11 +138,11 @@ program main
   call get_time(nc_file_name, REC_NAME, time_temp, time_step_s, cal_start)
 
   del_t = (time_temp(1) - time_temp(0)) * time_step_s
-  print*, 'time_temp', time_temp(0)
-  print*, 'del_t', del_t
+  ! print*, 'time_temp', time_temp(0)
+  ! print*, 'del_t', del_t
   td = dt_end - dt_start
   ntime = int(td%total_seconds() / del_t) + 1
-  print*, 'ntime=', ntime
+  ! print*, 'ntime=', ntime
 
   td = timedelta(hours=time_temp(0))
   dt_min = cal_start + td
@@ -235,13 +229,11 @@ program main
     dt_min = cal_start + td ! Start date time of each file
     td = idt - dt_min
     time_idx = int(td%total_seconds() / del_t) + 1
-    print*,''
-    print*,'=================================================================='
-    print*,'=================================================================='
-    print*, kt, 'idt=', idt, 'time_idx=', time_idx
-    print*,'=================================================================='
-    print*,'=================================================================='
-    print*,''
+    write(*, *) ''
+    write(*, *) '============================================================='
+    write(*, *)  'kt=', kt, 'idt=', idt, 'time_idx=', time_idx
+    write(*, *) '============================================================='
+    write(*, *) ''
     ! Read vorticity at the specified level
     call get_xy_from_xyzt(nc_file_name, vort_name, lvl_idx, time_idx, vor)
     vor(:, :) = vor(:, ny:0:-1)
@@ -308,7 +300,7 @@ program main
     else
       n_min = 0
     endif
-    ! print*, 'N_MIN=', n_min
+    ! ! print*, 'N_MIN=', n_min
 
     if (maxval(mtype(:)) >= 1) then
       call synop_check(mlon(:), mlat(:), n_max,                               &
@@ -394,7 +386,7 @@ program main
     enddo ! i_max loop
     close(unit=fh_maxloc)
 
-    print*,'------------------------------------------------------------------'
+    ! print*,'------------------------------------------------------------------'
 
     !---- output steeering wind ----!
     dummy = fillval
@@ -447,11 +439,10 @@ program main
       enddo
     endif
 
-    print*, 'main: vor_num=', vor_num
+    ! print*, 'main: vor_num=', vor_num
 
-    allocate(vortex     (vor_num, 4))
+    allocate(vortex     (vor_num, 5)); vortex = fillval
     allocate(vortex_type(vor_num   ))
-    vortex = -999
 
     do i_vor_num = 1, vor_num
       if (vor_index(i_vor_num) > 0) then
@@ -462,8 +453,9 @@ program main
           vortex(i_vor_num, 1) = mlon(vor_index(i_vor_num)) / rkilo
           vortex(i_vor_num, 2) = mlat(vor_index(i_vor_num)) / rkilo
         endif
-        vortex(i_vor_num, 3) = max_vor(vor_index(i_vor_num))
+        vortex(i_vor_num, 3) = max_vor(vor_index(i_vor_num)) * rkilo
         vortex(i_vor_num, 4) = s_part(vor_index(i_vor_num))
+        vortex(i_vor_num, 5) = mtype(vor_index(i_vor_num))
         vortex_type(i_vor_num) = mtype(vor_index(i_vor_num))
       end if
 
@@ -474,52 +466,50 @@ program main
     enddo
 
     !------------ vortrack out put ----------------------
-    print*, idt
-    print*,'main: vor_merge', vor_merge(1:5)
-    print*,'main: vor_index', vor_index(1:5)
-    print*,'main: vor_merge_num', vor_merge_num(1:5)
-
     do i_vor_num = 1, vor_num
       if (vor_index(i_vor_num) > 0) then! .and. tmp_arr(i_vor_num) /= 1) then
-        print*,'main: i_vor_num', i_vor_num
-        print*, '      vor_merge', vor_merge(i_vor_num)
+        ! print*,'main: i_vor_num', i_vor_num
+        ! print*, '      vor_merge', vor_merge(i_vor_num)
         if (vor_merge(i_vor_num) > 0) then
           if (tmp_arr(i_vor_num) /= 1) then 
             vor_merge_num(vor_merge(i_vor_num)) = &
               & vor_merge_num(vor_merge(i_vor_num)) + 1
             tmp_arr(i_vor_num) = 1
             ! Write current time step to the merged vortex file too
-            write(fname_track, '(A,A,A,I4.4,A,I4.4,A)') trim(outdir), '/',        &
-                                                     & 'vortrack_', i_vor_num,    &
-                                                     & '_', 1, '.txt'
-            open(unit=fh_track, file=fname_track, form='formatted',                 &
-               & access='append', status='unknown')
-            write(unit=fh_track, fmt='(3f12.5,A15,f15.5,I3)') vortex(i_vor_num, 1),  &
-                 & vortex(i_vor_num, 2), vortex(i_vor_num, 3) * rkilo,             &
-                 & trim(idt%strftime('%Y%m%d%H%M')), vortex(i_vor_num, 4),         &
-                 & vortex_type(i_vor_num)
-            close(unit=fh_track)
+            call write_vortrack(outdir, vortex(i_vor_num, :), i_vor_num, 1, idt)
+            ! write(fname_track, '(A,A,A,I4.4,A,I4.4,A)') trim(outdir), '/',        &
+            !                                          & 'vortrack_', i_vor_num,    &
+            !                                          & '_', 1, '.txt'
+            ! open(unit=fh_track, file=fname_track, form='formatted',                 &
+            !    & access='append', status='unknown')
+            ! write(unit=fh_track, fmt='(3f12.5,A15,f15.5,I3)') vortex(i_vor_num, 1),  &
+            !      & vortex(i_vor_num, 2), vortex(i_vor_num, 3) * rkilo,             &
+            !      & trim(idt%strftime('%Y%m%d%H%M')), vortex(i_vor_num, 4),         &
+            !      & vortex_type(i_vor_num)
+            ! close(unit=fh_track)
           endif
           ! print*, '      vor_merge_num', vor_merge_num(vor_merge(i_vor_num))
 
-          write (fname_track, '(A,A,A,I4.4,A,I4.4,A)') trim(outdir), '/',                         &
-                                                     & 'vortrack_',                               &
-                                                     & vor_merge(i_vor_num), '_',                 &
-                                                     & vor_merge_num(vor_merge(i_vor_num)), '.txt'
+          call write_vortrack(outdir, vortex(i_vor_num, :), vor_merge(i_vor_num), vor_merge_num(vor_merge(i_vor_num)), idt)
+          ! write (fname_track, '(A,A,A,I4.4,A,I4.4,A)') trim(outdir), '/',                         &
+          !                                            & 'vortrack_',                               &
+          !                                            & vor_merge(i_vor_num), '_',                 &
+          !                                            & vor_merge_num(vor_merge(i_vor_num)), '.txt'
         else
-          print*, '      vor_merge==0'
-          write(fname_track, '(A,A,A,I4.4,A,I4.4,A)') trim(outdir), '/',        &
-                                                   & 'vortrack_', i_vor_num,    &
-                                                   & '_', 1, '.txt'
+          ! print*, '      vor_merge==0'
+          call write_vortrack(outdir, vortex(i_vor_num, :), i_vor_num, 1, idt)
+          ! write(fname_track, '(A,A,A,I4.4,A,I4.4,A)') trim(outdir), '/',        &
+          !                                          & 'vortrack_', i_vor_num,    &
+          !                                          & '_', 1, '.txt'
         endif
-        print*, '>>>', i_vor_num, fname_track
-        open(unit=fh_track, file=fname_track, form='formatted',                 &
-           & access='append', status='unknown')
-        write(unit=fh_track, fmt='(3f12.5,A15,f15.5,I3)') vortex(i_vor_num, 1),  &
-             & vortex(i_vor_num, 2), vortex(i_vor_num, 3) * rkilo,             &
-             & trim(idt%strftime('%Y%m%d%H%M')), vortex(i_vor_num, 4),         &
-             & vortex_type(i_vor_num)
-        close(unit=fh_track)
+        ! print*, '>>>', i_vor_num, fname_track
+        ! open(unit=fh_track, file=fname_track, form='formatted',                 &
+        !    & access='append', status='unknown')
+        ! write(unit=fh_track, fmt='(3f12.5,A15,f15.5,I3)') vortex(i_vor_num, 1),  &
+        !      & vortex(i_vor_num, 2), vortex(i_vor_num, 3) * rkilo,             &
+        !      & trim(idt%strftime('%Y%m%d%H%M')), vortex(i_vor_num, 4),         &
+        !      & vortex_type(i_vor_num)
+        ! close(unit=fh_track)
 
       endif
     enddo
@@ -537,7 +527,7 @@ program main
     ! idt_pair(2) = idt
   enddo ! MAIN TIME LOOP ------------------------------------------------------
 
-  print*, '==================================================================='
+  ! print*, '==================================================================='
   ! print*, 'mlon', shape(mlon), mlon
   ! print*, '==================================================================='
   ! print*, 'mtype', shape(mtype), mtype

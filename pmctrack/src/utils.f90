@@ -1,7 +1,9 @@
 module utils
 
+use datetime_module
+
 use types, only : wp
-use constants, only : missval, pi, deg2rad
+use constants, only : missval, pi, deg2rad, fh_track
 
 implicit none
 
@@ -22,6 +24,31 @@ contains
                                                    & m, '.',                  &
                                                    & trim(var_name), '.nc'
   end subroutine make_nc_file_name
+
+
+  subroutine write_vortrack(outdir, vortex, id1, id2, idt)
+    
+    character(len=*), intent(in) :: outdir
+    integer         , intent(in) :: id1, id2
+    type(datetime)  , intent(in) :: idt
+    real(wp)        , intent(in) :: vortex(5)
+    character(len=256)           :: fname_track
+
+
+    write(fname_track, '(A,A,A,I4.4,A,I4.4,A)') trim(outdir), '/',        &
+                                             & 'vortrack_', id1,    &
+                                             & '_', id2, '.txt'
+    open(unit=fh_track, file=fname_track, form='formatted',                 &
+       & access='append', status='unknown')
+    write(unit=fh_track, fmt='(3f12.5,A15,f15.5,I3)')                         &
+      & vortex(1),                                                            &
+      & vortex(2),                                                            &
+      & vortex(3),                                                            &
+      & trim(idt%strftime('%Y%m%d%H%M')),                                     &
+      & vortex(4),                                                            &
+      & int(vortex(5))
+    close(unit=fh_track)
+  end subroutine write_vortrack 
 
 
   subroutine apply_mask_2d(var, nx, ny, flag)
