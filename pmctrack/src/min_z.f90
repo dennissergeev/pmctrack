@@ -29,7 +29,7 @@ subroutine min_z(z, nx, ny, minlat, minlon, &
   integer               :: s_part
   integer               :: var_part_tmp(1:2, 1:pmax4)
   integer               :: p
-  integer               :: buf_mij (2,        nmax) ! TODO: check the size
+  integer               :: buf_mij (2,        pmax4) ! TODO: check the size
   logical               :: mij_flag
   integer               :: i, j, m
   integer               :: i_min

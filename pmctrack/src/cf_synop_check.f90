@@ -97,9 +97,9 @@ subroutine cf_synop_check(vor_in,vor_part,n_part,nx,ny,lon,lat,mtype_part)
       end do
     end do
 
-#ifdef debug
-    print*, 'cf_synop_check(99):', 'i_s', i_s, 'i_n', i_n
-#endif
+!#ifdef debug
+!    print*, 'cf_synop_check(99):', 'i_s', i_s, 'i_n', i_n
+!#endif
 
     if(proj==1)then
       if(i_s/=i_n)then

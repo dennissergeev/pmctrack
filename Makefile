@@ -30,10 +30,10 @@ $(OBJDIR)/synop_check.o \
 $(OBJDIR)/min_z.o \
 $(OBJDIR)/steering_wind.o \
 $(OBJDIR)/link_vort_rad.o \
-$(OBJDIR)/linkin_vort.o \
-$(OBJDIR)/check_track.o \
 $(OBJDIR)/smth.o \
 $(OBJDIR)/main.o
+#$(OBJDIR)/check_track.o \
+#$(OBJDIR)/linkin_vort.o \
 #$(OBJDIR)/linkin_vort2.o \
 # $(OBJDIR)/tracking_main.o \
 
