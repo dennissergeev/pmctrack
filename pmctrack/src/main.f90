@@ -188,7 +188,7 @@ program main
   allocate(mlon_prev    (                  nmax)); mlon_prev = fillval
   allocate(max_vor      (                  nmax))
   allocate(s_part       (                  nmax))
-  allocate(mtype        (                  nmax)); mtype = -999 
+  allocate(mtype        (                  nmax)); mtype = -999
   allocate(minlat       (                  nmax))
   allocate(minlon       (                  nmax))
   allocate(z_min        (                  nmax))
@@ -244,7 +244,6 @@ program main
     idt_pair(2) = idt + timedelta(hours=del_t / time_step_s)
     ! if (kt > 1 .and. mod(kt, steer_nt) == 0) then
     if (kt < ntime) then
-      ! TODO: ensure all times are read in
       ! Read u- and v-winds
       do kt2 = 1, steer_nt
         call make_nc_file_name(nc_file_name, datadir, prefix_lvl, &
@@ -395,19 +394,19 @@ program main
     write(unit=fh_bin) dummy(nx1:nx2, ny1:ny2)
 
     !     dummy=fillval
-    
+
     !     do i_max=1,n_max(kt)
     !       dummy(mi(i_max,kt),mj(i_max,kt))=-u_vor_b(i_max,kt)
     !     end do
-    
+
     !     write (12)dummy(nx1:nx2,ny1:ny2)
-    
+
     !     dummy=fillval
-    
+
     !     do i_max=1,n_max(kt)
     !       dummy(mi(i_max,kt),mj(i_max,kt))=-v_vor_b(i_max,kt)
     !     end do
-    
+
     !     write (12)dummy(nx1:nx2,ny1:ny2)
     ! SLP output
     write(unit=fh_bin) psea(nx1:nx2, ny1:ny2)
@@ -421,7 +420,7 @@ program main
       elseif (track_type == 2) then
        call link_vort_rad(nx12, ny12, lons(nx1:nx2), lats(ny1:ny2),           &
                         & del_t, mtype, mlon_prev, mlat_prev, mlon, mlat,     &
-                        & u_vor_f_prev, v_vor_f_prev,                         &
+                        & u_vor_f_prev, v_vor_f_prev, s_part,                 &
                         & vor_part(nx1:nx2, ny1:ny2),                         &
                         & n_max_prev, n_max,                                  &
                         & vor_num, vor_index, vor_merge)
@@ -452,7 +451,7 @@ program main
       ! --- check the track ---
       ! call check_track(vortex(i_vor_num, 1:3), vortex_flag(i_vor_num))
       ! disabled, because requires full track in time
-      ! So it's easier to filter them out when analysing the full output 
+      ! So it's easier to filter them out when analysing the full output
     enddo
 
     !------------ vortrack out put ----------------------
@@ -461,7 +460,7 @@ program main
         ! print*,'main: i_vor_num', i_vor_num
         ! print*, '      vor_merge', vor_merge(i_vor_num)
         if (vor_merge(i_vor_num) > 0) then
-          if (merged_count(i_vor_num) /= 1) then 
+          if (merged_count(i_vor_num) /= 1) then
             vor_merge_num(vor_merge(i_vor_num)) = &
               & vor_merge_num(vor_merge(i_vor_num)) + 1
             merged_count(i_vor_num) = 1
@@ -483,8 +482,8 @@ program main
     n_max_prev = n_max
     mlon_prev = mlon
     mlat_prev = mlat
-    u_vor_f_prev = u_vor_f 
-    v_vor_f_prev = v_vor_f 
+    u_vor_f_prev = u_vor_f
+    v_vor_f_prev = v_vor_f
     ! idt_pair(1) = idt
     idt = idt + timedelta(hours=del_t / time_step_s)
     ! idt_pair(2) = idt

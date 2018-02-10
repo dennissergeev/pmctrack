@@ -1,6 +1,6 @@
 subroutine link_vort_rad(nx, ny, lon, lat, del_t, mtype,                      &
                        & mlon_prev, mlat_prev, mlon, mlat,                    &
-                       & uprev, vprev,                                        &
+                       & uprev, vprev, s_part,                                &
                        & vor_part, n_max_prev, n_max,                         &
                        & vor_num, vor_idx, vor_merge)
 
@@ -23,6 +23,7 @@ subroutine link_vort_rad(nx, ny, lon, lat, del_t, mtype,                      &
   real   (wp), intent(in)    :: mlat         (nmax             )
   real   (wp), intent(in)    :: uprev        (nmax             )
   real   (wp), intent(in)    :: vprev        (nmax             )
+  real   (wp), intent(in)    :: s_part       (nmax             )
   integer    , intent(in)    :: vor_part     (     0:nx, 0:ny  )
   integer    , intent(inout) :: vor_idx      (pmax             )
   integer    , intent(inout) :: vor_merge    (pmax             )
@@ -31,7 +32,7 @@ subroutine link_vort_rad(nx, ny, lon, lat, del_t, mtype,                      &
   integer                    :: i_max, i_max1
   integer                    :: i_next       (nmax             )
   integer                    :: vor_idx_old  (pmax             )
-  integer                    :: new_vor      (pmax             )
+  integer                    :: merge_by_val (nmax             )
   real   (wp)                :: r_next       (nmax             )
   real   (wp)                :: r_next_tmp
   integer                    :: vor_part_s   (nmax             )
@@ -43,8 +44,10 @@ subroutine link_vort_rad(nx, ny, lon, lat, del_t, mtype,                      &
   real   (wp)                :: r_c_min
   real   (wp)                :: r_tmp
   real   (wp)                :: max_dist ! Search radius for a vortex
+  integer                    :: merge_opt
 
 
+  merge_opt = 2 ! TODO: move to params
   max_dist = del_r * 1.e3
 
   r_tmp = 0.
@@ -56,7 +59,6 @@ subroutine link_vort_rad(nx, ny, lon, lat, del_t, mtype,                      &
   !!!vor_merge = -999
   vor_idx_old = vor_idx
   vor_idx = -999
-  new_vor = -999
   i_next = -999
 
   vor_new_flag(1:nmax) = .false.
@@ -89,9 +91,9 @@ subroutine link_vort_rad(nx, ny, lon, lat, del_t, mtype,                      &
       elseif (proj == 2) then
         r_tmp=sqrt( (mlon(i_max1) - e_mlon)**2                         &
                    +(mlat(i_max1) - e_mlat)**2)
-      endif 
+      endif
 
-      if (r_tmp <= r_c_min) then 
+      if (r_tmp <= r_c_min) then
         i_next(i_max) = i_max1  ! i_max1'th vortex is i_max'th in i_next array
         r_c_min = r_tmp !TODO: check if this is valid
         r_next(i_max) = r_tmp
@@ -107,7 +109,7 @@ subroutine link_vort_rad(nx, ny, lon, lat, del_t, mtype,                      &
     if (i_next(i_max) < 1) then
     ! i_max'th vortex on the previous time step does not have a location
     ! within the r_c_min radius on the current time step
-    ! Then the second requirement is considered, which is that a part of 
+    ! Then the second requirement is considered, which is that a part of
     ! an isolated vortex area at the next time step overlaps with the
     ! estimated area
       do j =0, ny
@@ -132,9 +134,9 @@ subroutine link_vort_rad(nx, ny, lon, lat, del_t, mtype,                      &
       do ! "while loop"
         if (maxval(vor_part_s) == 0) exit
 
-        ! If there are more than two isolated vortex areas for which part of 
+        ! If there are more than two isolated vortex areas for which part of
         ! the area overlaps with the estimated area, the vortex at the previous
-        ! time step is linked to the vortex with an isolated vortex area 
+        ! time step is linked to the vortex with an isolated vortex area
         ! having the largest amount of overlap with the estimated area
 
         i_next(i_max) = maxloc(vor_part_s, dim=1)
@@ -179,7 +181,7 @@ subroutine link_vort_rad(nx, ny, lon, lat, del_t, mtype,                      &
       ! New vortex at the current time step
       vor_num = vor_num + 1
       vor_idx(vor_num) = i_max1
-      !vor_idx_old(vor_num) = 
+      !vor_idx_old(vor_num) =
     else
       do i_max = 1, n_max_prev
         do i_vor_num = 1, vor_num
@@ -195,10 +197,18 @@ subroutine link_vort_rad(nx, ny, lon, lat, del_t, mtype,                      &
   enddo
 
   !------- check the merger of the vortices -------
+  if (merge_opt == 1) then
+    ! Check what vortex is dominant by comparing distances
+    merge_by_val = r_next
+  elseif (merge_opt == 2) then
+    ! Check what vortex is dominant by comparing their sizes
+    write(*, *) 'NotImplementedYet'; stop
+    merge_by_val = s_part
+  endif
+
   do i_vor_num = 1, vor_num
     if (vor_idx_old(i_vor_num) > 0 .and. vor_idx(i_vor_num) > 0) then
-      ! Decide what vortex is dominant by comparing r_next
-      r_tmp = r_next(vor_idx_old(i_vor_num))
+      r_tmp = merge_by_val(vor_idx_old(i_vor_num))
       do i_vor_num2 = 1, vor_num
         if (      vor_idx(i_vor_num) == vor_idx(i_vor_num2) &
             .and. i_vor_num /= i_vor_num2 &
@@ -206,9 +216,9 @@ subroutine link_vort_rad(nx, ny, lon, lat, del_t, mtype,                      &
             .and. vor_merge(i_vor_num2) < 1 &
             &) then
           !print*, 'vor_merge', vor_merge(i_vor_num), vor_merge(i_vor_num2)
-          if (r_tmp > r_next(vor_idx_old(i_vor_num2))) then
+          if (r_tmp > merge_by_val(vor_idx_old(i_vor_num2))) then
             vor_merge(i_vor_num) = i_vor_num2
-            r_tmp = r_next(vor_idx_old(i_vor_num2))
+            r_tmp = merge_by_val(vor_idx_old(i_vor_num2))
           endif
           if (vor_merge(i_vor_num) > 0) then
             write (*, *) 'vortex', i_vor_num, &
