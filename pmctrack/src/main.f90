@@ -73,6 +73,7 @@ program main
   real(wp)         , allocatable              :: v_vor_f_prev(:)
   integer          , allocatable              :: vor_merge(:)
   integer          , allocatable              :: vor_index(:)
+  integer          , allocatable              :: tmp_arr(:)
   real(wp)         , allocatable              :: vortex(:, :)
   integer          , allocatable              :: vortex_type(:)
   integer          , allocatable              :: vor_merge_num(:)
@@ -210,10 +211,12 @@ program main
   allocate(u_vor_f_prev (                  nmax)); u_vor_f_prev = fillval
   allocate(v_vor_f_prev (                  nmax)); v_vor_f_prev = fillval
   allocate(vor_index    (                  pmax)); vor_index = -999
+  allocate(tmp_arr(                  pmax)); tmp_arr = -999
   allocate(vor_merge    (                  pmax)); vor_merge = -999
   allocate(vor_merge_num(                  pmax));
 
   vor_num = 0
+  vor_merge_num(:) = 1
 
   write(nc_file_name, '(A,A,A,A)') trim(datadir), '/', trim(land_name), '.nc'
   call get_data_2d(nc_file_name, land_name, land_mask)
@@ -424,30 +427,24 @@ program main
     write(unit=fh_bin) psea(nx1:nx2, ny1:ny2)
 
     close(unit=fh_bin)
-    ! idt_pair(1) = idt
-    idt = idt + timedelta(hours=del_t / time_step_s)
-    ! idt_pair(2) = idt
 
     ! Link vortices
     if (kt > 1) then
       if (track_type == 1) then
         write(*, *) "NotImplementedError"; stop
       elseif (track_type == 2) then
-       ! WIP       
-       
        call link_vort_rad(nx12, ny12, lons(nx1:nx2), lats(ny1:ny2), del_t, mtype, &
                         & mlon_prev, mlat_prev, mlon, mlat,                       &
                         & u_vor_f_prev, v_vor_f_prev,                             &
                         & vor_part(nx1:nx2, ny1:ny2),                             &
                         & n_max_prev, n_max,                                      &
                         & vor_num, vor_index, vor_merge)
- 
       endif
     else
+      vor_num = n_max
       do i_max = 1, n_max
         vor_index(i_max) = i_max
       enddo
-      vor_num = n_max
     endif
 
     print*, 'main: vor_num=', vor_num
@@ -477,54 +474,67 @@ program main
     enddo
 
     !------------ vortrack out put ----------------------
-
+    print*, idt
     print*,'main: vor_merge', vor_merge(1:5)
+    print*,'main: vor_index', vor_index(1:5)
+    print*,'main: vor_merge_num', vor_merge_num(1:5)
 
-    vor_merge_num(:) = 1
     do i_vor_num = 1, vor_num
-      if (vor_index(i_vor_num) > 0) then ! TODO: check
+      if (vor_index(i_vor_num) > 0) then! .and. tmp_arr(i_vor_num) /= 1) then
         print*,'main: i_vor_num', i_vor_num
-        if (vor_merge(i_vor_num) > 0) then ! TODO: check
-          print*, 'main: vor_merge>0'
-          vor_merge_num(vor_merge(i_vor_num)) = &
-            & vor_merge_num(vor_merge(i_vor_num)) + 1
+        print*, '      vor_merge', vor_merge(i_vor_num)
+        if (vor_merge(i_vor_num) > 0) then
+          if (tmp_arr(i_vor_num) /= 1) then 
+            vor_merge_num(vor_merge(i_vor_num)) = &
+              & vor_merge_num(vor_merge(i_vor_num)) + 1
+            tmp_arr(i_vor_num) = 1
+            ! Write current time step to the merged vortex file too
+            write(fname_track, '(A,A,A,I4.4,A,I4.4,A)') trim(outdir), '/',        &
+                                                     & 'vortrack_', i_vor_num,    &
+                                                     & '_', 1, '.txt'
+            open(unit=fh_track, file=fname_track, form='formatted',                 &
+               & access='append', status='unknown')
+            write(unit=fh_track, fmt='(3f12.5,A15,f15.5,I3)') vortex(i_vor_num, 1),  &
+                 & vortex(i_vor_num, 2), vortex(i_vor_num, 3) * rkilo,             &
+                 & trim(idt%strftime('%Y%m%d%H%M')), vortex(i_vor_num, 4),         &
+                 & vortex_type(i_vor_num)
+            close(unit=fh_track)
+          endif
+          ! print*, '      vor_merge_num', vor_merge_num(vor_merge(i_vor_num))
 
           write (fname_track, '(A,A,A,I4.4,A,I4.4,A)') trim(outdir), '/',                         &
                                                      & 'vortrack_',                               &
                                                      & vor_merge(i_vor_num), '_',                 &
                                                      & vor_merge_num(vor_merge(i_vor_num)), '.txt'
-          !          write (*,*)vor_merge(i_vor_num),vor_merge_num(vor_merge(i_vor_num))
-        else  !if (vor_merge(i_vor_num) == 0) then
-          print*, 'main: vor_merge==0'
+        else
+          print*, '      vor_merge==0'
           write(fname_track, '(A,A,A,I4.4,A,I4.4,A)') trim(outdir), '/',        &
                                                    & 'vortrack_', i_vor_num,    &
                                                    & '_', 1, '.txt'
-        end if
-
-
+        endif
+        print*, '>>>', i_vor_num, fname_track
         open(unit=fh_track, file=fname_track, form='formatted',                 &
            & access='append', status='unknown')
-
         write(unit=fh_track, fmt='(3f12.5,A15,f15.5,I3)') vortex(i_vor_num, 1),  &
              & vortex(i_vor_num, 2), vortex(i_vor_num, 3) * rkilo,             &
              & trim(idt%strftime('%Y%m%d%H%M')), vortex(i_vor_num, 4),         &
              & vortex_type(i_vor_num)
-
         close(unit=fh_track)
+
       endif
-    end do
+    enddo
     deallocate(vortex     )
     deallocate(vortex_type)
 
-    ! Save for the next time step    
-    ! TODO: check this!!!!!!!!
-    if (kt == 0) then
-    endif
+    ! Save for the next time step
     n_max_prev = n_max
     mlon_prev = mlon
     mlat_prev = mlat
     u_vor_f_prev = u_vor_f 
     v_vor_f_prev = v_vor_f 
+    ! idt_pair(1) = idt
+    idt = idt + timedelta(hours=del_t / time_step_s)
+    ! idt_pair(2) = idt
   enddo ! MAIN TIME LOOP ------------------------------------------------------
 
   print*, '==================================================================='
@@ -578,6 +588,7 @@ program main
   deallocate(v_vor_f_prev )
   deallocate(vor_merge    )
   deallocate(vor_index    )
+  deallocate(tmp_arr)
 
   write(*, *) 'Owari'
 end program main

@@ -25,7 +25,7 @@ subroutine link_vort_rad(nx, ny, lon, lat, del_t, mtype,                      &
   real   (wp), intent(in)    :: v_vor_f_prev (nmax             )
   integer    , intent(in)    :: vor_part     (     0:nx, 0:ny  )
   integer    , intent(inout) :: vor_idx      (pmax             )
-  integer    , intent(out)   :: vor_merge    (pmax             )
+  integer    , intent(inout) :: vor_merge    (pmax             )    !????????????
   integer    , intent(inout) :: vor_num
   !integer    , intent(in) :: vor_num_k_1
   ! Local variables
@@ -56,7 +56,7 @@ subroutine link_vort_rad(nx, ny, lon, lat, del_t, mtype,                      &
 
   r_next = fillval
 
-  vor_merge = -999
+  !vor_merge = -999
   vor_idx_old = vor_idx
   vor_idx = -999
 
@@ -66,13 +66,13 @@ subroutine link_vort_rad(nx, ny, lon, lat, del_t, mtype,                      &
 
   vor_new_flag(1:nmax) = .false.
 
-  print*, '###################################################################'
-  !print*, '>>> u_vor_f_prev', u_vor_f_prev(1:5)
-  print*, '>>> mlon_prev', mlon_prev(1:5)
-  print*, '>>> mlon', mlon(1:5)
-  print*, '>>> n_max_prev, n_max',  n_max_prev, n_max
-  print*, '>>> vor_idx_old',  vor_idx_old(1:5)
-  print*, '>>> vor_num',  vor_num
+  !!print*, '###################################################################'
+  !!print*, '>>> u_vor_f_prev', u_vor_f_prev(1:5)
+  !!print*, '>>> mlon_prev', mlon_prev(1:5)
+  !!print*, '>>> mlon', mlon(1:5)
+  !!print*, '>>> n_max_prev, n_max',  n_max_prev, n_max
+  !!print*, '>>> vor_idx_old',  vor_idx_old(1:5)
+  !!print*, '>>> vor_num',  vor_num
 
   ! t=kt -> t=kt+1
   do i_max = 1, n_max_prev ! Loop over vortices at the previous time step
@@ -109,17 +109,17 @@ subroutine link_vort_rad(nx, ny, lon, lat, del_t, mtype,                      &
         r_c_min = r_tmp !TODO: check if this is valid
         r_next(i_max) = r_tmp
       endif
-      print*, '>>>', i_max, i_max1, r_c_min, r_tmp, mlon_prev(i_max), mlat_prev(i_max), &
-                   & e_mlon, e_mlat, mlon(i_max1), mlat(i_max1)
+      !print*, '>>>', i_max, i_max1, r_c_min, r_tmp, mlon_prev(i_max), mlat_prev(i_max), &
+      !             & e_mlon, e_mlat, mlon(i_max1), mlat(i_max1)
     enddo
 
     ! ------ Tracking by part of vortex --------
 
-    print*, '*****************************************************************'
-    print*, mlon(i_max), mlat(i_max)
-    print*, i_next(1:5)
-    print*, r_next(1:5)
-    print*, '*****************************************************************'
+    !print*, '*****************************************************************'
+    !print*, mlon(i_max), mlat(i_max)
+    !print*, i_next(1:5)
+    !print*, r_next(1:5)
+    !print*, '*****************************************************************'
 
     vor_part_s = 0
     if (i_next(i_max) < 1) then
@@ -139,13 +139,13 @@ subroutine link_vort_rad(nx, ny, lon, lat, del_t, mtype,                      &
 
           if ((r_tmp <= max_dist) .and. (vor_part(i, j) > 0)) then
             ! The vortex (i_max) is partly within the radius
-            ! print*, i, j, lon(i), lat(j)
+            ! !print*, i, j, lon(i), lat(j)
             vor_part_s(vor_part(i, j)) = vor_part_s(vor_part(i, j)) + 1
           endif
         enddo
       enddo
 
-      print*, 'vor_part_s', vor_part_s(1:5)
+      !print*, 'vor_part_s', vor_part_s(1:5)
 
       do ! "while loop"
         if (maxval(vor_part_s) == 0) exit
@@ -173,20 +173,20 @@ subroutine link_vort_rad(nx, ny, lon, lat, del_t, mtype,                      &
         endif
       enddo ! "while loop"
     endif  ! i_next(i_max) == 0
-    !print*, '*****************************************************************'
+    !!print*, '*****************************************************************'
   enddo ! i_max loop
-  print*, r_next(1:5)
-  print*, n_max_prev
-  print*, i_next(1:5)
-  print*, vor_idx_old(1:5)
-  print*, 'vor_num', vor_num
-  print*, '*****************************************************************'
+  !print*, r_next(1:5)
+  !print*, n_max_prev
+  !print*, i_next(1:5)
+  !print*, vor_idx_old(1:5)
+  !print*, 'vor_num', vor_num
+  !print*, '*****************************************************************'
 
   ! ------------- Connecting vortex (prev) to vortex (current) ----------------
   do i_max1 = 1, n_max
     vor_new_flag(i_max1) = .true.
     do i_max = 1, n_max_prev
-      ! print*, i_max1, i_max, i_next(i_max)
+      ! !print*, i_max1, i_max, i_next(i_max)
       if (i_max1 == i_next(i_max)) then
         vor_new_flag(i_max1) = .false.
       endif
@@ -202,17 +202,16 @@ subroutine link_vort_rad(nx, ny, lon, lat, del_t, mtype,                      &
     else
       do i_max = 1, n_max_prev
         do i_vor_num = 1, vor_num
-          !print*, i_max1, i_max, i_vor_num, vor_num
+          !!print*, i_max1, i_max, i_vor_num, vor_num
           if (i_max == vor_idx_old(i_vor_num)) then
             vor_idx(i_vor_num) = i_next(i_max)
             ! WHAT ABOUT vor_idx_old???
+            ! vor_idx_old(i_vor_num) = i_max
           endif
         enddo
       enddo
     endif
   enddo
-
-
   !do i_max = 1, n_max_prev ! ?????????????????
   !  if (i_next(i_max) > 0) then
   !    write (*,'(A,I4,A,I4,A,I4,A,I4)') 'Vortex labeled as ', i_max, &
@@ -226,50 +225,49 @@ subroutine link_vort_rad(nx, ny, lon, lat, del_t, mtype,                      &
   !        endif
   !      enddo
   !    else ! The vortex appears at kt
-  !      print*, 'vortex appears at the previous time step'
-  !      print*, '->', vor_num, i_max, i_next(i_max)
+  !      !print*, 'vortex appears at the previous time step'
+  !      !print*, '->', vor_num, i_max, i_next(i_max)
   !      vor_num = vor_num + 1
   !      vor_idx_old(vor_num) = i_max
   !      vor_idx(vor_num) = i_next(i_max)
-  !      ! print*, '--->', vor_num, i_max, i_next(i_max)
+  !      ! !print*, '--->', vor_num, i_max, i_next(i_max)
   !    endif
   !  endif ! i_next > 0
   !enddo ! i_max loop
 
-  print*, 'VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV'
-  print*, vor_num
-  print*, vor_idx_old(1:5)
-  print*, vor_idx(1:5)
-  print*, '^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^'
+  !print*, 'VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV'
+  !print*, vor_num
+  !print*, vor_idx_old(1:5)
+  !print*, vor_idx(1:5)
+  !print*, '^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^'
   ! stop
 
   !------- check the merger of the vortices -------
   do i_vor_num = 1, vor_num
-    if (vor_idx_old(i_vor_num) > 0) then ! TODO: check this!!!
-      r_next_tmp = r_next(vor_idx_old(i_vor_num))
-
+    if (vor_idx_old(i_vor_num) > 0 .and. vor_idx(i_vor_num) > 0) then
+      ! Decide what vortex is dominant by comparing r_next
+      r_tmp = r_next(vor_idx_old(i_vor_num))
       do i_vor_num2 = 1, vor_num
-        if (vor_idx(i_vor_num) == vor_idx(i_vor_num2)         &
-          & .and. vor_idx(i_vor_num) > 0                              &
-          & .and. i_vor_num /= i_vor_num2 &
-          & .and. vor_merge(i_vor_num) /= i_vor_num2 &
-          & .and. vor_merge(i_vor_num2) < 1) then
-
-            if (r_next_tmp > r_next(vor_idx_old(i_vor_num2))) then
-              vor_merge(i_vor_num) = i_vor_num2
-              r_next_tmp = r_next(vor_idx_old(i_vor_num2))
-            endif
-            if (vor_merge(i_vor_num) > 0) then
-              write (*, *) 'vortex', i_vor_num, &
-                   &' merged with vortex', vor_merge(i_vor_num)
-            endif
-
+        if (      vor_idx(i_vor_num) == vor_idx(i_vor_num2) &
+            .and. i_vor_num /= i_vor_num2 &
+            .and. vor_merge(i_vor_num) /= i_vor_num2 &
+            .and. vor_merge(i_vor_num2) < 1 &
+            &) then
+          !print*, 'vor_merge', vor_merge(i_vor_num), vor_merge(i_vor_num2)
+          if (r_tmp > r_next(vor_idx_old(i_vor_num2))) then
+            vor_merge(i_vor_num) = i_vor_num2
+            r_tmp = r_next(vor_idx_old(i_vor_num2))
+          endif
+          if (vor_merge(i_vor_num) > 0) then
+            write (*, *) 'vortex', i_vor_num, &
+                 &' merged into vortex', vor_merge(i_vor_num)
+          endif
         endif
-      enddo ! i_vor_num2
+      enddo
     endif
-  enddo ! i_vor_num
+  enddo
 
-  print*, '>>> vor_merge',  vor_merge(1:5)
-  print*, '###################################################################'
+  !print*, '>>> vor_merge',  vor_merge(1:5)
+  !print*, '###################################################################'
 
 end subroutine link_vort_rad
