@@ -410,7 +410,6 @@ program main
     !     write (12)dummy(nx1:nx2,ny1:ny2)
     ! SLP output
     write(unit=fh_bin) psea(nx1:nx2, ny1:ny2)
-
     close(unit=fh_bin)
 
     ! Link vortices

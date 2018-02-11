@@ -47,10 +47,11 @@ module params
 contains
   subroutine get_config_params()
 
+    use constants, only : fh_conf
+
     implicit none
 
     ! Local variables
-    integer, parameter            :: fh = 999
     character(len=256)            :: buffer
     character(len=256)            :: label
     integer                       :: line
@@ -66,13 +67,13 @@ contains
     ios = 0
     line = 0
 
-    open (fh, file=trim(config_file), form='formatted', status='old', &
+    open (fh_conf, file=trim(config_file), form='formatted', status='old', &
       &   iostat=ios, action='read')
     if (ios == 0) then
       if (dbg) write(*, *) '--------------------------------'
       if (dbg) write(*, *) 'Reading configuration parameters'
       do while (ios == 0)
-        read(fh, '(A)', iostat=ios) buffer
+        read(fh_conf, '(A)', iostat=ios) buffer
         if (ios == 0) then
           line = line + 1
 
@@ -142,7 +143,7 @@ contains
       end do
       if (dbg) write(*, *) '--------------------------------'
     end if
-    close(fh)
+    close(fh_conf)
 
     if(proj==2)then
       write (*,*)'Cartesian coordinate'

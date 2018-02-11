@@ -53,11 +53,11 @@ contains
 
   subroutine apply_mask_2d(var, nx, ny, flag)
   
-    integer(4), intent (in)    :: nx, ny
-    real   (4), intent (inout) :: var (0:nx, 0:ny)
-    real   (4), intent (in)    :: flag(0:nx, 0:ny)
+    integer    , intent (in)    :: nx, ny
+    real   (wp), intent (inout) :: var (0:nx, 0:ny)
+    real   (wp), intent (in)    :: flag(0:nx, 0:ny)
     
-    integer(4) :: i, j
+    integer                     :: i, j
   
     do j = 0, ny
       do i = 0, nx
@@ -72,11 +72,11 @@ contains
   
   
   function integral_p(var, p, nz)
-    integer , intent (in)  :: nz
-    real(wp), intent (in)  :: var(nz)
-    real(wp), intent (in)  :: p  (nz)
-    real(wp)               :: integral_p
-    integer                :: k
+    integer    , intent (in)  :: nz
+    real   (wp), intent (in)  :: var(nz)
+    real   (wp), intent (in)  :: p  (nz)
+    real   (wp)               :: integral_p
+    integer                   :: k
     
     integral_p = 0.
   
@@ -112,10 +112,10 @@ contains
     ang_cos = cosd(lat1) * cosd(lat2) * cosd(lon2 - lon1)             &
           & + sind(lat1) * sind(lat2)
 
-    if (abs(ang_cos) <= 1.0) then
+    if (abs(ang_cos) <= 1.0_wp) then
       great_circle = ra * acos(ang_cos)
     else 
-      great_circle = 0.
+      great_circle = 0.0_wp
       write(*, *) 'ValueError: ang_cos is', ang_cos, '; Setting great_circle to 0'
     endif
   end function

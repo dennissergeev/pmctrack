@@ -5,7 +5,7 @@ subroutine link_vort_rad(nx, ny, lon, lat, del_t, mtype,                      &
                        & vor_num, vor_idx, vor_merge)
 
   use types, only: wp
-  use constants, only: ra, fillval, nmax, pmax, rad2deg, deg2rad
+  use constants, only: ra, fillval, nmax, pmax, rad2deg, deg2rad, rkilo
   use params, only: proj, del_r, merge_opt !, dbg
   use utils, only: sind, cosd, great_circle
 
@@ -46,11 +46,11 @@ subroutine link_vort_rad(nx, ny, lon, lat, del_t, mtype,                      &
   real   (wp)                :: max_dist ! Search radius for a vortex
 
 
-  max_dist = del_r * 1.e3
+  max_dist = del_r * rkilo
 
-  r_tmp = 0.
-  e_mv_lon = 0.
-  e_mv_lat = 0.
+  r_tmp = 0.0_wp
+  e_mv_lon = 0.0_wp
+  e_mv_lat = 0.0_wp
 
   r_next = fillval
 
@@ -147,9 +147,9 @@ subroutine link_vort_rad(nx, ny, lon, lat, del_t, mtype,                      &
                             & +(e_mlat - mlat(i_next(i_max)))**2)
         endif
 
-        if (r_next(i_max) <= 1.0 * max_dist) exit  ! TODO: check 2.0 * max_dist
+        if (r_next(i_max) <= 2.0 * max_dist) exit  ! TODO: check 2.0 * max_dist
         if (mtype(i_next(i_max)) >= 1) exit
-        if (r_next(i_max) > 1.0 * max_dist) then
+        if (r_next(i_max) > 2.0 * max_dist) then
           vor_part_s(i_next(i_max)) = -999
           i_next(i_max) = -999
         endif
