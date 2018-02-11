@@ -39,8 +39,7 @@ module params
   ! parameter for linking vortex
   integer           , protected :: track_type
   real(wp)          , protected :: del_lon, del_lat, del_r
-  ! parameter for checking the track
-  integer           , protected :: period_min
+  integer           , protected :: merge_opt
                               
   ! Debug flag
   logical           , protected :: dbg
@@ -133,7 +132,7 @@ contains
           case('del_lon'); read(buffer, *, iostat=ios) del_lon; if (dbg) write(*, *) del_lon
           case('del_lat'); read(buffer, *, iostat=ios) del_lat; if (dbg) write(*, *) del_lat
           case('del_r'); read(buffer, *, iostat=ios) del_r; if (dbg) write(*, *) del_r
-          case('period_min'); read(buffer, *, iostat=ios) period_min; if (dbg) write(*, *) period_min
+          case('merge_opt'); read(buffer, *, iostat=ios) merge_opt; if (dbg) write(*, *) merge_opt
           case default
             if (index (trim(label), "#") /= 1) then
               write(*, *) 'ConfigParseWarning: Skipping invalid line', line

@@ -6,7 +6,7 @@ subroutine link_vort_rad(nx, ny, lon, lat, del_t, mtype,                      &
 
   use types, only: wp
   use constants, only: ra, fillval, nmax, pmax, rad2deg, deg2rad
-  use params, only: proj, del_r !, dbg
+  use params, only: proj, del_r, merge_opt !, dbg
   use utils, only: sind, cosd, great_circle
 
   implicit none
@@ -32,7 +32,7 @@ subroutine link_vort_rad(nx, ny, lon, lat, del_t, mtype,                      &
   integer                    :: i_max, i_max1
   integer                    :: i_next       (nmax             )
   integer                    :: vor_idx_old  (pmax             )
-  integer                    :: merge_by_val (nmax             )
+  real   (wp)                :: merge_by_val (nmax             )
   real   (wp)                :: r_next       (nmax             )
   real   (wp)                :: r_next_tmp
   integer                    :: vor_part_s   (nmax             )
@@ -44,10 +44,8 @@ subroutine link_vort_rad(nx, ny, lon, lat, del_t, mtype,                      &
   real   (wp)                :: r_c_min
   real   (wp)                :: r_tmp
   real   (wp)                :: max_dist ! Search radius for a vortex
-  integer                    :: merge_opt
 
 
-  merge_opt = 2 ! TODO: move to params
   max_dist = del_r * 1.e3
 
   r_tmp = 0.
@@ -199,10 +197,9 @@ subroutine link_vort_rad(nx, ny, lon, lat, del_t, mtype,                      &
   !------- check the merger of the vortices -------
   if (merge_opt == 1) then
     ! Check what vortex is dominant by comparing distances
-    merge_by_val = r_next
+    merge_by_val = 1. / r_next
   elseif (merge_opt == 2) then
     ! Check what vortex is dominant by comparing their sizes
-    write(*, *) 'NotImplementedYet'; stop
     merge_by_val = s_part
   endif
 
@@ -216,13 +213,15 @@ subroutine link_vort_rad(nx, ny, lon, lat, del_t, mtype,                      &
             .and. vor_merge(i_vor_num2) < 1 &
             &) then
           !print*, 'vor_merge', vor_merge(i_vor_num), vor_merge(i_vor_num2)
-          if (r_tmp > merge_by_val(vor_idx_old(i_vor_num2))) then
+          if (r_tmp < merge_by_val(vor_idx_old(i_vor_num2))) then
             vor_merge(i_vor_num) = i_vor_num2
             r_tmp = merge_by_val(vor_idx_old(i_vor_num2))
           endif
           if (vor_merge(i_vor_num) > 0) then
             write (*, *) 'vortex', i_vor_num, &
+                  !'s=', merge_by_val(vor_idx_old(i_vor_num)), &
                  &' merged into vortex', vor_merge(i_vor_num)
+                 ! , 's=', merge_by_val(vor_idx_old(i_vor_num2))
           endif
         endif
       enddo
