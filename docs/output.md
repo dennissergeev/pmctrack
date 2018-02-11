@@ -12,7 +12,6 @@ vor\_out\_\*\*\*\*.dat
 In vormax\_loc\_(kt).txt, the locations of the vortices at time step =
 kt are written in the following format.
 
-|----------------|---------------|--------------------------|------------------------|------
 |x or longitude  |y or latitude  |Vorticity (10^-3^ s^-1^)  |Size of vortex (km^2^)  |Type
 |----------------|---------------|--------------------------|------------------------|------
 
@@ -25,7 +24,6 @@ vortrack\_(i)\_0002.txt, vortrack\_(i)\_0003.txt,...
 
 The track of a vortex are written in the following format.
 
-|----------------|---------------|--------------------------|---------------|------------------------|------
 |x or longitude  |y or latitude  |Vorticity (10^-3^ s^-1^)  | Date and time |Size of vortex (km^2^)  |Type
 |----------------|---------------|--------------------------|---------------|------------------------|------
 
