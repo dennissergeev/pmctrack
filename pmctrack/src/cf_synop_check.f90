@@ -1,4 +1,6 @@
-subroutine cf_synop_check(vor_in,vor_part,n_part,nx,ny,lon,lat,mtype_part)
+subroutine cf_synop_check(vor_in, vor_part, &
+                        & n_part, nx, ny,   &
+                        & lon, lat, mtype_part)
 
   use types, only: wp
   use constants, only: pi, ra, rkilo, pmax, deg2rad, pi_thirds, pi_ninths

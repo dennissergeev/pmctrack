@@ -6,6 +6,7 @@ implicit none
 
 ! Numerical parameters
 real   (kind=wp), parameter :: fillval = 9.99e20_wp
+integer         , parameter :: ifillval = -999
 real   (kind=wp), parameter :: missval = -999.9_wp
 
 integer, parameter :: steer_nt = 2
