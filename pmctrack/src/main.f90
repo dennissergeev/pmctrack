@@ -246,6 +246,9 @@ program main
     if (kt < ntime) then
       ! Read u- and v-winds
       do kt2 = 1, steer_nt
+        if (idt_pair(2)%month > idt_pair(1)%month .and. kt2 == 2) then
+          time_idx = 0
+        endif
         call make_nc_file_name(nc_file_name, datadir, prefix_lvl, &
                              & idt_pair(kt2)%year, idt_pair(kt2)%month, u_name)
         call get_xyz_from_xyzt(nc_file_name, u_name, time_idx+kt2-1, &
