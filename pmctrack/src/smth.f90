@@ -4,48 +4,42 @@ subroutine smth(var, nx, ny, var_smth)
   use params, only : nsmth_x, nsmth_y, nx1, nx2, ny1, ny2
 
   implicit none
-  integer ,intent (in)::nx,ny
-  real (4),intent (in)::var(0:nx,0:ny)
-  real (4),intent (out)::var_smth(nx1:nx2,ny1:ny2)
-  real (4)::tmp(nx1:nx2,ny1:ny2)
-  integer ::nc
-  integer ::i,j,ii,jj
+
+  integer    , intent(in) :: nx
+  integer    , intent(in) :: ny
+  real   (wp), intent(in) :: var     (0:nx,       0:ny)
+  real   (wp), intent(out):: var_smth(nx1:nx2, ny1:ny2)
+  ! Local variables
+  real   (wp)             :: tmp     (nx1:nx2, ny1:ny2)
+  integer                 :: nc
+  integer                 :: i, j, ii, jj
+  real   (wp), parameter  :: var_thresh = -10.0
 
 
-  var_smth(nx1:nx2,ny1:ny2)=var(nx1:nx2,ny1:ny2)
+  var_smth(nx1:nx2, ny1:ny2) = var(nx1:nx2, ny1:ny2)
 
-!  if(nsmth_x>0.and.nsmth_y>0)then
-
-  do j=ny1,ny2
-    if(j-nsmth_y>=0.and.j+nsmth_y<=ny)then
-      do i=nx1,nx2
-        if(i-nsmth_x>=0.and.i+nsmth_x<=nx)then
-
-
-          nc=0
-          tmp(i,j)=0.
-          if(var(i,j)>-10.0)then
-            !           write (*,*)'smth at ',i,j
-            do jj=-nsmth_y,nsmth_y
-              do ii=-nsmth_x,nsmth_x
-                if(var(i+ii,j+jj)>-10.0)then
-                  tmp(i,j)=tmp(i,j)+var(i+ii,j+jj)
-                  nc=nc+1
+  do j = ny1, ny2
+    if (j - nsmth_y >=0 .and. j + nsmth_y <= ny) then
+      do i = nx1, nx2
+        if (i - nsmth_x >= 0 .and. i + nsmth_x <= nx) then
+          nc = 0
+          tmp(i, j) = 0.
+          if (var(i, j) > var_thresh) then
+            do jj = -nsmth_y, nsmth_y
+              do ii = -nsmth_x, nsmth_x
+                if (var(i+ii, j+jj) > var_thresh) then
+                  tmp(i, j) = tmp(i, j) + var(i+ii, j+jj)
+                  nc = nc + 1
                 endif
               enddo
             enddo
-            !          tmp(i,j)=tmp(i,j)/nc
-            tmp(i,j)=tmp(i,j)/((2*nsmth_x+1)*(2*nsmth_y+1))
-            var_smth(i,j)=tmp(i,j)
+            tmp(i, j) = tmp(i, j) / ((2 * nsmth_x + 1) * (2 * nsmth_y + 1))
+            var_smth(i, j) = tmp(i, j)
           endif
         endif
-
       enddo
     endif
   enddo
-!endif
-
-  return
 end subroutine smth
 
 
