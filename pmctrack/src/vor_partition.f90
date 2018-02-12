@@ -26,6 +26,7 @@ logical                   :: remove_flag(nmax)
 integer                   :: remove_num
 integer                   :: n_max
 integer                   :: i, j, ii, jj, m
+integer                   :: mmax
 integer                   :: i_max, i_max2
 integer                   :: mi, mj, mij(2), mi_tmp, mj_tmp
 integer                   :: i_vor_min, n_vor_min
@@ -50,11 +51,10 @@ real   (wp)               :: del_vor_max_tmp
 real   (wp)               :: l(nmax), l_min(nmax), theta_l
 
 
-p = 0
-
 lonin = lon(1) - lon(0)
 latin = lat(1) - lat(0)
 
+mmax = size(mx)
 n_max = 0
 n_part = 0
 max_tmp = 0
@@ -73,65 +73,60 @@ do j = 0, ny
   enddo
 enddo
 
-max_tmp=maxval(vor)
-n_vor_min=int((max_tmp-zeta_max0)/int_zeta_min0)+1
+max_tmp = maxval(vor)
+n_vor_min = int((max_tmp - zeta_max0) / int_zeta_min0) + 1
 
 do
-  p=0
+  p = 0
 
+  max_tmp = maxval(vor)
+  mij = maxloc(vor)
+  mi = mij(1) - 1
+  mj = mij(2) - 1
+  if (max_tmp <= zeta_max0) exit
+  n_part = n_part + 1
+  vor_part(mi, mj) = n_part
 
-  max_tmp=maxval(vor)
-  mij=maxloc(vor)
-  mi=mij(1)-1
-  mj=mij(2)-1
-  if(max_tmp<=zeta_max0)exit
-  n_part=n_part+1
-  vor_part(mi,mj)=n_part
+  vor(mi, mj) = 0.
 
-  vor(mi,mj)=0.
-
-  do m=1,8
-    ! print*, m, mi, mx(m), mj, my(m)
-    if ( mi+mx(m) >= 0  .and. &
-       & mi+mx(m) <= nx .and. &
-       & mj+my(m) >= 0  .and. &
-       & mj+my(m) <= ny       ) then
-      if(vor(mi+mx(m),mj+my(m))>zeta_min0)then
-        vor_part(mi+mx(m),mj+my(m))=n_part
-        vor(mi+mx(m),mj+my(m))=0.
+  do m = 1, mmax
+    if (       mi + mx(m) >= 0  &
+       & .and. mi + mx(m) <= nx &
+       & .and. mj + my(m) >= 0  &
+       & .and. mj + my(m) <= ny) then
+      if (vor(mi+mx(m), mj+my(m)) > zeta_min0) then
+        vor_part(mi+mx(m), mj+my(m)) = n_part
+        vor(mi+mx(m), mj+my(m)) = 0.
 
         if (p < pmax) then
           p = p + 1
-          surr8_buf(1,p) = mi+mx(m)
-          surr8_buf(2,p) = mj+my(m)
+          surr8_buf(1, p) = mi + mx(m)
+          surr8_buf(2, p) = mj + my(m)
         endif
       endif
     endif
   enddo
 
   do
-    if(p==0)exit
-    mi_tmp=surr8_buf(1,p)
-    mj_tmp=surr8_buf(2,p)
-!#ifdef debug
-!    print*, 'vor_partition(143):', mi_tmp, mj_tmp
-!#endif
-    p=p-1
+    if (p == 0) exit
+    mi_tmp = surr8_buf(1, p)
+    mj_tmp = surr8_buf(2, p)
+    p = p - 1
 
-    do m=1,8
-      if ( mi_tmp+mx(m) >= 0  .and. &
-         & mi_tmp+mx(m) <= nx .and. &
-         & mj_tmp+my(m) >= 0  .and. &
-         & mj_tmp+my(m) <= ny       ) then
-        if(vor(mi_tmp+mx(m),mj_tmp+my(m))>zeta_min0)then
-          if(vor_part(mi_tmp+mx(m),mj_tmp+my(m))==0)then
-            vor_part(mi_tmp+mx(m),mj_tmp+my(m))=n_part
+    do m = 1, mmax
+      if (       mi_tmp + mx(m) >= 0  &
+         & .and. mi_tmp + mx(m) <= nx &
+         & .and. mj_tmp + my(m) >= 0  &
+         & .and. mj_tmp + my(m) <= ny) then
+        if (vor(mi_tmp+mx(m), mj_tmp+my(m)) > zeta_min0) then
+          if (vor_part(mi_tmp+mx(m), mj_tmp+my(m)) == 0) then
+            vor_part(mi_tmp+mx(m), mj_tmp+my(m)) = n_part
+            vor(mi_tmp+mx(m), mj_tmp+my(m)) = 0.
 
-            vor(mi_tmp+mx(m),mj_tmp+my(m))=0.
             if (p < pmax) then
               p = p + 1
-              surr8_buf(1,p) = mi_tmp+mx(m)
-              surr8_buf(2,p) = mj_tmp+my(m)
+              surr8_buf(1, p) = mi_tmp + mx(m)
+              surr8_buf(2, p) = mj_tmp + my(m)
             endif
           endif
         endif
@@ -141,12 +136,13 @@ do
 
 
 !--------------- Check cold front and synoptic low----------------
-    call cf_synop_check(vor_in(0:nx,0:ny),vor_part(0:nx,0:ny),n_part,nx,ny,proj,&
-         &lon(0:nx),lat(0:ny),mtype_part(n_part))
+  call cf_synop_check(vor_in(0:nx, 0:ny), vor_part(0:nx,0:ny), &
+                    & n_part, nx, ny, &
+                    & lon(0:nx), lat(0:ny), mtype_part(n_part))
 
-      n_max=n_max+1
-      buf_mij(1,n_max)=mi
-      buf_mij(2,n_max)=mj
+  n_max = n_max + 1
+  buf_mij(1, n_max) = mi
+  buf_mij(2, n_max) = mj
 
 
       mlon(n_max)=lon(mi)
