@@ -116,7 +116,10 @@ contains
       great_circle = ra * acos(ang_cos)
     else 
       great_circle = 0.0_wp
-      write(*, *) 'ValueError: ang_cos is', ang_cos, '; Setting great_circle to 0'
+      if ((lon1 /= lon2) .or. (lat1 /= lat2)) then
+         write(*, *) 'ValueError: ang_cos is', ang_cos, & 
+                   & '; Setting great_circle to 0', lon1, lon2, lat1, lat2
+      endif
     endif
   end function
 

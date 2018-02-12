@@ -21,8 +21,8 @@ OBJ = \
 $(OBJDIR)/datetime.o \
 $(OBJDIR)/types.o \
 $(OBJDIR)/nc_io.o \
-$(OBJDIR)/params.o \
 $(OBJDIR)/constants.o \
+$(OBJDIR)/params.o \
 $(OBJDIR)/utils.o \
 $(OBJDIR)/vor_partition.o \
 $(OBJDIR)/cf_synop_check.o \

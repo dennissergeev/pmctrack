@@ -3,7 +3,7 @@ subroutine smth(var, nx, ny, var_smth)
   use types, only : wp
   use params, only : nsmth_x, nsmth_y, nx1, nx2, ny1, ny2
 
-  implicit none 
+  implicit none
   integer ,intent (in)::nx,ny
   real (4),intent (in)::var(0:nx,0:ny)
   real (4),intent (out)::var_smth(nx1:nx2,ny1:ny2)
@@ -31,113 +31,94 @@ subroutine smth(var, nx, ny, var_smth)
                 if(var(i+ii,j+jj)>-10.0)then
                   tmp(i,j)=tmp(i,j)+var(i+ii,j+jj)
                   nc=nc+1
-                end if
-              end do
-            end do
+                endif
+              enddo
+            enddo
             !          tmp(i,j)=tmp(i,j)/nc
             tmp(i,j)=tmp(i,j)/((2*nsmth_x+1)*(2*nsmth_y+1))
             var_smth(i,j)=tmp(i,j)
-          end if
-        end if
+          endif
+        endif
 
-      end do
-    end if
-  end do
-!end if
+      enddo
+    endif
+  enddo
+!endif
 
-  return 
+  return
 end subroutine smth
 
 
-
-subroutine smth_r(var,nx,ny,lon,lat,var_smth)
+subroutine smth_r(var, nx, ny, lon, lat, var_smth)
 
   use types, only : wp
-  use constants, only: pi, ra
+  use constants, only : pi, ra, rkilo, deg2rad
   use params, only : proj, r_smth, nx1, nx2, ny1, ny2
+  use utils, only : great_circle, cosd
 
   implicit none
 
-  integer, intent (in)::nx, ny
-  real (4),intent (in)::var(0:nx,0:ny)
-  real (4),intent (in)::lon(0:nx),lat(0:ny)
-  real (4),intent (out)::var_smth(nx1:nx2,ny1:ny2)
-  real (4)::tmp(nx1:nx2,ny1:ny2)
-  integer ::nc
-  integer ::i,j,ii,jj
-  real(4)::lonin,latin
-  integer ::x_smth, y_smth
-  real(4)::d,theta_d
+  integer    , intent(in) :: nx
+  integer    , intent(in) :: ny
+  real   (wp), intent(in) :: var     (0:nx,       0:ny)
+  real   (wp), intent(in) :: lon     (0:nx            )
+  real   (wp), intent(in) :: lat     (            0:ny)
+  real   (wp), intent(out):: var_smth(nx1:nx2, ny1:ny2)
+  ! Local variables
+  real   (wp)             :: tmp     (nx1:nx2, ny1:ny2)
+  integer                 :: nc
+  integer                 :: i, j, ii, jj
+  real   (wp)             :: lonin, latin
+  integer                 :: x_smth, y_smth
+  real   (wp)             :: dist
+  real   (wp), parameter  :: var_thresh = -10.0
 
   x_smth = 0
   y_smth = 0
 
-  d = 0.
+  dist = 0.
 
-  lonin=lon(2)-lon(1)
-  latin=lat(2)-lat(1)
+  lonin = lon(2) - lon(1)
+  latin = lat(2) - lat(1)
 
-  if(proj==1)then
-    x_smth=nint(r_smth/(ra*lonin*pi/180.0*cos(lat(ny1+ny2/2)*pi/180.0))*1.0e-3)+1
-    y_smth=nint(r_smth/(ra*latin*pi/180.0*1.0e-3)+1)
-  elseif(proj==2)then
-    x_smth=nint(r_smth/lonin*1.0e-3)+2
-    y_smth=nint(r_smth/latin*1.0e-3)+2
-  end if
+  if (proj==1) then
+    x_smth = nint(r_smth / (ra * lonin * deg2rad * cosd(lat(ny1+ny2/2)) / rkilo)) + 1
+    y_smth = nint(r_smth / (ra * latin * deg2rad / rkilo)) + 1
+  elseif (proj==2) then
+    x_smth = nint(r_smth / lonin / rkilo) + 2
+    y_smth = nint(r_smth / latin / rkilo) + 2 ! TODO: check why +2
+  endif
 
-!  write (*,*)x_smth,y_smth
+  var_smth(nx1:nx2, ny1:ny2) = var(nx1:nx2, ny1:ny2)
 
-  var_smth(nx1:nx2,ny1:ny2)=var(nx1:nx2,ny1:ny2)
+  do j = ny1, ny2
+    if (j - y_smth >= 0 .and. j + y_smth <= ny) then
+      do i = nx1, nx2
+        if (i - x_smth >= 0 .and. i + x_smth <= nx) then
+          nc = 0
+          tmp(i, j) = 0.
+          if (var(i, j) > var_thresh) then
+            do jj = -y_smth, y_smth
+              do ii = -x_smth, x_smth
+                if (proj == 1) then
+                  dist = great_circle(lon(i), lon(i+ii), lat(j), lat(j+jj), ra)
 
-  do j=ny1,ny2
-    if(j-y_smth>=0.and.j+y_smth<=ny)then
-      do i=nx1,nx2
-        if(i-x_smth>=0.and.i+x_smth<=nx)then
-          
-          nc=0
-          tmp(i,j)=0.
-          if(var(i,j)>-10.0)then
-            !           write (*,*)'smth at ',i,j
-            do jj=-y_smth,y_smth
-              do ii=-x_smth,x_smth
-                if(proj==1)then
-                  if(ii/=0.and.jj/=0)then
-                    theta_d=acos(cos(pi/180*lat(j))*cos(pi/180*lat(j+jj))&
-                         &*cos(pi/180*(lon(i)-lon(i+ii)))&
-                         &+sin(pi/180*lat(j))*sin(pi/180*lat(j+jj)))
-                    d=ra*theta_d
-                  else
-                    d=0.0
-                  end if
-                  
                 elseif(proj==2)then
-                  d=sqrt((ii*lonin)**2+(jj*latin)**2)
-                end if
-              
+                  dist = sqrt((ii * lonin)**2 + (jj * latin)**2)
+                endif
 
-                  
-                if(d<=r_smth*1.0e3)then
-
-
-                  nc=nc+1
-                  if(var(i+ii,j+jj)>-10.0)then
-                    tmp(i,j)=tmp(i,j)+var(i+ii,j+jj)
-                  end if
-                end if
-              end do
-            end do
-  
-          var_smth(i,j)=tmp(i,j)/nc
-          end if
-          
-        end if
-
- !       if(i==(nx1+nx2)/2.and.j==(ny1+ny2)/2)write (*,*)lon(i),lat(j),nc
-
-      end do
-    end if
-  end do
-
-  return
+                if (dist <= r_smth * rkilo) then
+                  nc = nc + 1
+                  if (var(i+ii, j+jj) > var_thresh) then
+                    tmp(i, j) = tmp(i, j) + var(i+ii, j+jj)
+                  endif
+                endif
+              enddo
+            enddo
+            var_smth(i, j) = tmp(i, j) / nc
+          endif
+        endif
+      enddo
+    endif
+  enddo
 end subroutine smth_r
-

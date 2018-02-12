@@ -61,6 +61,11 @@ subroutine link_vort_rad(nx, ny, lon, lat, del_t, mtype,                      &
 
   vor_new_flag(1:nmax) = .false.
 
+  ! print*, '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'
+  ! print*, mlon(1:10)
+  ! print*, mlat(1:10)
+  ! print*, uprev(1:10)
+  ! print*, vprev(1:10)
   ! t=kt -> t=kt+1
   do i_max = 1, n_max_prev ! Loop over vortices at the previous time step
 
@@ -212,7 +217,7 @@ subroutine link_vort_rad(nx, ny, lon, lat, del_t, mtype,                      &
             .and. vor_merge(i_vor_num) /= i_vor_num2 &
             .and. vor_merge(i_vor_num2) < 1 &
             &) then
-          !print*, 'vor_merge', vor_merge(i_vor_num), vor_merge(i_vor_num2)
+         !print*, 'vor_merge', vor_merge(i_vor_num), vor_merge(i_vor_num2)
           if (r_tmp < merge_by_val(vor_idx_old(i_vor_num2))) then
             vor_merge(i_vor_num) = i_vor_num2
             r_tmp = merge_by_val(vor_idx_old(i_vor_num2))
