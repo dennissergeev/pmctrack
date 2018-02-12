@@ -27,13 +27,13 @@ program main
   character(len=256)                          :: nc_file_name
   character(len=256)                          :: fname_bin
   character(len=256)                          :: fname_vormaxloc
-  real(wp)                                    :: lonin
-  real(wp)                                    :: latin
-  real(wp)                                    :: del_t
-  real(wp)                                    :: time_step_s
+  real     (wp)                               :: lonin
+  real     (wp)                               :: latin
+  real     (wp)                               :: del_t
+  real     (wp)                               :: time_step_s
   integer                                     :: nt_per_file
-  real(wp)                                    :: lon0
-  real(wp)                                    :: lat0
+  real     (wp)                               :: lon0
+  real     (wp)                               :: lat0
   ! Coordinate arrays
   integer                                     :: ntime, nlvls, nlats, nlons
   integer                                     :: ny, nx
@@ -41,36 +41,36 @@ program main
   integer          , allocatable              :: time_temp(:)
   integer          , allocatable              :: time(:)
   integer          , allocatable              :: lvls(:)
-  real(wp)         , allocatable              :: lats(:)
-  real(wp)         , allocatable              :: lons(:)
+  real     (wp)    , allocatable              :: lats(:)
+  real     (wp)    , allocatable              :: lons(:)
   ! Data arrays
-  real(wp)         , allocatable              :: vor(:, :)
-  real(wp)         , allocatable              :: psea(:, :)
-  real(wp)         , allocatable              :: u(:, :, :, :)
-  real(wp)         , allocatable              :: v(:, :, :, :)
-  real(wp)         , allocatable              :: land_mask(:, :)
+  real     (wp)    , allocatable              :: vor(:, :)
+  real     (wp)    , allocatable              :: psea(:, :)
+  real     (wp)    , allocatable              :: u(:, :, :, :)
+  real     (wp)    , allocatable              :: v(:, :, :, :)
+  real     (wp)    , allocatable              :: land_mask(:, :)
 
   ! Local arrays
-  real(wp)         , allocatable              :: vor_smth(:, :)
-  integer(4)       , allocatable              :: vor_part(:, :)
-  real(wp)         , allocatable              :: dummy(:, :)
-  real(wp)         , allocatable              :: mlat(:), mlon(:)
-  real(wp)         , allocatable              :: mlat_prev(:), mlon_prev(:)
-  integer(4)       , allocatable              :: mi(:), mj(:)
-  real(wp)         , allocatable              :: max_vor(:)
-  real(wp)         , allocatable              :: minlat(:), minlon(:)
-  real(wp)         , allocatable              :: z_min(:)
-  real(wp)         , allocatable              :: z_min_size(:)
-  real(wp)         , allocatable              :: s_part(:)
+  real     (wp)    , allocatable              :: vor_smth(:, :)
+  integer          , allocatable              :: vor_part(:, :)
+  real     (wp)    , allocatable              :: dummy(:, :)
+  real     (wp)    , allocatable              :: mlat(:), mlon(:)
+  real     (wp)    , allocatable              :: mlat_prev(:), mlon_prev(:)
+  integer          , allocatable              :: mi(:), mj(:)
+  real     (wp)    , allocatable              :: max_vor(:)
+  real     (wp)    , allocatable              :: minlat(:), minlon(:)
+  real     (wp)    , allocatable              :: z_min(:)
+  real     (wp)    , allocatable              :: z_min_size(:)
+  real     (wp)    , allocatable              :: s_part(:)
   integer          , allocatable              :: mtype(:)
-  real(wp)         , allocatable              :: u_vor_f(:)
-  real(wp)         , allocatable              :: v_vor_f(:)
-  real(wp)         , allocatable              :: u_vor_f_prev(:)
-  real(wp)         , allocatable              :: v_vor_f_prev(:)
+  real     (wp)    , allocatable              :: u_vor_f(:)
+  real     (wp)    , allocatable              :: v_vor_f(:)
+  real     (wp)    , allocatable              :: u_vor_f_prev(:)
+  real     (wp)    , allocatable              :: v_vor_f_prev(:)
   integer          , allocatable              :: vor_merge(:)
   integer          , allocatable              :: vor_index(:)
   integer          , allocatable              :: merged_count(:)
-  real(wp)         , allocatable              :: vortex(:, :)
+  real     (wp)    , allocatable              :: vortex(:, :)
   integer          , allocatable              :: vor_merge_num(:)
 
   ! Local scalars
@@ -87,15 +87,14 @@ program main
   integer                                     :: i, j
   integer                                     :: i_max
   integer                                     :: i_vor_num
-
   ! Time and date variables
-  type(datetime)                              :: cal_start
-  type(datetime)                              :: dt_start, dt_end
-  type(datetime)                              :: dt_min ! within a file
-  type(timedelta)                             :: td
+  type   (datetime)                           :: cal_start
+  type   (datetime)                           :: dt_start, dt_end
+  type   (datetime)                           :: dt_min ! within a file
+  type   (timedelta)                          :: td
   integer                                     :: time_idx
-  type(datetime)                              :: idt
-  type(datetime)                              :: idt_pair(steer_nt)
+  type   (datetime)                           :: idt
+  type   (datetime)                           :: idt_pair(steer_nt)
 
 
   ! Store dimension names in one array
