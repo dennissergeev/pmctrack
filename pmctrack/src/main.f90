@@ -349,19 +349,15 @@ program main
       !
       ! ----- calculate steering wind -----!
       !
-      if (steering_type == 1) then
-        write(*, *) "NotImplementedError"; stop
-        !call steering_wind_f(u,v,&
-        !     &levs,nx,ny,nz,nt,kt,&
-        !     &mi(i_max,kt),mj(i_max,kt),&
-        !     &u_vor_f(i_max,kt),v_vor_f(i_max,kt))
-
-        !call steering_wind_b(u,v,&
-        !     &levs,nx,ny,nz,nt,kt,&
-        !     &mi(i_max,kt),mj(i_max,kt),&
-        !     &u_vor_b(i_max,kt),v_vor_b(i_max,kt))
-      elseif (steering_type == 2) then
-        if (kt < ntime) then
+      if (kt < ntime) then
+        if (steering_type == 1) then
+          ! Forward
+          call steering_wind_f(u, v,                                          &
+                             & lvls(1:nsteer_lvl),                            &
+                             & nx, ny, nsteer_lvl, steer_nt,                  &
+                             & mi(i_max), mj(i_max),                          &
+                             & u_vor_f(i_max), v_vor_f(i_max))
+        elseif (steering_type == 2) then
           ! Forward
           call steering_wind_r(u, v,                                          &
                              & lvls(1:nsteer_lvl), lons, lats,                &
@@ -369,17 +365,9 @@ program main
                              & mi(i_max), mj(i_max),                          &
                              & u_vor_f(i_max), v_vor_f(i_max))
         endif
-        !if (kt > 1) then
-        !  ! Backward
-        !  call steering_wind_r(u, v,     &
-        !       &lvls, lons,lats,nx,ny,nz,nt,kt,kt-1,&
-        !       &mi(i_max,kt),mj(i_max,kt),&
-        !       &u_vor_b(i_max,kt),v_vor_b(i_max,kt))
-        !endif
       endif
     enddo ! i_max loop
     close(unit=fh_maxloc)
-
 
     !---- output steeering wind ----!
     dummy = fillval
