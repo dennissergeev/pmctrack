@@ -765,9 +765,12 @@ FUNCTION isocalendar(self)
   INTEGER              :: year,week,wday
   INTEGER              :: rc
   CHARACTER(LEN=20)    :: string
+  TYPE(tm_struct)      :: tm
+
+  tm = self % tm()
 
   rc = c_strftime(string,LEN(string),'%G %V %u'//c_null_char,&
-                  self % tm())  
+                  tm)  
 
   READ(UNIT=string(1:4),FMT='(I4)')year
   READ(UNIT=string(6:7),FMT='(I2)')week
@@ -823,9 +826,11 @@ FUNCTION strftime(self,format)
   CHARACTER(LEN=MAXSTRLEN) :: resultString
   TYPE(tm_struct)          :: tm
 
+  tm = self % tm()
+
   resultString = ""
   rc = c_strftime(resultString,MAXSTRLEN,TRIM(format)//c_null_char,&
-                  self % tm())
+                  tm)
   strftime = TRIM(resultString)
   n = LEN(strftime)
   strftime = strftime(1:n-1)
