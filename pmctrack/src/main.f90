@@ -1,9 +1,10 @@
 program main
   use datetime_module
 
-  use types, only : wp
-  use constants, only : fillval, steer_nt, nmax, pmax, rkilo, fh_bin, fh_maxloc
-  use params, only : get_config_params, set_bounds_auto, dbg,                 &
+  use types, only: wp
+  use constants, only: ifillval, fillval, &
+                     & steer_nt, nmax, pmax, rkilo, fh_bin, fh_maxloc
+  use params, only: get_config_params, set_bounds_auto, dbg,                  &
     & datadir, outdir, prefix_sfc, prefix_lvl,                                &
     & year_start, month_start, day_start, hour_start,                         &
     & year_end, month_end, day_end, hour_end,                                 &
@@ -11,10 +12,10 @@ program main
     & vor_lvl, steer_lvl_btm, steer_lvl_top,                                  &
     & nx1, nx2, ny1, ny2,                                                     &
     & smth_type, proj, steering_type, track_type
-  use nc_io, only : get_dims, get_time, get_coords,                           &
+  use nc_io, only: get_dims, get_time, get_coords,                            &
     & get_xy_from_xyzt, get_xy_from_xyt, get_xyz_from_xyzt,                   &
     & get_data_2d
-  use utils, only : apply_mask_2d, make_nc_file_name, write_vortrack
+  use utils, only: apply_mask_2d, make_nc_file_name, write_vortrack
 
   implicit none
 
@@ -176,11 +177,11 @@ program main
   u = fillval
   v = fillval
   psea = fillval
-  land_mask = -999
+  land_mask = ifillval
 
   ! Allocate work arrays
   allocate(vor_smth     (nx1:nx2, ny1:ny2      ))
-  allocate(vor_part     (nx1:nx2, ny1:ny2      )); vor_part = -999
+  allocate(vor_part     (nx1:nx2, ny1:ny2      )); vor_part = ifillval
   allocate(dummy        (nx1:nx2, ny1:ny2      ))
   allocate(mlat         (                  nmax)); mlat = fillval
   allocate(mlon         (                  nmax)); mlon = fillval
@@ -188,20 +189,20 @@ program main
   allocate(mlon_prev    (                  nmax)); mlon_prev = fillval
   allocate(max_vor      (                  nmax))
   allocate(s_part       (                  nmax))
-  allocate(mtype        (                  nmax)); mtype = -999
+  allocate(mtype        (                  nmax)); mtype = ifillval
   allocate(minlat       (                  nmax))
   allocate(minlon       (                  nmax))
   allocate(z_min        (                  nmax))
   allocate(z_min_size   (                  nmax))
-  allocate(mi           (                  nmax));      mi = -999
-  allocate(mj           (                  nmax));      mj = -999
+  allocate(mi           (                  nmax));      mi = ifillval
+  allocate(mj           (                  nmax));      mj = ifillval
   allocate(u_vor_f      (                  nmax)); u_vor_f = fillval
   allocate(v_vor_f      (                  nmax)); v_vor_f = fillval
   allocate(u_vor_f_prev (                  nmax)); u_vor_f_prev = fillval
   allocate(v_vor_f_prev (                  nmax)); v_vor_f_prev = fillval
-  allocate(vor_index    (                  pmax)); vor_index = -999
-  allocate(merged_count (                  pmax)); merged_count = -999
-  allocate(vor_merge    (                  pmax)); vor_merge = -999
+  allocate(vor_index    (                  pmax)); vor_index = ifillval
+  allocate(merged_count (                  pmax)); merged_count = ifillval
+  allocate(vor_merge    (                  pmax)); vor_merge = ifillval
   allocate(vor_merge_num(                  pmax));
 
   vor_num = 0

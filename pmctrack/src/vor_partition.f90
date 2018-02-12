@@ -50,7 +50,7 @@ real   (wp)               :: vor         (0:nx, 0:ny      )
 real   (wp)               :: max_tmp
 real   (wp)               :: vor_min_tmp
 real   (wp)               :: del_vor_max_tmp
-real   (wp)               :: l 
+real   (wp)               :: l
 real   (wp)               :: l_min       (            nmax)
 
 
@@ -139,7 +139,7 @@ do
   enddo
 
 
-!--- Check cold front and synoptic low ----------------------------------------
+!---- Check cold front and synoptic low ---------------------------------------
   call cf_synop_check(vor_in(0:nx, 0:ny), vor_part(0:nx,0:ny), &
                     & n_part, nx, ny, &
                     & lon(0:nx), lat(0:ny), mtype_part(n_part))
@@ -229,7 +229,7 @@ do i_vor_min = 0, n_vor_min
       enddo
     enddo
 
-    !---- check new vortex ----
+!---- Check new vortex --------------------------------------------------------
     mij_flag = .true.
     do i_max = 1, n_max
       if (      buf_mij(1, i_max) == mi &
@@ -272,8 +272,9 @@ do j = 0, ny
   enddo
 enddo
 
-!---- check the topographical effect ------
-  remove_flag=.false.
+!---- Check the topographical effect ------------------------------------------
+! TODO: implement?
+remove_flag = .false.
 
 ! do i_max=1,n_max
 !   if(vor_max(i_max)<0.3e-3)then
@@ -322,7 +323,7 @@ do i_max = 1, n_max
   endif
 enddo
 
-!----- Partition ----
+!---- Partition ---------------------------------------------------------------
 do i_max = 1, n_max_out
   vor_min_tmp = vor_max_out(i_max)
   do
@@ -385,7 +386,6 @@ do i_max = 1, n_max_out
       enddo
     enddo
 
-
     mij_flag = .true.
 
     do j = 0, ny
@@ -422,62 +422,62 @@ do i_max = 1, n_max_out
 enddo
 
 
-!---- Nearest part ---------
-  vor_part_tmp = 0
-  do j = 0, ny
-    do i = 0, nx
-      if ((vor_part(i, j) > 0 .or. vor_part(i, j) == ifillval) &
-        & .and. vor_part_max(i, j) == 0) then
-        l_min(:) = 1.e9
-        do jj = 0, ny
-          do ii = 0, nx
-            if (     vor_part    (ii, jj) == vor_part(i, j) &
-              & .and.vor_part_max(ii, jj) /= 0) then
-              if (proj == 1) then
-                l = great_circle(lon(i), lon(ii), lat(j), lat(jj), ra)
-              elseif (proj == 2) then
-                l = sqrt((lon(i) - lon(ii))**2 + (lat(j) - lat(jj))**2)
-              endif
-              if (l < l_min(vor_part_max(ii, jj))) then
-                l_min(vor_part_max(ii, jj)) = l
-              endif
+!---- Nearest part ------------------------------------------------------------
+vor_part_tmp = 0
+do j = 0, ny
+  do i = 0, nx
+    if ((vor_part(i, j) > 0 .or. vor_part(i, j) == ifillval) &
+      & .and. vor_part_max(i, j) == 0) then
+      l_min(:) = 1.e9
+      do jj = 0, ny
+        do ii = 0, nx
+          if (     vor_part    (ii, jj) == vor_part(i, j) &
+            & .and.vor_part_max(ii, jj) /= 0) then
+            if (proj == 1) then
+              l = great_circle(lon(i), lon(ii), lat(j), lat(jj), ra)
+            elseif (proj == 2) then
+              l = sqrt((lon(i) - lon(ii))**2 + (lat(j) - lat(jj))**2)
             endif
-          enddo
+            if (l < l_min(vor_part_max(ii, jj))) then
+              l_min(vor_part_max(ii, jj)) = l
+            endif
+          endif
         enddo
+      enddo
 
-        if (minval(l_min) < 0.9e9) then
-          vor_part_tmp(i, j) = minloc(l_min, 1)
-        endif
-
+      if (minval(l_min) < 0.9e9) then
+        vor_part_tmp(i, j) = minloc(l_min, 1)
       endif
 
-    enddo
-  enddo
+    endif
 
-  do j = 0, ny
-    do i = 0, nx
-      if (vor_part_tmp(i, j) /= 0 .and. vor_part_max(i, j) == 0) then
-        vor_part_max(i, j) = vor_part_tmp(i, j)
-      endif
-    enddo
   enddo
+enddo
+
+do j = 0, ny
+  do i = 0, nx
+    if (vor_part_tmp(i, j) /= 0 .and. vor_part_max(i, j) == 0) then
+      vor_part_max(i, j) = vor_part_tmp(i, j)
+    endif
+  enddo
+enddo
 
 
 !---- Calculate the size of the vortex ----------------------------------------
-  s_part_out = 0.
-  do j = 0, ny
-    do i = 0, nx
-      if (vor_part_max(i, j) > 0) then
-        if (proj==1) then
-          s_part_out(vor_part_max(i, j)) = s_part_out(vor_part_max(i, j)) &
-                                       & + (lonin * deg2rad * cosd(lat(j)) &
-                                       &   * latin * deg2rad * (ra / rkilo)**2)
-        elseif (proj == 2) then
-          s_part_out(vor_part_max(i, j)) = s_part_out(vor_part_max(i, j)) &
-                                       & + lonin * latin * rkilo**(-2)
-        endif
+s_part_out = 0.
+do j = 0, ny
+  do i = 0, nx
+    if (vor_part_max(i, j) > 0) then
+      if (proj==1) then
+        s_part_out(vor_part_max(i, j)) = s_part_out(vor_part_max(i, j)) &
+                                     & + (lonin * deg2rad * cosd(lat(j)) &
+                                     &   * latin * deg2rad * (ra / rkilo)**2)
+      elseif (proj == 2) then
+        s_part_out(vor_part_max(i, j)) = s_part_out(vor_part_max(i, j)) &
+                                     & + lonin * latin * rkilo**(-2)
       endif
-    enddo
+    endif
   enddo
+enddo
 
 end subroutine vor_partition

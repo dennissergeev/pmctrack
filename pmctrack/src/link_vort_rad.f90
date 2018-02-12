@@ -5,7 +5,8 @@ subroutine link_vort_rad(nx, ny, lon, lat, del_t, mtype,                      &
                        & vor_num, vor_idx, vor_merge)
 
   use types, only: wp
-  use constants, only: ra, fillval, nmax, pmax, rad2deg, deg2rad, rkilo
+  use constants, only: ra, fillval, ifillval, &
+                     & nmax, pmax, rad2deg, deg2rad, rkilo
   use params, only: proj, del_r, merge_opt !, dbg
   use utils, only: sind, cosd, great_circle
 
@@ -54,10 +55,10 @@ subroutine link_vort_rad(nx, ny, lon, lat, del_t, mtype,                      &
 
   r_next = fillval
 
-  !!!vor_merge = -999
+  !!!vor_merge = ifillval
   vor_idx_old = vor_idx
-  vor_idx = -999
-  i_next = -999
+  vor_idx = ifillval
+  i_next = ifillval
 
   vor_new_flag(1:nmax) = .false.
 
@@ -115,7 +116,7 @@ subroutine link_vort_rad(nx, ny, lon, lat, del_t, mtype,                      &
     ! Then the second requirement is considered, which is that a part of
     ! an isolated vortex area at the next time step overlaps with the
     ! estimated area
-      do j =0, ny
+      do j = 0, ny
         do i = 0, nx
           if (proj == 1) then
             r_tmp = great_circle(lon(i), e_mlon,                            &
@@ -155,8 +156,8 @@ subroutine link_vort_rad(nx, ny, lon, lat, del_t, mtype,                      &
         if (r_next(i_max) <= 2.0 * max_dist) exit  ! TODO: check 2.0 * max_dist
         if (mtype(i_next(i_max)) >= 1) exit
         if (r_next(i_max) > 2.0 * max_dist) then
-          vor_part_s(i_next(i_max)) = -999
-          i_next(i_max) = -999
+          vor_part_s(i_next(i_max)) = ifillval
+          i_next(i_max) = ifillval
         endif
       enddo ! "while loop"
     endif  ! i_next(i_max) == 0
