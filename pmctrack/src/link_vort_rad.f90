@@ -35,7 +35,6 @@ subroutine link_vort_rad(nx, ny, lon, lat, del_t, mtype,                      &
   integer                    :: vor_idx_old  (pmax             )
   real   (wp)                :: merge_by_val (nmax             )
   real   (wp)                :: r_next       (nmax             )
-  real   (wp)                :: r_next_tmp
   integer                    :: vor_part_s   (nmax             )
   integer                    :: i, j
   integer                    :: i_vor_num, i_vor_num2

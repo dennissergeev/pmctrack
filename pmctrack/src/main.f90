@@ -4,7 +4,7 @@ program main
   use types, only: wp
   use constants, only: ifillval, fillval, &
                      & steer_nt, nmax, pmax, rkilo, fh_bin, fh_maxloc
-  use params, only: get_config_params, set_bounds_auto, dbg,                  &
+  use params, only: get_config_params, set_lonlat_bounds_auto, dbg,           &
     & datadir, outdir, prefix_sfc, prefix_lvl, dt_start, dt_end,              &
     & vort_name, u_name, v_name, psea_name, land_name,                        &
     & vor_lvl, steer_lvl_btm, steer_lvl_top,                                  &
@@ -111,9 +111,6 @@ program main
   call get_dims(nc_file_name, DIM_NAMES, nt_per_file, nlvls, nlats, nlons)
   nx = nlons - 1
   ny = nlats - 1
-  call set_bounds_auto(nx, ny)
-  nx12 = nx2 - nx1
-  ny12 = ny2 - ny1
 
   ! Time & calendar
   allocate(time_temp(0:nt_per_file-1))
@@ -151,6 +148,10 @@ program main
   lat0 = lats(0)
   lonin = lons(1) - lons(0)
   latin = lats(1) - lats(0)
+  ! Calculate sub domain boundaries
+  call set_lonlat_bounds_auto(nx, ny, lons, lats)
+  nx12 = nx2 - nx1
+  ny12 = ny2 - ny1
 
   ! Define input array sizes
   allocate(vor      (0:nx, 0:ny))

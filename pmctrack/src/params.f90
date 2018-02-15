@@ -1,7 +1,8 @@
 module params
   use datetime_module
 
-  use types, only : wp
+  use types, only: wp
+  use constants, only: fillval
 
   implicit none
 
@@ -21,26 +22,27 @@ module params
   integer           , protected :: steer_lvl_btm, steer_lvl_top
   integer           , protected :: proj
   integer           , protected :: vert_grid
+  real   (wp)       , protected :: lon1, lon2, lat1, lat2
   integer           , protected :: nx1, nx2, ny1, ny2
   !integer          , protected:: nt
   !real(wp)         , protected:: del_t
   ! parameter for smoothing of vorticity
   integer           , protected :: smth_type
   integer           , protected :: nsmth_x, nsmth_y
-  real(wp)          , protected :: r_smth
+  real   (wp)       , protected :: r_smth
   ! parameter for detecting vortex
-  real(wp)          , protected :: zeta_max0, zeta_min0
-  real(wp)          , protected :: int_zeta_min0, gamma
+  real   (wp)       , protected :: zeta_max0, zeta_min0
+  real   (wp)       , protected :: int_zeta_min0, gamma
   ! parameter for excluding the synoptic scale disturbances
-  real(wp)          , protected :: d_cf_min, size_synop
-  real(wp)          , protected :: del_psea_min, distance_ec
+  real   (wp)       , protected :: d_cf_min, size_synop
+  real   (wp)       , protected :: del_psea_min, distance_ec
   ! parameter for calculating steering winds
   integer           , protected :: steering_type
   integer           , protected :: n_steering_x, n_steering_y
-  real(wp)          , protected :: r_steering
+  real   (wp)       , protected :: r_steering
   ! parameter for linking vortex
   integer           , protected :: track_type
-  real(wp)          , protected :: del_lon, del_lat, del_r
+  real   (wp)       , protected :: del_lon, del_lat, del_r
   integer           , protected :: merge_opt
   ! Debug flag
   logical           , protected :: dbg
@@ -68,6 +70,11 @@ contains
 
     ios = 0
     line = 0
+
+    lon1 = fillval
+    lon2 = fillval
+    lat1 = fillval
+    lat2 = fillval
 
     open (fh_conf, file=trim(config_file), form='formatted', status='old', &
       &   iostat=ios, action='read')
@@ -105,10 +112,10 @@ contains
           case('prefix_sfc'); read(buffer, *, iostat=ios) prefix_sfc; if (dbg) write(*, *) prefix_sfc
           case('proj'); read(buffer, *, iostat=ios) proj; if (dbg) write(*, *) proj
           case('vert_grid'); read(buffer, *, iostat=ios) vert_grid; if (dbg) write(*, *) vert_grid
-          case('nx1'); read(buffer, *, iostat=ios) nx1; if (dbg) write(*, *) nx1
-          case('nx2'); read(buffer, *, iostat=ios) nx2; if (dbg) write(*, *) nx2
-          case('ny1'); read(buffer, *, iostat=ios) ny1; if (dbg) write(*, *) ny1
-          case('ny2'); read(buffer, *, iostat=ios) ny2; if (dbg) write(*, *) ny2
+          case('lon1'); read(buffer, *, iostat=ios) lon1; if (dbg) write(*, *) lon1
+          case('lon2'); read(buffer, *, iostat=ios) lon2; if (dbg) write(*, *) lon2
+          case('lat1'); read(buffer, *, iostat=ios) lat1; if (dbg) write(*, *) lat1
+          case('lat2'); read(buffer, *, iostat=ios) lat2; if (dbg) write(*, *) lat2
           case('smth_type'); read(buffer, *, iostat=ios) smth_type; if (dbg) write(*, *) smth_type
           case('nsmth_x'); read(buffer, *, iostat=ios) nsmth_x; if (dbg) write(*, *) nsmth_x
           case('nsmth_y'); read(buffer, *, iostat=ios) nsmth_y; if (dbg) write(*, *) nsmth_y
@@ -142,7 +149,7 @@ contains
     close(fh_conf)
 
     dt_start = strptime(trim(dt_start_str), '%Y%m%dT%H%MZ')
-    dt_start%minute = 0
+    !dt_start%minute = 0
     dt_start%second = 0
     dt_start%millisecond = 0
     if (.not. dt_start%isValid()) then
@@ -150,7 +157,7 @@ contains
       stop
     endif
     dt_end = strptime(trim(dt_end_str), '%Y%m%dT%H%MZ')
-    dt_end%minute = 0
+    !dt_end%minute = 0
     dt_end%second = 0
     dt_end%millisecond = 0
     if (.not. dt_end%isValid()) then
@@ -196,13 +203,21 @@ contains
   end subroutine get_config_params
 
 
-  subroutine set_bounds_auto(nx, ny)
+  subroutine set_lonlat_bounds_auto(nx, ny, lons, lats)
 
-    integer, intent(in) :: nx, ny
+    integer    , intent(in)    :: nx, ny
+    real   (wp), intent(in)    :: lons(0:nx      )
+    real   (wp), intent(in)    :: lats(      0:ny)
 
-    if (nx1 == -1) nx1 = 0
-    if (nx2 == -1) nx2 = nx
-    if (ny1 == -1) ny1 = 0
-    if (ny2 == -1) ny2 = ny
-  end subroutine set_bounds_auto
+    if (lon1 == fillval) lon1 = lons(0)
+    if (lon2 == fillval) lon2 = lons(nx)
+    if (lat1 == fillval) lat1 = lats(0)
+    if (lat2 == fillval) lat2 = lats(ny)
+
+    nx1 = minloc(abs(lons-lon1), 1) - 1 ! -1 because arrays start at 0
+    nx2 = minloc(abs(lons-lon2), 1) - 1
+    ny1 = minloc(abs(lats-lat1), 1) - 1
+    ny2 = minloc(abs(lats-lat2), 1) - 1
+
+  end subroutine set_lonlat_bounds_auto
 end module params
