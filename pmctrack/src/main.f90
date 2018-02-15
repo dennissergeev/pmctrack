@@ -5,9 +5,7 @@ program main
   use constants, only: ifillval, fillval, &
                      & steer_nt, nmax, pmax, rkilo, fh_bin, fh_maxloc
   use params, only: get_config_params, set_bounds_auto, dbg,                  &
-    & datadir, outdir, prefix_sfc, prefix_lvl,                                &
-    & year_start, month_start, day_start, hour_start,                         &
-    & year_end, month_end, day_end, hour_end,                                 &
+    & datadir, outdir, prefix_sfc, prefix_lvl, dt_start, dt_end,              &
     & vort_name, u_name, v_name, psea_name, land_name,                        &
     & vor_lvl, steer_lvl_btm, steer_lvl_top,                                  &
     & nx1, nx2, ny1, ny2,                                                     &
@@ -89,7 +87,6 @@ program main
   integer                                     :: i_vor_num
   ! Time and date variables
   type   (datetime)                           :: cal_start
-  type   (datetime)                           :: dt_start, dt_end
   type   (datetime)                           :: dt_min ! within a file
   type   (timedelta)                          :: td
   integer                                     :: time_idx
@@ -103,18 +100,8 @@ program main
   DIM_NAMES(3) = trim(LAT_NAME)
   DIM_NAMES(4) = trim(LON_NAME)
 
+  ! Read configs from settings.conf file
   call get_config_params()
-
-  dt_start = datetime(year_start, month_start, day_start, hour_start)
-  if (.not. dt_start%isValid()) then
-    write(*, *) 'Start date ', dt_start, ' is not valid'
-    stop
-  endif
-  dt_end = datetime(year_end, month_end, day_end, hour_end)
-  if (.not. dt_end%isValid()) then
-    write(*, *) 'End date ', dt_end, ' is not valid'
-    stop
-  endif
 
   ! Get dimensions from the vorticity file using first year and first month
   ! Assume all the other files are organised in the same way

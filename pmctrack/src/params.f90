@@ -1,9 +1,13 @@
 module params
+  use datetime_module
+
   use types, only : wp
 
   implicit none
 
   character(len=*), parameter   :: CONFIG_FILE = "settings.conf"
+  type(datetime)    , protected :: dt_start
+  type(datetime)    , protected :: dt_end
   character(len=256), protected :: datadir
   character(len=256), protected :: outdir
   character(len=256), protected :: vort_name
@@ -13,8 +17,6 @@ module params
   character(len=256), protected :: land_name
   character(len=256), protected :: prefix_lvl
   character(len=256), protected :: prefix_sfc
-  integer           , protected :: year_start, month_start, day_start, hour_start
-  integer           , protected :: year_end, month_end, day_end, hour_end
   integer           , protected :: vor_lvl
   integer           , protected :: steer_lvl_btm, steer_lvl_top
   integer           , protected :: proj
@@ -40,7 +42,6 @@ module params
   integer           , protected :: track_type
   real(wp)          , protected :: del_lon, del_lat, del_r
   integer           , protected :: merge_opt
-                              
   ! Debug flag
   logical           , protected :: dbg
 
@@ -57,6 +58,7 @@ contains
     integer                       :: line
     integer                       :: ios
     integer                       :: sep
+    character(len=14)             :: dt_start_str, dt_end_str
 
 #ifdef debug
     dbg = .true.
@@ -87,14 +89,8 @@ contains
           end if
 
           select case (trim(label))
-          case('year_start'); read(buffer, *, iostat=ios) year_start; if (dbg) write(*, *) year_start
-          case('month_start'); read(buffer, *, iostat=ios) month_start; if (dbg) write(*, *) month_start
-          case('day_start'); read(buffer, *, iostat=ios) day_start; if (dbg) write(*, *) day_start
-          case('hour_start'); read(buffer, *, iostat=ios) hour_start; if (dbg) write(*, *) hour_start
-          case('year_end'); read(buffer, *, iostat=ios) year_end; if (dbg) write(*, *) year_end
-          case('month_end'); read(buffer, *, iostat=ios) month_end; if (dbg) write(*, *) month_end
-          case('day_end'); read(buffer, *, iostat=ios) day_end; if (dbg) write(*, *) day_end
-          case('hour_end'); read(buffer, *, iostat=ios) hour_end; if (dbg) write(*, *) hour_end
+          case('dt_start'); read(buffer, *, iostat=ios) dt_start_str; if (dbg) write(*, *) dt_start_str
+          case('dt_end'); read(buffer, *, iostat=ios) dt_end_str; if (dbg) write(*, *) dt_end_str
           case('vor_lvl'); read(buffer, *, iostat=ios) vor_lvl; if (dbg) write(*, *) vor_lvl
           case('steer_lvl_btm'); read(buffer, *, iostat=ios) steer_lvl_btm; if (dbg) write(*, *) steer_lvl_btm
           case('steer_lvl_top'); read(buffer, *, iostat=ios) steer_lvl_top; if (dbg) write(*, *) steer_lvl_top
@@ -144,6 +140,24 @@ contains
       if (dbg) write(*, *) '--------------------------------'
     end if
     close(fh_conf)
+
+    dt_start = strptime(trim(dt_start_str), '%Y%m%dT%H%MZ')
+    dt_start%minute = 0
+    dt_start%second = 0
+    dt_start%millisecond = 0
+    if (.not. dt_start%isValid()) then
+      write(*, *) 'Start date ', dt_start, ' is not valid'
+      stop
+    endif
+    dt_end = strptime(trim(dt_end_str), '%Y%m%dT%H%MZ')
+    dt_end%minute = 0
+    dt_end%second = 0
+    dt_end%millisecond = 0
+    if (.not. dt_end%isValid()) then
+      write(*, *) 'End date ', dt_end, ' is not valid'
+      stop
+    endif
+
 
     if(proj==2)then
       write (*,*)'Cartesian coordinate'
