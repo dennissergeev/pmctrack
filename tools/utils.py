@@ -10,6 +10,27 @@ import subprocess
 #
 
 
+class PMCSettings:
+    def __init__(self, fname_path):
+        with fname_path.open('r') as f:
+            self.conf = [line for line in f.read().split('\n')
+                         if not line.startswith('#') and len(line) > 0]
+        for line in self.conf:
+            try:
+                exec(line, None, self.__dict__)
+            except SyntaxError:
+                k, v = line.split('=')
+                self.__dict__.update({k: str(v)})
+
+    def __repr__(self):
+        return ('Settings used for '
+                f'PMC tracking algorithm ({len(self.conf)})')
+
+    def __str__(self):
+        summary = '\n'.join(self.conf)
+        return f'Settings used for PMC tracking algorithm:\n\n{summary}'
+
+
 def unit_format(value, unit='1'):
     if value == 1:
         if unit == '1':
