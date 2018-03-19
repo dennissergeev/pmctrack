@@ -11,7 +11,10 @@ import argparse
 # import cartopy.crs as ccrs
 from datetime import datetime
 import iris
+from iris.experimental import equalise_cubes
+# from iris.time import PartialDateTime
 import daiquiri, logging  # NOQA
+from matplotlib.colors import LinearSegmentedColormap
 import matplotlib.pyplot as plt
 from matplotlib.offsetbox import AnchoredText
 import matplotlib.patheffects as PathEffects
@@ -24,21 +27,22 @@ import warnings
 # Local files
 import utils
 
-# Global settings
-iris.FUTURE.netcdf_promote = True
-iris.FUTURE.cell_datetime_objects = True
-# plt.style.use('awesome')
 # Settings for saving figures
 fmt = 'png'
 svfigkw = dict(format=fmt, dpi=100, bbox_inches='tight')
 imgname_mask = 'track_res_{time}.{fmt}'
+# PMC settings
+PMCTRACK_DIR = Path(__file__).abspath().parent.parent
+conf = utils.PMCSettings(PMCTRACK_DIR / 'settings.conf')
 # Directories
-TOPDIR = Path(getenv('HOME')) / 'phd'
-ORIG_DATA_DIR = TOPDIR / 'reanalysis' / 'ERA5'
-TRACK_RES_DIR = TOPDIR / 'pmc_tracking' / 'pmctrack' / 'output'
+ORIG_DATA_DIR = (PMCTRACK_DIR / conf.datadir).expand()
+TRACK_RES_DIR = (PMCTRACK_DIR / conf.outdir).expand()
+# TOPDIR = Path(getenv('HOME')) / 'phd'
+# ORIG_DATA_DIR = TOPDIR / 'reanalysis' / 'ERA5'
+# TRACK_RES_DIR = TOPDIR / 'pmc_tracking' / 'pmctrack' / 'output'
 PLOT_DIR = TRACK_RES_DIR / 'quickviews'
 # File wildcards
-ORIG_DATA_FILES = 'era5*2011.01*.nc'
+ORIG_DATA_FILES = 'era5*2011.*.nc'
 LAND_MASK_FILE = 'lsm.nc'
 VORTRACK_FILES = 'vortrack*.txt'
 VORMAX_FILES = 'vormax_loc_{kt:%Y%m%d%H%M}.txt'
@@ -46,16 +50,15 @@ VORMAX_FILES = 'vormax_loc_{kt:%Y%m%d%H%M}.txt'
 LOGPATH = Path(__file__).dirname() / 'logs'
 SCRIPT = Path(__file__).basename().splitext()[0]
 # Subset used in tracking
-# e.g.:
-#  nx1=120
-#  nx2=290
-#  ny1=30
-#  ny2=70
-# TODO: move to args?
-xx = slice(None, None)
-yy = slice(None, None)
-#xx = slice(10, 295+1)
-#yy = slice(30, 90+1)
+lonlat = iris.Constraint()
+if getattr(conf, 'lon1', None):
+    lonlat &= iris.Constraint(longitude=lambda x: x>getattr(conf, 'lon1')-1)
+if getattr(conf, 'lon2', None):
+    lonlat &= iris.Constraint(longitude=lambda x: x<getattr(conf, 'lon2')+1)
+if getattr(conf, 'lat1', None):
+    lonlat &= iris.Constraint(latitude=lambda x: x>getattr(conf, 'lat1')-1)
+if getattr(conf, 'lat2', None):
+    lonlat &= iris.Constraint(latitude=lambda x: x<getattr(conf, 'lat2')+1)
 # Column names
 vor_loc_df_kw = dict(delimiter='\s+',
                      names=['lon', 'lat', 'vo', 'rad', 'vortex_type'])
@@ -63,7 +66,12 @@ vortrack_df_kw = dict(delimiter='\s+',
                       names=['lon', 'lat', 'vo', 'kt', 'rad', 'vortex_type'])
 # Plotting styles
 vort_scl = 1e4  # vorticity factor
-vort_kw = dict(cmap=plt.cm.Oranges, vmin=0.1, vmax=5)
+# vort_kw = dict(cmap=plt.cm.Oranges, vmin=0.1, vmax=5)
+vort_cmap = plt.cm.Oranges
+vort_cmap.set_over('#330000')
+vort_cmap.set_under('w', alpha=0)
+vort_kw = dict(levels=[0.5, 1, 1.5, 2, 2.5, 3],
+               cmap=vort_cmap, extend='both')
 slp_scl = 1e-2  # pressure factor
 slp_kw = dict(levels=np.arange(900, 1101, 2), colors='#FF0000', linewidths=0.5)
 clab_kw = dict(inline=1, fmt='%1.0f', fontsize=10, colors='#FF0000')
@@ -74,6 +82,7 @@ track_start_kw = dict(marker='x', color=track_past_kw['color'])
 PATH_EFFECTS_ON = True
 path_effects = [PathEffects.withStroke(linewidth=2, foreground="w")]
 FIGSIZE = (12, 10)
+lsm_cmap = LinearSegmentedColormap.from_list('', [(1,1,1,0), (0.5,0.5,0.5)])
 
 # Logging set up
 utils._make_dir(LOGPATH)
@@ -126,17 +135,17 @@ def prep_canvas(anno_text='', figsize=FIGSIZE):
 
 def plot_fields(fig, ax, lons, lats, vort, slp, lsm=None):
     """ Plot vorticity and SLP in the given axes """
+    if isinstance(lsm, np.ndarray):
+        ax.pcolormesh(lons, lats, lsm, cmap=lsm_cmap)
     # Vorticity
-    h = ax.pcolormesh(lons, lats, vort*vort_scl, **vort_kw)
+    h = ax.contourf(lons, lats, vort*vort_scl, **vort_kw)
+    # import pdb; pdb.set_trace()
     cb = fig.colorbar(h, ax=ax)
     cb.ax.set_title(utils.unit_format(vort_scl**(-1), 's^{-1}'))
 
     # Sea level pressure
     h = ax.contour(lons, lats, slp*slp_scl, **slp_kw)
     ax.clabel(h, **clab_kw)
-
-    if isinstance(lsm, np.ndarray):
-        ax.contourf(lons, lats, lsm, cmap='gray_r', alpha=0.25)
 
 
 def plot_tracks(fig, ax, dt):
@@ -145,7 +154,7 @@ def plot_tracks(fig, ax, dt):
     handles = []
     for fname in sorted(TRACK_RES_DIR.glob(VORTRACK_FILES)):
         df_track = pd.read_csv(fname, parse_dates=['kt'], **vortrack_df_kw)
-        if dt in df_track['kt'].dt.to_pydatetime():
+        if dt in df_track['kt'].dt.to_pydatetime():  # and df_track.shape[0]>6:
             df_past = df_track[df_track['kt'].dt.to_pydatetime() <= dt]
             df_future = df_track[df_track['kt'].dt.to_pydatetime() >= dt]
             h1 = ax.plot(df_past.lon[0], df_past.lat[0], **track_start_kw)
@@ -174,11 +183,19 @@ def main(args=None):
     # Lazy-load all the original data
     with warnings.catch_warnings():
         warnings.simplefilter('ignore')
-        ds = iris.load(ORIG_DATA_DIR.listdir(ORIG_DATA_FILES))
-        ds += iris.load(ORIG_DATA_DIR.listdir(LAND_MASK_FILE))
+        ds = iris.load(ORIG_DATA_DIR.listdir(ORIG_DATA_FILES),
+                       constraints=lonlat)
+        ds += iris.load(ORIG_DATA_DIR.listdir(LAND_MASK_FILE),
+                        constraints=lonlat)
+    # import pdb; pdb.set_trace()
+    equalise_cubes.equalise_attributes(ds)
+    ds = ds.concatenate()
     vort = ds.extract_strict('atmosphere_relative_vorticity')
     slp = ds.extract_strict('air_pressure_at_sea_level')
-    lsm = ds.extract_strict('land_binary_mask')
+    try:
+        lsm = ds.extract_strict('land_binary_mask')
+    except iris.exceptions.ConstraintMismatchError:
+        lsm = ds.extract_strict('lsm')
 
     # Date-time span
     t0, tfreq, t1 = args.tspan.split(':')
@@ -193,16 +210,21 @@ def main(args=None):
 
     # Main time loop
     for idt in time_span:
+        # pdt = PartialDateTime(**{k: getattr(idt, k)
+        #                          for k in PartialDateTime.__slots__})
         logger.debug(f'Processing {idt:%Y-%m-%d %H:%M}')
         # Prepare data and coordinates
         lons, lats = iris.analysis.cartography.get_xy_grids(vort)
-        lons = lons[yy, xx]
-        lats = lats[yy, xx]
+        lons = lons
+        lats = lats
+        # print(vort.coord('time'))
+        # print(pdt)
         time_constr = iris.Constraint(time=idt)
         pres_constr = iris.Constraint(pressure_level=950)
-        vo_data = vort.extract(time_constr & pres_constr).data[yy, xx]
-        slp_data = slp.extract(time_constr).data[yy, xx]
-        lsm_data = lsm.data[0, yy, xx]
+        # import pdb; pdb.set_trace()
+        vo_data = vort.extract(time_constr & pres_constr).data
+        slp_data = slp.extract(time_constr).data
+        lsm_data = lsm.data.squeeze()
 
         # Prepare figure
         anno_text = f'{idt: %b %d, %H%M}UTC'
@@ -212,7 +234,7 @@ def main(args=None):
 
         imgname = imgname_mask.format(time=f'{idt:%Y%m%d%H%M}',
                                       fmt=fmt)
-        fig.savefig(output_dir / imgname, **svfigkw)
+        fig.savefig(str(output_dir / imgname), **svfigkw)
         logger.debug(f'Saved to {output_dir / imgname}')
         plt.close()
 
