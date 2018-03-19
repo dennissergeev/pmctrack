@@ -12,7 +12,7 @@ LIBS = ${NETCDF_LIB}
 .PHONY: all debug clean
 
 PROJNAME = pmctrack
-TARGET = track.out
+TARGET = track.x
 OUTDIR = output
 MODDIR = $(PROJNAME)/modules
 SRCDIR = $(PROJNAME)/src
