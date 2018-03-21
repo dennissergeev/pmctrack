@@ -13,7 +13,7 @@ program main
   use nc_io, only: get_dims, get_time, get_coords,                            &
     & get_xy_from_xyzt, get_xy_from_xyt, get_xyz_from_xyzt,                   &
     & get_data_2d
-  use utils, only: apply_mask_2d, make_nc_file_name, write_vortrack
+  use utils, only: apply_mask_2d, make_nc_file_name, write_vortrack, makedirs_p
 
   implicit none
 
@@ -102,6 +102,9 @@ program main
 
   ! Read configs from settings.conf file
   call get_config_params()
+
+  ! Create output directory if it does not exist
+  call makedirs_p(outdir)
 
   ! Get dimensions from the vorticity file using first year and first month
   ! Assume all the other files are organised in the same way
@@ -198,6 +201,7 @@ program main
   write(nc_file_name, '(A,A,A,A)') trim(datadir), '/', trim(land_name), '.nc'
   call get_data_2d(nc_file_name, land_name, land_mask)
   land_mask = land_mask(:, ny:0:-1)
+  print*, 'Land mask loaded'
 
   ! MAIN TIME LOOP ------------------------------------------------------------
   do kt = 1, ntime ! including both start and end dates

@@ -123,4 +123,34 @@ contains
     endif
   end function
 
+  subroutine makedirs_p(newdirpath)
+    ! Author:  Jess Vriesema
+    ! Date:    Spring 2011
+    ! Purpose: Creates a directory at ./newDirPath
+  
+    implicit none
+  
+    character(len=*), intent(in) :: newdirpath
+    character(len=256)           :: mkdir_cmd
+    logical                      :: dir_exists
+  
+    ! Check if the directory exists first
+    ! Works with gfortran, but not ifort
+#ifdef gnu
+    inquire(file=trim(newdirpath)//'/.', exist=dir_exists)
+#else
+    ! Works with ifort, but not gfortran
+    inquire(directory=newdirpath, exist=dir_exists)
+#endif
+  
+  
+    if (dir_exists) then
+    ! write (*,*) "Directory already exists: '"//trim(newDirPath)//"'"
+    else
+      mkdir_cmd = 'mkdir -p '//trim(newdirpath)
+      write(*, '(a)') "Creating new directory: '"//trim(mkdir_cmd)//"'"
+      call system(mkdir_cmd)
+    endif
+  end subroutine makedirs_p
+
 end module utils

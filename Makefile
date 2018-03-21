@@ -1,7 +1,7 @@
 #F90    = ifort
 #FFLAGS =  -convert little_endian -assume byterecl 
 F90        = gfortran
-FFLAGS     = -cpp -frecord-marker=4 -O3
+FFLAGS     = -cpp -frecord-marker=4 -O3 -Dgnu
 NETCDF_LIB = -L/usr/lib -lnetcdff -lnetcdf #$(shell nc-config --flibs)
 NETCDF_INC = -I/usr/include #$(shell nc-config --fflags)
 
