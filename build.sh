@@ -45,6 +45,9 @@ elif [ $PLATFORM == "jasmin" ]; then
     NETCDF_INC=`nc-config --fflags`
 elif [ $PLATFORM == "archer" ]; then
     export FORTRAN=ifort
+    netcdf_prefix=/opt/cray/netcdf/4.4.1.1/INTEL/15.0
+    NETCDF_LIB="-L${netcdf_prefix}/lib -lnetcdff"
+    NETCDF_INC="-L${netcdf_prefix}/include"
 elif [ $PLATFORM == "clean" ]; then
     ACTION=OTHER
     make -f Makefile clean
