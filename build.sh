@@ -41,8 +41,8 @@ elif [ $PLATFORM == "jasmin" ]; then
     module load intel/14.0
     module load netcdff/intel/14.0/4.2 
     export FORTRAN=ifort
-    NETCDF_LIB=$(shell nc-config --flibs)
-    NETCDF_INC=$(shell nc-config --fflags)
+    NETCDF_LIB=`nc-config --flibs`
+    NETCDF_INC=`nc-config --fflags`
 elif [ $PLATFORM == "archer" ]; then
     export FORTRAN=ifort
 elif [ $PLATFORM == "clean" ]; then
