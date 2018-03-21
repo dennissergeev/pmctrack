@@ -150,8 +150,8 @@ subroutine quadric_fit(one, one_num, a, b, c, k, r2)
 
   implicit none
 
-  real   (wp), intent (in) :: one(1:one_num, 1:2)
   integer    , intent (in) :: one_num
+  real   (wp), intent (in) :: one(1:one_num, 1:2)
   real   (wp), intent (out):: a, b, c, k, r2
   ! Local variables
   integer                  :: i

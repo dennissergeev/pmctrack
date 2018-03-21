@@ -38,7 +38,7 @@ program main
   integer                                     :: ny12, nx12
   integer          , allocatable              :: time_temp(:)
   integer          , allocatable              :: time(:)
-  integer          , allocatable              :: lvls(:)
+  real     (wp)    , allocatable              :: lvls(:)
   real     (wp)    , allocatable              :: lats(:)
   real     (wp)    , allocatable              :: lons(:)
   ! Data arrays
@@ -397,6 +397,9 @@ program main
 
     ! Link vortices
     if (kt > 1) then
+    print*, u_vor_f_prev(1:10)
+    print*, u_vor_f(1:10)
+    stop
       if (track_type == 1) then
         write(*, *) "NotImplementedError"; stop
       elseif (track_type == 2) then

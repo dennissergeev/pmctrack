@@ -92,7 +92,7 @@ contains
     character(len=*)              , intent(in)    :: nc_file_name
     character(len=*), dimension(4), intent(in)    :: dim_names
     integer                       , intent(inout) :: time(:) 
-    integer                       , intent(inout) :: lvls(:) 
+    real(wp)                      , intent(inout) :: lvls(:) 
     real(wp)                      , intent(inout) :: lats(:) 
     real(wp)                      , intent(inout) :: lons(:) 
     integer                       , intent(in)    :: time_idx
