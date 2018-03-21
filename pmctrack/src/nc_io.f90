@@ -340,8 +340,8 @@ contains
     integer, intent (in) :: status
 
     if (status /= nf90_noerr) then 
-      write(*, *), "status:", status
-      write(*, *), trim(nf90_strerror(status))
+      write(*, *) "status:", status
+      write(*, *) trim(nf90_strerror(status))
       stop "Stopped"
     end if
   end subroutine check  
