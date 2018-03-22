@@ -37,6 +37,14 @@ if [ $PLATFORM == "ubuntu" ]; then
     export FORTRAN=gfortran
     NETCDF_INC="-I/usr/include"
     NETCDF_LIB="-L/usr/lib -lnetcdff -lnetcdf"
+elif [ $PLATFORM == "monsoon" ]; then
+    module load gcc/4.8.1
+    module load cray-netcdf
+    netcdf_prefix=/opt/cray/netcdf/4.3.2/GNU/48
+    hdf_prefix=/opt/cray/hdf/1.8.13/GNU/48
+    export FORTRAN=gfortran
+    NETCDF_INC="-I{netcdf_prefix}/include"
+    NETCDF_LIB="-L{netcdf_prefix}/lib -lnetcdff -L{hdf_prefix}/lib -lnetcdf"
 elif [ $PLATFORM == "jasmin" ]; then
     module load intel/14.0
     module load netcdff/intel/14.0/4.2 
@@ -55,7 +63,7 @@ elif [ $PLATFORM == "clean" ]; then
     ACTION=OTHER
     make -f Makefile clean
 else
-    echo "build.sh [ubuntu|jasmin|archer|clean]"
+    echo "build.sh [ubuntu|monsoon|jasmin|archer|clean]"
     exit 0
 fi
 
