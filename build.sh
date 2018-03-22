@@ -35,22 +35,22 @@ ${OBJDIR}/main.o"
 ACTION=BUILD
 if [ $PLATFORM == "ubuntu" ]; then
     export FORTRAN=gfortran
-    NETCDF_LIB="-L/usr/lib -lnetcdff -lnetcdf"
     NETCDF_INC="-I/usr/include"
+    NETCDF_LIB="-L/usr/lib -lnetcdff -lnetcdf"
 elif [ $PLATFORM == "jasmin" ]; then
     module load intel/14.0
     module load netcdff/intel/14.0/4.2 
     export FORTRAN=ifort
-    NETCDF_LIB=`nc-config --flibs`
-    NETCDF_INC=`nc-config --fflags`
+    NETCDF_INC="-I/apps/libs/netCDF/intel14/fortran/4.2/include"
+    NETCDF_LIB="-L/apps/libs/netCDF/intel14/fortran/4.2/lib -lnetcdff"
 elif [ $PLATFORM == "archer" ]; then
     module swap PrgEnv-cray PrgEnv-intel
     module load intel/16.0.2.181 # otherwise libifcore.so.5 is not found
     module load cray-netcdf
     export FORTRAN=ifort
     netcdf_prefix=/opt/cray/netcdf/4.4.1.1/INTEL/15.0
-    NETCDF_LIB="-L${netcdf_prefix}/lib -lnetcdff -lnetcdf"
     NETCDF_INC="-I${netcdf_prefix}/include"
+    NETCDF_LIB="-L${netcdf_prefix}/lib -lnetcdff -lnetcdf"
 elif [ $PLATFORM == "clean" ]; then
     ACTION=OTHER
     make -f Makefile clean
