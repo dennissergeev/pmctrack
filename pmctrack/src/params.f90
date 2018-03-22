@@ -6,7 +6,7 @@ module params
 
   implicit none
 
-  character(len=*), parameter   :: CONFIG_FILE = "settings.conf"
+  character(len=256), protected :: config_file
   type(datetime)    , protected :: dt_start
   type(datetime)    , protected :: dt_end
   character(len=256), protected :: datadir
@@ -48,6 +48,20 @@ module params
   logical           , protected :: dbg
 
 contains
+  subroutine get_config_file_name()
+    implicit none
+    integer :: narg
+
+    narg = iargc()
+
+    if (narg == 0) then
+      config_file = "settings.conf"
+    else
+      call getarg(1, config_file)
+    endif
+  end subroutine get_config_file_name
+
+
   subroutine get_config_params()
 
     use constants, only : fh_conf
@@ -76,6 +90,7 @@ contains
     lat1 = fillval
     lat2 = fillval
 
+    call get_config_file_name()
     open (fh_conf, file=trim(config_file), form='formatted', status='old', &
       &   iostat=ios, action='read')
     if (ios == 0) then
@@ -218,6 +233,10 @@ contains
     nx2 = minloc(abs(lons-lon2), 1) - 1
     ny1 = minloc(abs(lats-lat1), 1) - 1
     ny2 = minloc(abs(lats-lat2), 1) - 1
+
+    print*, lon1, lon2, lat1, lat2
+    print*, nx1, nx2, ny1, ny2
+    ! stop
 
   end subroutine set_lonlat_bounds_auto
 end module params
