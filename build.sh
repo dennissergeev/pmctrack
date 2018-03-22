@@ -54,11 +54,9 @@ elif [ $PLATFORM == "archer" ]; then
 elif [ $PLATFORM == "clean" ]; then
     ACTION=OTHER
     make -f Makefile clean
-elif [ $PLATFORM == "purge" ]; then
-    ACTION=OTHER
-    make -f Makefile purge
 else
-    echo "build.sh [ubuntu|jasmin|archer|clean|purge]"
+    echo "build.sh [ubuntu|jasmin|archer|clean]"
+    exit 0
 fi
 
 if [ $ACTION == "BUILD" ]; then
@@ -78,6 +76,9 @@ if [ $ACTION == "BUILD" ]; then
             FFLAGS+=" -O0 -g -fcheck=all -fbacktrace -Ddebug -Wall"
         fi
         FFLAGS+=" -I${MODDIR}"
+    else
+        echo "[gfortran|ifort]"
+        exit 0
     fi
     export INCS=${NETCDF_INC}
     export LIBS=${NETCDF_LIB}
