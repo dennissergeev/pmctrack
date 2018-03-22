@@ -66,12 +66,12 @@ vortrack_df_kw = dict(delimiter='\s+',
                       names=['lon', 'lat', 'vo', 'kt', 'rad', 'vortex_type'])
 # Plotting styles
 vort_scl = 1e4  # vorticity factor
-# vort_kw = dict(cmap=plt.cm.Oranges, vmin=0.1, vmax=5)
 vort_cmap = plt.cm.Oranges
 vort_cmap.set_over('#330000')
 vort_cmap.set_under('w', alpha=0)
 vort_kw = dict(levels=[0.5, 1, 1.5, 2, 2.5, 3],
                cmap=vort_cmap, extend='both')
+vort_kw_pc = dict(cmap=vort_cmap, vmin=0.5, vmax=3)
 slp_scl = 1e-2  # pressure factor
 slp_kw = dict(levels=np.arange(900, 1101, 2), colors='#FF0000', linewidths=0.5)
 clab_kw = dict(inline=1, fmt='%1.0f', fontsize=10, colors='#FF0000')
@@ -82,7 +82,7 @@ track_start_kw = dict(marker='x', color=track_past_kw['color'])
 PATH_EFFECTS_ON = True
 path_effects = [PathEffects.withStroke(linewidth=2, foreground="w")]
 FIGSIZE = (12, 10)
-lsm_cmap = LinearSegmentedColormap.from_list('', [(1,1,1,0), (0.5,0.5,0.5)])
+lsm_cmap = LinearSegmentedColormap.from_list('', [(1,1,1,0), (0.5,0.5,0.5,0.5)])
 
 # Logging set up
 utils._make_dir(LOGPATH)
@@ -135,10 +135,9 @@ def prep_canvas(anno_text='', figsize=FIGSIZE):
 
 def plot_fields(fig, ax, lons, lats, vort, slp, lsm=None):
     """ Plot vorticity and SLP in the given axes """
-    if isinstance(lsm, np.ndarray):
-        ax.pcolormesh(lons, lats, lsm, cmap=lsm_cmap)
     # Vorticity
-    h = ax.contourf(lons, lats, vort*vort_scl, **vort_kw)
+    # h = ax.contourf(lons, lats, vort*vort_scl, **vort_kw)
+    h = ax.pcolormesh(lons, lats, vort*vort_scl, **vort_kw_pc)
     # import pdb; pdb.set_trace()
     cb = fig.colorbar(h, ax=ax)
     cb.ax.set_title(utils.unit_format(vort_scl**(-1), 's^{-1}'))
@@ -146,6 +145,9 @@ def plot_fields(fig, ax, lons, lats, vort, slp, lsm=None):
     # Sea level pressure
     h = ax.contour(lons, lats, slp*slp_scl, **slp_kw)
     ax.clabel(h, **clab_kw)
+
+    if isinstance(lsm, np.ndarray):
+        ax.pcolormesh(lons, lats, lsm, cmap=lsm_cmap, rasterized=True, edgecolor=(1.0, 1.0, 1.0, 0.), linewidth=0.0015625)
 
 
 def plot_tracks(fig, ax, dt):
