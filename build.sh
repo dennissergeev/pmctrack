@@ -44,10 +44,13 @@ elif [ $PLATFORM == "jasmin" ]; then
     NETCDF_LIB=`nc-config --flibs`
     NETCDF_INC=`nc-config --fflags`
 elif [ $PLATFORM == "archer" ]; then
+    module swap PrgEnv-cray PrgEnv-intel
+    module load intel/16.0.2.181 # otherwise libifcore.so.5 is not found
+    module load cray-netcdf
     export FORTRAN=ifort
     netcdf_prefix=/opt/cray/netcdf/4.4.1.1/INTEL/15.0
-    NETCDF_LIB="-L${netcdf_prefix}/lib -lnetcdff"
-    NETCDF_INC="-L${netcdf_prefix}/include"
+    NETCDF_LIB="-L${netcdf_prefix}/lib -lnetcdff -lnetcdf"
+    NETCDF_INC="-I${netcdf_prefix}/include"
 elif [ $PLATFORM == "clean" ]; then
     ACTION=OTHER
     make -f Makefile clean

@@ -201,7 +201,6 @@ program main
   write(nc_file_name, '(A,A,A,A)') trim(datadir), '/', trim(land_name), '.nc'
   call get_data_2d(nc_file_name, land_name, land_mask)
   land_mask = land_mask(:, ny:0:-1)
-  print*, 'Land mask loaded'
 
   ! MAIN TIME LOOP ------------------------------------------------------------
   do kt = 1, ntime ! including both start and end dates
@@ -397,9 +396,6 @@ program main
 
     ! Link vortices
     if (kt > 1) then
-    print*, u_vor_f_prev(1:10)
-    print*, u_vor_f(1:10)
-    stop
       if (track_type == 1) then
         write(*, *) "NotImplementedError"; stop
       elseif (track_type == 2) then
