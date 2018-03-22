@@ -2,6 +2,7 @@
 _precc/
 output
 logs/
+track.x
 
 ######################
 # OS generated files #
