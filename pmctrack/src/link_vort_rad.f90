@@ -98,18 +98,18 @@ subroutine link_vort_rad(nx, ny, lon, lat, del_t, mtype,                      &
 
       if (r_tmp <= r_c_min) then
         i_next(i_max) = i_max1  ! i_max1'th vortex is i_max'th in i_next array
-        r_c_min = r_tmp !TODO: check if this is valid
+        r_c_min = r_tmp
         r_next(i_max) = r_tmp
       endif
-      !print*, '>>>', i_max, i_max1, r_c_min, r_tmp, mlon_prev(i_max), &
-      !             & mlat_prev(i_max), &
-      !             & e_mlon, e_mlat, mlon(i_max1), mlat(i_max1)
+      ! print*, '>>>', i_max, i_max1, r_c_min, r_tmp, mlon_prev(i_max), &
+      !              & mlat_prev(i_max), &
+      !              & e_mlon, e_mlat, mlon(i_max1), mlat(i_max1)
     enddo
 
     ! ------ Tracking by part of vortex --------
 
     vor_part_s = 0
-    if (i_next(i_max) < 1) then
+    if (i_next(i_max) == ifillval) then
     ! i_max'th vortex on the previous time step does not have a location
     ! within the r_c_min radius on the current time step
     ! Then the second requirement is considered, which is that a part of
@@ -132,7 +132,8 @@ subroutine link_vort_rad(nx, ny, lon, lat, del_t, mtype,                      &
         enddo
       enddo
 
-      !print*, 'vor_part_s', vor_part_s(1:5)
+      ! print*, i_max
+      ! print*, 'vor_part_s', vor_part_s(1:5)
 
       do ! "while loop"
         if (maxval(vor_part_s) == 0) exit
@@ -142,7 +143,9 @@ subroutine link_vort_rad(nx, ny, lon, lat, del_t, mtype,                      &
         ! time step is linked to the vortex with an isolated vortex area
         ! having the largest amount of overlap with the estimated area
 
+        ! print*, '>', i_next(i_max)
         i_next(i_max) = maxloc(vor_part_s, dim=1)
+        ! print*, '>', i_next(i_max)
 
         if (proj == 1) then
           r_next(i_max) = great_circle(mlon(i_next(i_max)), e_mlon, &
@@ -161,12 +164,12 @@ subroutine link_vort_rad(nx, ny, lon, lat, del_t, mtype,                      &
       enddo ! "while loop"
     endif  ! i_next(i_max) == 0
   enddo ! i_max loop
-  !print*, r_next(1:5)
-  !print*, n_max_prev
-  !print*, i_next(1:5)
-  !print*, vor_idx_old(1:5)
-  !print*, 'vor_num', vor_num
-  !print*, '*****************************************************************'
+  ! print*, r_next(1:5)
+  ! print*, n_max_prev
+  ! print*, i_next(1:5)
+  ! print*, vor_idx_old(1:5)
+  ! print*, 'vor_num', vor_num
+  ! print*, '*****************************************************************'
 
   ! ------------- Connecting vortex (prev) to vortex (current) ----------------
   do i_max1 = 1, n_max

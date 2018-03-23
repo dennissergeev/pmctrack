@@ -19,7 +19,6 @@ import matplotlib.pyplot as plt
 from matplotlib.offsetbox import AnchoredText
 import matplotlib.patheffects as PathEffects
 import numpy as np
-from os import getenv
 from path import Path
 import pandas as pd
 import sys
@@ -52,13 +51,13 @@ SCRIPT = Path(__file__).basename().splitext()[0]
 # Subset used in tracking
 lonlat = iris.Constraint()
 if getattr(conf, 'lon1', None):
-    lonlat &= iris.Constraint(longitude=lambda x: x>getattr(conf, 'lon1')-1)
+    lonlat &= iris.Constraint(longitude=lambda x: x > getattr(conf, 'lon1')-1)
 if getattr(conf, 'lon2', None):
-    lonlat &= iris.Constraint(longitude=lambda x: x<getattr(conf, 'lon2')+1)
+    lonlat &= iris.Constraint(longitude=lambda x: x < getattr(conf, 'lon2')+1)
 if getattr(conf, 'lat1', None):
-    lonlat &= iris.Constraint(latitude=lambda x: x>getattr(conf, 'lat1')-1)
+    lonlat &= iris.Constraint(latitude=lambda x: x > getattr(conf, 'lat1')-1)
 if getattr(conf, 'lat2', None):
-    lonlat &= iris.Constraint(latitude=lambda x: x<getattr(conf, 'lat2')+1)
+    lonlat &= iris.Constraint(latitude=lambda x: x < getattr(conf, 'lat2')+1)
 # Column names
 vor_loc_df_kw = dict(delimiter='\s+',
                      names=['lon', 'lat', 'vo', 'rad', 'vortex_type'])
@@ -75,14 +74,16 @@ vort_kw_pc = dict(cmap=vort_cmap, vmin=0.5, vmax=3)
 slp_scl = 1e-2  # pressure factor
 slp_kw = dict(levels=np.arange(900, 1101, 2), colors='#FF0000', linewidths=0.5)
 clab_kw = dict(inline=1, fmt='%1.0f', fontsize=10, colors='#FF0000')
-vor_loc_kw = dict(linestyle='', marker='o', ms=10, mec='b', mfc='w')
-track_past_kw = dict(color='b', linewidth=2)
-track_future_kw = dict(color='b', linewidth=0.5, linestyle='--')
+vor_loc_kw = dict(marker='o', s=2**7, zorder=20)
+vor_type_colors = ('C0', 'C2', 'C3', 'C4')
+track_past_kw = dict(color='C0', linewidth=2)
+track_future_kw = dict(color='C0', linewidth=0.5, linestyle='--')
 track_start_kw = dict(marker='x', color=track_past_kw['color'])
 PATH_EFFECTS_ON = True
 path_effects = [PathEffects.withStroke(linewidth=2, foreground="w")]
 FIGSIZE = (12, 10)
-lsm_cmap = LinearSegmentedColormap.from_list('', [(1,1,1,0), (0.5,0.5,0.5,0.5)])
+lsm_cmap = LinearSegmentedColormap.from_list('', [(1, 1, 1, 0),
+                                                  (0.5, 0.5, 0.5, 0.5)])
 
 # Logging set up
 utils._make_dir(LOGPATH)
@@ -147,7 +148,7 @@ def plot_fields(fig, ax, lons, lats, vort, slp, lsm=None):
     ax.clabel(h, **clab_kw)
 
     if isinstance(lsm, np.ndarray):
-        ax.pcolormesh(lons, lats, lsm, cmap=lsm_cmap, rasterized=True, edgecolor=(1.0, 1.0, 1.0, 0.), linewidth=0.0015625)
+        ax.pcolormesh(lons, lats, lsm, cmap=lsm_cmap, rasterized=True)
 
 
 def plot_tracks(fig, ax, dt):
@@ -174,7 +175,9 @@ def plot_tracks(fig, ax, dt):
     fname = TRACK_RES_DIR / VORMAX_FILES.format(kt=dt)
     if fname.exists():
         df = pd.read_csv(fname, **vor_loc_df_kw)
-        ax.plot(df.lon, df.lat, **vor_loc_kw)
+        ax.scatter(df.lon, df.lat,
+                   c=df.vortex_type.apply(lambda x: vor_type_colors[x]),
+                   **vor_loc_kw)
 
 
 def main(args=None):

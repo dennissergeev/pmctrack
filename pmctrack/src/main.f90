@@ -9,7 +9,7 @@ program main
     & vort_name, u_name, v_name, psea_name, land_name,                        &
     & vor_lvl, steer_lvl_btm, steer_lvl_top,                                  &
     & nx1, nx2, ny1, ny2,                                                     &
-    & smth_type, proj, steering_type, track_type
+    & smth_type, proj, steering_type, track_type, vor_out_on
   use nc_io, only: get_dims, get_time, get_coords,                            &
     & get_xy_from_xyzt, get_xy_from_xyt, get_xyz_from_xyzt,                   &
     & get_data_2d
@@ -172,7 +172,7 @@ program main
   ! Allocate work arrays
   allocate(vor_smth     (nx1:nx2, ny1:ny2      ))
   allocate(vor_part     (nx1:nx2, ny1:ny2      )); vor_part = ifillval
-  allocate(dummy        (nx1:nx2, ny1:ny2      ))
+  allocate(dummy        (nx1:nx2, ny1:ny2      )); dummy = fillval
   allocate(mlat         (                  nmax)); mlat = fillval
   allocate(mlon         (                  nmax)); mlon = fillval
   allocate(mlat_prev    (                  nmax)); mlat_prev = fillval
@@ -265,13 +265,13 @@ program main
     endif
 
 
-    write(fname_bin, '(A,A,A,A,A)') trim(outdir), '/',                     &
-                      & 'vor_out_', trim(idt%strftime('%Y%m%d%H%M')), '.dat'
-    open(unit=fh_bin, file=fname_bin, form='unformatted', access='sequential')
-    write(unit=fh_bin) vor(nx1:nx2,ny1:ny2)
-    write(unit=fh_bin) vor_smth(nx1:nx2,ny1:ny2)
-
-    ! write (*,'(A,I4.4)') 'Detecting vortex at kt = ', kt
+    if (vor_out_on==1) then
+      write(fname_bin, '(A,A,A,A,A)') trim(outdir), '/',                     &
+                        & 'vor_out_', trim(idt%strftime('%Y%m%d%H%M')), '.dat'
+      open(unit=fh_bin, file=fname_bin, form='unformatted', access='sequential')
+      write(unit=fh_bin) vor(nx1:nx2,ny1:ny2)
+      write(unit=fh_bin) vor_smth(nx1:nx2,ny1:ny2)
+    endif
 
     call vor_partition(vor_smth(nx1:nx2, ny1:ny2),                            &
                      & nx12, ny12,                                            &
@@ -294,18 +294,6 @@ program main
       call synop_check(mlon(:), mlat(:), n_max,                               &
                      & minlon(:), minlat(:), n_min, mtype(:))
     endif
-
-    ! Save vor_part to a dummy array and write it to unformatted output
-    dummy = fillval
-    ! dummy(nx1, ny2)=-1.
-    do j = ny1, ny2
-      do i = nx1, nx2
-        if (vor_part(i, j) /= 0.) then
-          dummy(i, j) = vor_part(i, j)
-        endif
-      enddo
-    enddo
-    write(unit=fh_bin) dummy(nx1:nx2, ny1:ny2)
 
     write(fname_vormaxloc, '(A,A,A,A,A)') trim(outdir), '/',               &
                       & 'vormax_loc_', trim(idt%strftime('%Y%m%d%H%M')), '.txt'
@@ -363,36 +351,48 @@ program main
     enddo ! i_max loop
     close(unit=fh_maxloc)
 
-    !---- output steeering wind ----!
-    dummy = fillval
-    do i_max=1, n_max
-      dummy(mi(i_max), mj(i_max)) = u_vor_f(i_max)
-    end do
-    write(unit=fh_bin) dummy(nx1:nx2, ny1:ny2)
-    dummy = fillval
-    do i_max=1, n_max
-      dummy(mi(i_max), mj(i_max)) = v_vor_f(i_max)
-    end do
-    write(unit=fh_bin) dummy(nx1:nx2, ny1:ny2)
+    if (vor_out_on==1) then
+      ! Save vor_part to a dummy array and write it to unformatted output
+      ! dummy(nx1, ny2)=-1.
+      do j = ny1, ny2
+        do i = nx1, nx2
+          if (vor_part(i, j) /= 0.) then
+            dummy(i, j) = vor_part(i, j)
+          endif
+        enddo
+      enddo
+      write(unit=fh_bin) dummy(nx1:nx2, ny1:ny2)
+      !---- output steeering wind ----!
+      dummy = fillval
+      do i_max=1, n_max
+        dummy(mi(i_max), mj(i_max)) = u_vor_f(i_max)
+      end do
+      write(unit=fh_bin) dummy(nx1:nx2, ny1:ny2)
+      dummy = fillval
+      do i_max=1, n_max
+        dummy(mi(i_max), mj(i_max)) = v_vor_f(i_max)
+      end do
+      write(unit=fh_bin) dummy(nx1:nx2, ny1:ny2)
 
-    !     dummy=fillval
+      !     dummy=fillval
 
-    !     do i_max=1,n_max(kt)
-    !       dummy(mi(i_max,kt),mj(i_max,kt))=-u_vor_b(i_max,kt)
-    !     end do
+      !     do i_max=1,n_max(kt)
+      !       dummy(mi(i_max,kt),mj(i_max,kt))=-u_vor_b(i_max,kt)
+      !     end do
 
-    !     write (12)dummy(nx1:nx2,ny1:ny2)
+      !     write (12)dummy(nx1:nx2,ny1:ny2)
 
-    !     dummy=fillval
+      !     dummy=fillval
 
-    !     do i_max=1,n_max(kt)
-    !       dummy(mi(i_max,kt),mj(i_max,kt))=-v_vor_b(i_max,kt)
-    !     end do
+      !     do i_max=1,n_max(kt)
+      !       dummy(mi(i_max,kt),mj(i_max,kt))=-v_vor_b(i_max,kt)
+      !     end do
 
-    !     write (12)dummy(nx1:nx2,ny1:ny2)
-    ! SLP output
-    write(unit=fh_bin) psea(nx1:nx2, ny1:ny2)
-    close(unit=fh_bin)
+      !     write (12)dummy(nx1:nx2,ny1:ny2)
+      ! SLP output
+      write(unit=fh_bin) psea(nx1:nx2, ny1:ny2)
+      close(unit=fh_bin)
+    endif
 
     ! Link vortices
     if (kt > 1) then

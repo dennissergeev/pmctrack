@@ -44,6 +44,8 @@ module params
   integer           , protected :: track_type
   real   (wp)       , protected :: del_lon, del_lat, del_r
   integer           , protected :: merge_opt
+  ! Output flags
+  integer           , protected :: vor_out_on
   ! Debug flag
   logical           , protected :: dbg
 
@@ -152,6 +154,7 @@ contains
           case('del_lat'); read(buffer, *, iostat=ios) del_lat; if (dbg) write(*, *) del_lat
           case('del_r'); read(buffer, *, iostat=ios) del_r; if (dbg) write(*, *) del_r
           case('merge_opt'); read(buffer, *, iostat=ios) merge_opt; if (dbg) write(*, *) merge_opt
+          case('vor_out_on'); read(buffer, *, iostat=ios) vor_out_on; if (dbg) write(*, *) vor_out_on
           case default
             if (index (trim(label), "#") /= 1) then
               write(*, *) 'ConfigParseWarning: Skipping invalid line', line
