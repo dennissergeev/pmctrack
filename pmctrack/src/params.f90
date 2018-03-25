@@ -166,7 +166,7 @@ contains
     end if
     close(fh_conf)
 
-    dt_start = strptime(trim(dt_start_str), '%Y%m%dT%H%MZ')
+    dt_start = strptime(trim(dt_start_str), '%Y_%m_%d_%H%M')
     !dt_start%minute = 0
     dt_start%second = 0
     dt_start%millisecond = 0
@@ -174,7 +174,7 @@ contains
       write(*, *) 'Start date ', dt_start, ' is not valid'
       stop
     endif
-    dt_end = strptime(trim(dt_end_str), '%Y%m%dT%H%MZ')
+    dt_end = strptime(trim(dt_end_str), '%Y_%m_%d_%H%M')
     !dt_end%minute = 0
     dt_end%second = 0
     dt_end%millisecond = 0
