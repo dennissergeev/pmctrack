@@ -231,13 +231,14 @@ program main
     call get_xy_from_xyt(nc_file_name, psea_name, time_idx, psea)
     psea(:, :) = 1e-2 * psea(:, ny:0:-1)
 
+    ! Read 2 time steps (forward)
     idt_pair(1) = idt
     idt_pair(2) = idt + timedelta(hours=del_t / time_step_s)
     ! if (kt > 1 .and. mod(kt, steer_nt) == 0) then
     if (kt < ntime) then
       ! Read u- and v-winds
       do kt2 = 1, steer_nt
-        if (idt_pair(2)%month > idt_pair(1)%month .and. kt2 == 2) then
+        if (idt_pair(2)%month /= idt_pair(1)%month .and. kt2 == 2) then
           time_idx = 0
         endif
         call make_nc_file_name(nc_file_name, datadir, prefix_lvl, &
@@ -253,7 +254,8 @@ program main
       u(:, :, :, :) = u(:, ny:0:-1, :, :)
       v(:, :, :, :) = v(:, ny:0:-1, :, :)
     endif
-
+    ! END OF INPUT
+    
     if (smth_type == 1) then
       call smth(vor(0:nx, 0:ny), nx, ny, vor_smth(nx1:nx2, ny1:ny2))
     elseif (smth_type == 2) then

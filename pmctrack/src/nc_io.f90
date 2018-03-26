@@ -75,7 +75,12 @@ contains
    
     i = scan(trim(units_date(i+1:)), ' ')
     units_date = trim(units_date(i+1:))
-    cal_start = strptime(units_date, cal_fmt)
+    cal_start = strptime(trim(units_date), cal_fmt)
+    ! Calendars usually start from 00:00
+    cal_start%hour = 0
+    cal_start%minute = 0
+    cal_start%second = 0
+    cal_start%millisecond = 0
     if (.not. cal_start%isValid()) then
       write(*, *) 'CalendarParseError: calendar start', cal_start, ' is not valid'
       stop
