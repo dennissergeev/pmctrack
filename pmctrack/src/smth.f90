@@ -19,26 +19,22 @@ subroutine smth(var, nx, ny, var_smth)
   var_smth(nx1:nx2, ny1:ny2) = var(nx1:nx2, ny1:ny2)
 
   do j = ny1, ny2
-    if (j - nsmth_y >=0 .and. j + nsmth_y <= ny) then
-      do i = nx1, nx2
-        if (i - nsmth_x >= 0 .and. i + nsmth_x <= nx) then
-          nc = 0
-          tmp(i, j) = 0.
-          if (var(i, j) > var_thresh) then
-            do jj = -nsmth_y, nsmth_y
-              do ii = -nsmth_x, nsmth_x
-                if (var(i+ii, j+jj) > var_thresh) then
-                  tmp(i, j) = tmp(i, j) + var(i+ii, j+jj)
-                  nc = nc + 1
-                endif
-              enddo
-            enddo
-            tmp(i, j) = tmp(i, j) / ((2 * nsmth_x + 1) * (2 * nsmth_y + 1))
-            var_smth(i, j) = tmp(i, j)
-          endif
-        endif
-      enddo
-    endif
+    do i = nx1, nx2
+      nc = 0
+      tmp(i, j) = 0.
+      if (var(i, j) > var_thresh) then
+        do jj = max(-nsmth_y, -j), min(nsmth_y, ny-j)
+          do ii = max(-nsmth_x, -i), min(nsmth_x, nx-i)
+            if (var(i+ii, j+jj) > var_thresh) then
+              tmp(i, j) = tmp(i, j) + var(i+ii, j+jj)
+              nc = nc + 1
+            endif
+          enddo
+        enddo
+        tmp(i, j) = tmp(i, j) / ((2 * nsmth_x + 1) * (2 * nsmth_y + 1))
+        var_smth(i, j) = tmp(i, j)
+      endif
+    enddo
   enddo
 end subroutine smth
 
@@ -65,7 +61,7 @@ subroutine smth_r(var, nx, ny, lon, lat, var_smth)
   real   (wp)             :: lonin, latin
   integer                 :: x_smth, y_smth
   real   (wp)             :: dist
-  real   (wp), parameter  :: var_thresh = -10.0
+  real   (wp), parameter  :: var_thresh = -10.0 ! TODO: replace by fillval?
 
   x_smth = 0
   y_smth = 0
@@ -86,24 +82,23 @@ subroutine smth_r(var, nx, ny, lon, lat, var_smth)
   var_smth(nx1:nx2, ny1:ny2) = var(nx1:nx2, ny1:ny2)
 
   do j = ny1, ny2
-    if (j - y_smth >= 0 .and. j + y_smth <= ny) then
+  !  if (j - y_smth >= 0 .and. j + y_smth <= ny) then
       do i = nx1, nx2
-        if (i - x_smth >= 0 .and. i + x_smth <= nx) then
+  !      if (i - x_smth >= 0 .and. i + x_smth <= nx) then
           nc = 0
           tmp(i, j) = 0.
           if (var(i, j) > var_thresh) then
-            do jj = -y_smth, y_smth
-              do ii = -x_smth, x_smth
+            do jj = max(-y_smth, -j), min(y_smth, ny-j)
+              do ii = max(-x_smth, -i), min(x_smth, nx-i)
                 if (proj == 1) then
                   dist = great_circle(lon(i), lon(i+ii), lat(j), lat(j+jj), ra)
-
                 elseif(proj==2)then
                   dist = sqrt((ii * lonin)**2 + (jj * latin)**2)
                 endif
 
                 if (dist <= r_smth * rkilo) then
-                  nc = nc + 1
                   if (var(i+ii, j+jj) > var_thresh) then
+                    nc = nc + 1
                     tmp(i, j) = tmp(i, j) + var(i+ii, j+jj)
                   endif
                 endif
@@ -111,8 +106,8 @@ subroutine smth_r(var, nx, ny, lon, lat, var_smth)
             enddo
             var_smth(i, j) = tmp(i, j) / nc
           endif
-        endif
+  !      endif
       enddo
-    endif
+  !  endif
   enddo
 end subroutine smth_r
