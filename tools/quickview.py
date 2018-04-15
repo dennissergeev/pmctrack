@@ -136,6 +136,8 @@ def prep_canvas(anno_text='', figsize=FIGSIZE):
 
 def plot_fields(fig, ax, lons, lats, vort, slp, lsm=None):
     """ Plot vorticity and SLP in the given axes """
+    ax.set_xlim(lons.min()-5, lons.max()+5)
+    ax.set_ylim(lats.min()-1, lats.max()+1)
     # Vorticity
     # h = ax.contourf(lons, lats, vort*vort_scl, **vort_kw)
     h = ax.pcolormesh(lons, lats, vort*vort_scl, **vort_kw_pc)
@@ -220,8 +222,6 @@ def main(args=None):
         logger.debug(f'Processing {idt:%Y-%m-%d %H:%M}')
         # Prepare data and coordinates
         lons, lats = iris.analysis.cartography.get_xy_grids(vort)
-        lons = lons
-        lats = lats
         # print(vort.coord('time'))
         # print(pdt)
         time_constr = iris.Constraint(time=idt)
