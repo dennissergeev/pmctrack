@@ -1,5 +1,6 @@
 # Package-specific
-_precc/
+obj/
+modules/
 output
 logs/
 track.x

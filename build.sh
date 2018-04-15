@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 PLATFORM=${1:-ubuntu}
 MODE=${2:-quick}
-export PROJNAME=pmctrack
+export PROJNAME=.
 export TARGET=track.x
 export OUTDIR=output
 export MODDIR=${PROJNAME}/modules
 export SRCDIR=${PROJNAME}/src
 
-export OBJDIR=${PROJNAME}/src/_precc
+export OBJDIR=${PROJNAME}/src/obj
 export OBJ="\
 ${OBJDIR}/datetime.o \
 ${OBJDIR}/types.o \
