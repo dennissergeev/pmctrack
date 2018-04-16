@@ -1,9 +1,8 @@
 # Package-specific
-obj/
-modules/
 output
 logs/
 track.x
+Makefile
 
 ######################
 # OS generated files #

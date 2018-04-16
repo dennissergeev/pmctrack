@@ -3,16 +3,38 @@ project (PMCTRACK)
 enable_language(Fortran)
 
 set(EXE track.x)
+set(SRCDIR src)
 
-if(PLATFORM MATCHES "ubuntu")
+if(NOT PLATFORM)
+    set(PLATFORM linux)
+endif()
+
+if(PLATFORM MATCHES "linux")
     set(CMAKE_Fortran_COMPILER gfortran)
-    set(INCS "/usr/include")
-    set(LIBS "/usr/lib -lnetcdff -lnetcdf")
-else()
+    set(INCS /usr/include)
+    set(LIBS "-L/usr/lib -lnetcdff -lnetcdf")
+elseif(PLATFORM MATCHES "monsoon")
+    set(CMAKE_Fortran_COMPILER gfortran)
     set(MODULE_CMDS
-    "module load foo"
-    "module load bar"
+    "module swap PrgEnv-cray PrgEnv-gnu"
+    "module load cray-netcdf"
     )
+    set(netcdf_prefix "/opt/cray/netcdf/4.3.2/GNU/49")
+    set(hdf_prefix "/opt/cray/hdf5/1.8.13/GNU/49")
+    set(INCS ${netcdf_prefix}/include)
+    set(LIBS "-L${netcdf_prefix}/lib -lnetcdff -L${hdf_prefix}/lib -lnetcdf")
+elseif(PLATFORM MATCHES "archer")
+    set(CMAKE_Fortran_COMPILER ifort)
+    set(MODULE_CMDS
+    "module swap PrgEnv-cray PrgEnv-intel"
+    "module load intel/16.0.2.181" # otherwise libifcore.so.5 is not found
+    "module load cray-netcdf"
+    )
+    set(netcdf_prefix "/opt/cray/netcdf/4.4.1.1/INTEL/15.0")
+    set(INCS ${netcdf_prefix}/include)
+    set(LIBS "-L${netcdf_prefix}/lib -lnetcdff -lnetcdf")
+else()
+    MESSAGE(FATAL_ERROR "Uknown option PLATFORM=${PLATFORM}")
 endif()
 
 # this is where we will place the Fortran module files
@@ -38,9 +60,6 @@ if(NOT CMAKE_Fortran_COMPILER_SUPPORTS_F90)
     message(FATAL_ERROR "Fortran compiler does not support F90")
 endif(NOT CMAKE_Fortran_COMPILER_SUPPORTS_F90)
 
-
-MESSAGE("${CMAKE_Fortran_COMPILER}")
-
 if(CMAKE_Fortran_COMPILER_ID MATCHES GNU)
     set(CMAKE_Fortran_FLAGS         "-cpp -frecord-marker=4 -Dgnu")
     set(CMAKE_Fortran_FLAGS_DEBUG   "-O0 -g -fcheck=all -fbacktrace -Ddebug -Wall")
@@ -54,21 +73,21 @@ else()
 endif()
 
 include_directories(${INCS})
-link_directories (${LIBS})
 add_executable(
     ${EXE}
-    src/datetime.f90
-    src/types.f90
-    src/nc_io.f90
-    src/constants.f90
-    src/params.f90
-    src/utils.f90
-    src/vor_partition.f90
-    src/cf_synop_check.f90
-    src/synop_check.f90
-    src/min_z.f90
-    src/steering_wind.f90
-    src/link_vort_rad.f90
-    src/smth.f90
-    src/main.f90
+    ${SRCDIR}/datetime.f90
+    ${SRCDIR}/types.f90
+    ${SRCDIR}/nc_io.f90
+    ${SRCDIR}/constants.f90
+    ${SRCDIR}/params.f90
+    ${SRCDIR}/utils.f90
+    ${SRCDIR}/vor_partition.f90
+    ${SRCDIR}/cf_synop_check.f90
+    ${SRCDIR}/synop_check.f90
+    ${SRCDIR}/min_z.f90
+    ${SRCDIR}/steering_wind.f90
+    ${SRCDIR}/link_vort_rad.f90
+    ${SRCDIR}/smth.f90
+    ${SRCDIR}/main.f90
 )
+target_link_libraries(${EXE} ${LIBS})
