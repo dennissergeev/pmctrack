@@ -10,8 +10,8 @@ integer         , parameter :: ifillval = -999
 real   (kind=wp), parameter :: missval = -999.9_wp
 
 integer, parameter :: steer_nt = 2
-integer, parameter :: nmax = 300
-integer, parameter :: pmax = 1000 
+integer, parameter :: nmax = 600
+integer, parameter :: pmax = 6000 
 integer, parameter :: pmax4 = pmax * 4
 
 integer, parameter :: mx(8) = (/1, 1, 0, -1, -1, -1,  0,  1/)

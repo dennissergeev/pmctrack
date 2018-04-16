@@ -1,3 +1,4 @@
+set(CMAKE_VERBOSE_MAKEFILE off)
 cmake_minimum_required(VERSION 2.6.0 FATAL_ERROR)
 project (PMCTRACK)
 enable_language(Fortran)
@@ -10,51 +11,53 @@ set(
     ${CMAKE_HOME_DIRECTORY}
     )
 
-if(NOT PLATFORM)
-    set(PLATFORM linux)
-endif()
+set(CMAKE_Fortran_COMPILER ${FC})
 
-if(PLATFORM MATCHES "linux")
-    set(CMAKE_Fortran_COMPILER gfortran)
-    set(INCS /usr/include)
-    set(LIBS "-L/usr/lib -lnetcdff -lnetcdf")
-elseif(PLATFORM MATCHES "monsoon")
-    set(CMAKE_Fortran_COMPILER gfortran)
-    set(MODULE_CMDS
-    "module swap PrgEnv-cray PrgEnv-gnu"
-    "module load cray-netcdf"
-    )
-    set(netcdf_prefix "/opt/cray/netcdf/4.3.2/GNU/49")
-    set(hdf_prefix "/opt/cray/hdf5/1.8.13/GNU/49")
-    set(INCS ${netcdf_prefix}/include)
-    set(LIBS "-L${netcdf_prefix}/lib -lnetcdff -L${hdf_prefix}/lib -lnetcdf")
-elseif(PLATFORM MATCHES "archer")
-    set(CMAKE_Fortran_COMPILER ifort)
-    set(MODULE_CMDS
-    "module swap PrgEnv-cray PrgEnv-intel"
-    "module load intel/16.0.2.181" # otherwise libifcore.so.5 is not found
-    "module load cray-netcdf"
-    )
-    set(netcdf_prefix "/opt/cray/netcdf/4.4.1.1/INTEL/15.0")
-    set(INCS ${netcdf_prefix}/include)
-    set(LIBS "-L${netcdf_prefix}/lib -lnetcdff -lnetcdf")
-else()
-    MESSAGE(FATAL_ERROR "Uknown option PLATFORM=${PLATFORM}")
-endif()
+# if(NOT PLATFORM)
+#     set(PLATFORM linux)
+# endif()
+# 
+# if(PLATFORM MATCHES "linux")
+#     set(CMAKE_Fortran_COMPILER gfortran)
+#     set(INCS /usr/include)
+#     set(LIBS "-L/usr/lib -lnetcdff -lnetcdf")
+# elseif(PLATFORM MATCHES "monsoon")
+#     set(CMAKE_Fortran_COMPILER gfortran)
+#     set(MODULE_CMDS
+#     "module swap PrgEnv-cray PrgEnv-gnu"
+#     "module load cray-netcdf"
+#     )
+#     set(netcdf_prefix "/opt/cray/netcdf/4.3.2/GNU/49")
+#     set(hdf_prefix "/opt/cray/hdf5/1.8.13/GNU/49")
+#     set(INCS ${netcdf_prefix}/include)
+#     set(LIBS "-L${netcdf_prefix}/lib -lnetcdff -L${hdf_prefix}/lib -lnetcdf")
+# elseif(PLATFORM MATCHES "archer")
+#     set(CMAKE_Fortran_COMPILER ifort)
+#     set(MODULE_CMDS
+#     "module swap PrgEnv-cray PrgEnv-intel"
+#     "module load intel/16.0.2.181" # otherwise libifcore.so.5 is not found
+#     "module load cray-netcdf"
+#     )
+#     set(netcdf_prefix "/opt/cray/netcdf/4.4.1.1/INTEL/15.0")
+#     set(INCS ${netcdf_prefix}/include)
+#     set(LIBS "-L${netcdf_prefix}/lib -lnetcdff -lnetcdf")
+# else()
+#     MESSAGE(FATAL_ERROR "Uknown option PLATFORM=${PLATFORM}")
+# endif()
 
 # this is where we will place the Fortran module files
 set(CMAKE_Fortran_MODULE_DIRECTORY ${PROJECT_BINARY_DIR}/modules)
 
-function(hpc_env module_cmd)
-    add_custom_target(${module_cmd} ALL
-                      COMMAND echo ${module_cmd}
-                      COMMENT
-                      VERBATIM)
-endfunction()
-
-foreach(module_cmd ${MODULE_CMDS})
-    hpc_env(${module_cmd})
-endforeach()
+# function(hpc_env module_cmd)
+#     add_custom_target(${module_cmd} ALL
+#                       COMMAND echo ${module_cmd}
+#                       COMMENT
+#                       VERBATIM)
+# endfunction()
+# 
+# foreach(module_cmd ${MODULE_CMDS})
+#     hpc_env(${module_cmd})
+# endforeach()
 
 # we default to Release build type
 if(NOT CMAKE_BUILD_TYPE)
