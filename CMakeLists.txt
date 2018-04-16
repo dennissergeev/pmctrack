@@ -5,6 +5,11 @@ enable_language(Fortran)
 set(EXE track.x)
 set(SRCDIR src)
 
+set(
+    CMAKE_RUNTIME_OUTPUT_DIRECTORY
+    ${CMAKE_HOME_DIRECTORY}
+    )
+
 if(NOT PLATFORM)
     set(PLATFORM linux)
 endif()

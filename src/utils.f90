@@ -123,6 +123,23 @@ contains
     endif
   end function
 
+
+  subroutine check_exist( fname ) ! , ierr)
+    ! Check if file exists
+    implicit none
+  
+    character(len=*), intent(in)  :: fname
+    ! integer         , intent(out) :: ierr
+    logical                       :: f_exist
+
+    inquire( file=trim(fname), exist=f_exist )
+    if (.not. f_exist) then
+      write(*, '(a)') "ERROR File '"//trim(fname)//"' not found"
+      stop
+    endif
+  end subroutine check_exist
+
+
   subroutine makedirs_p(newdirpath)
     ! Author:  Jess Vriesema
     ! Date:    Spring 2011

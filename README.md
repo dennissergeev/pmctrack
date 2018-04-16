@@ -14,6 +14,11 @@ Run the script
 ```
 All options are stored in `CMakeLists.txt` file. You can add shortcut for your platform.
 
+## Running the program
+```bash
+./track.x [settings.conf]
+```
+
 ## Papers
 * Watanabe, S. I., H. Niino, and W. Yanase, 2017: Structure and Environment of Polar Mesocyclones over the Northeastern Part of the Sea of Japan. Monthly Weather Review, 145 (6), 2217–2233, DOI:10.1175/MWR-D-16-0342.1.
 

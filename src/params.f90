@@ -3,6 +3,7 @@ module params
 
   use types, only: wp
   use constants, only: fillval
+  use utils, only: check_exist
 
   implicit none
 
@@ -61,6 +62,7 @@ contains
     else
       call getarg(1, config_file)
     endif
+    call check_exist( trim( config_file ) )
   end subroutine get_config_file_name
 
 
