@@ -2,7 +2,7 @@
 output
 logs/
 track.x
-Makefile
+launcher/configs
 
 ######################
 # OS generated files #
