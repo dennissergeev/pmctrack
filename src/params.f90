@@ -66,6 +66,11 @@ contains
   end subroutine get_config_file_name
 
 
+  subroutine copy_config_file()
+      call system('cp '//trim(config_file)//' '//trim(outdir))
+  end subroutine copy_config_file
+
+
   subroutine get_config_params()
 
     use constants, only : fh_conf

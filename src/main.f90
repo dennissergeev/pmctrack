@@ -4,7 +4,8 @@ program main
   use types, only: wp
   use constants, only: ifillval, fillval, &
                      & steer_nt, nmax, pmax, rkilo, fh_bin, fh_maxloc
-  use params, only: get_config_params, set_lonlat_bounds_auto, dbg,           &
+  use params, only: get_config_params, copy_config_file,                      &
+    & set_lonlat_bounds_auto, dbg,                                            &
     & datadir, outdir, prefix_sfc, prefix_lvl, dt_start, dt_end,              &
     & vort_name, u_name, v_name, psea_name, land_name,                        &
     & vor_lvl, steer_lvl_btm, steer_lvl_top,                                  &
@@ -105,6 +106,9 @@ program main
 
   ! Create output directory if it does not exist
   call makedirs_p(outdir, overwrite=.true.)
+
+  ! Copy config file to the output directory
+  call copy_config_file()
 
   ! Get dimensions from the vorticity file using first year and first month
   ! Assume all the other files are organised in the same way
