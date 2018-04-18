@@ -1,0 +1,26 @@
+{
+    "run0": {
+        "zeta_max0": 0.0002,
+        "zeta_min0": 0.00015
+    },
+    "run1": {
+        "zeta_max0": 0.0003,
+        "zeta_min0": 0.00025
+    },
+    "run2": {
+        "zeta_max0": 0.0001,
+        "zeta_min0": 5e-05
+    },
+    "run3": {
+        "zeta_max0": 0.0004,
+        "zeta_min0": 0.00035
+    },
+    "run4": {
+        "smth_type": 2,
+        "r_smth": 40.0
+    },
+    "run5": {
+        "smth_type": 2,
+        "r_smth": 70.0
+    }
+}
