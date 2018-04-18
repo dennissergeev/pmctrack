@@ -140,16 +140,18 @@ contains
   end subroutine check_exist
 
 
-  subroutine makedirs_p(newdirpath)
+  subroutine makedirs_p(newdirpath, overwrite)
     ! Author:  Jess Vriesema
     ! Date:    Spring 2011
     ! Purpose: Creates a directory at ./newDirPath
   
     implicit none
   
-    character(len=*), intent(in) :: newdirpath
-    character(len=256)           :: mkdir_cmd
-    logical                      :: dir_exists
+    character(len=*), intent(in)  :: newdirpath
+    logical, optional, intent(in) :: overwrite
+    character(len=256)            :: mkdir_cmd
+    logical                       :: dir_exists
+    logical                       :: ovwrt
   
     ! Check if the directory exists first
     ! Works with gfortran, but not ifort
@@ -160,9 +162,20 @@ contains
     inquire(directory=newdirpath, exist=dir_exists)
 #endif
   
-  
+    if (present(overwrite)) then
+      ovwrt = overwrite
+    else
+      ovwrt = .false.
+    endif
+
     if (dir_exists) then
-    ! write (*,*) "Directory already exists: '"//trim(newDirPath)//"'"
+      write (*, '(a)') "Directory already exists: '"//trim(newdirpath)//"'"
+      if (ovwrt) then
+        write (*, '(a)') "Overwriting it"
+        call system('rm -r '//trim(newdirpath))
+        mkdir_cmd = 'mkdir -p '//trim(newdirpath)
+        call system(mkdir_cmd)
+      endif
     else
       mkdir_cmd = 'mkdir -p '//trim(newdirpath)
       write(*, '(a)') "Creating new directory: '"//trim(mkdir_cmd)//"'"

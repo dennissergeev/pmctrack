@@ -104,7 +104,7 @@ program main
   call get_config_params()
 
   ! Create output directory if it does not exist
-  call makedirs_p(outdir)
+  call makedirs_p(outdir, overwrite=.true.)
 
   ! Get dimensions from the vorticity file using first year and first month
   ! Assume all the other files are organised in the same way
