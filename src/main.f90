@@ -10,7 +10,7 @@ program main
     & vort_name, u_name, v_name, psea_name, land_name,                        &
     & vor_lvl, steer_lvl_btm, steer_lvl_top,                                  &
     & nx1, nx2, ny1, ny2,                                                     &
-    & smth_type, proj, steering_type, track_type, vor_out_on
+    & halo_r, smth_type, proj, steering_type, track_type, vor_out_on
   use nc_io, only: get_dims, get_time, get_coords,                            &
     & get_xy_from_xyzt, get_xy_from_xyt, get_xyz_from_xyzt,                   &
     & get_data_2d
@@ -227,7 +227,8 @@ program main
     ! Read vorticity at the specified level
     call get_xy_from_xyzt(nc_file_name, vort_name, lvl_idx, time_idx, vor)
     vor(:, :) = vor(:, ny:0:-1)
-    call apply_mask_2d(vor, nx, ny, land_mask, lons(0:nx), lats(0:ny))
+    call apply_mask_2d(vor, nx, ny, land_mask, lons(0:nx), lats(0:ny),        &
+      &                proj, halo_r)
 
     ! Read sea level pressure
     call make_nc_file_name(nc_file_name, datadir, prefix_sfc, &

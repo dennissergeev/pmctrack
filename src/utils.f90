@@ -4,7 +4,6 @@ use datetime_module
 
 use types, only : wp
 use constants, only : missval, pi, deg2rad, fh_track, ra, rkilo
-use params, only : proj, halo_r, nx1, nx2, ny1, ny2
 
 implicit none
 
@@ -52,13 +51,15 @@ contains
   end subroutine write_vortrack 
 
 
-  subroutine apply_mask_2d(var, nx, ny, flag, lon, lat)
+  subroutine apply_mask_2d(var, nx, ny, flag, lon, lat, proj, halo_r)
   
     integer    , intent (in)    :: nx, ny
     real   (wp), intent (inout) :: var (0:nx, 0:ny)
     real   (wp), intent (in)    :: flag(0:nx, 0:ny)
     real   (wp), intent(in)     :: lon (0:nx      )
     real   (wp), intent(in)     :: lat (      0:ny)
+    real   (wp), intent(in)     :: halo_r
+    integer    , intent(in)     :: proj
     
     integer                     :: i, j
     integer                     :: ii, jj
@@ -73,7 +74,7 @@ contains
     latin = lat(2) - lat(1)
 
     if (proj==1) then
-      halo_x = nint(halo_r / (ra * lonin * deg2rad * cosd(lat(ny1+ny2/2)) / rkilo))
+      halo_x = nint(halo_r / (ra * lonin * deg2rad * cosd(lat(ny/2)) / rkilo))
       halo_y = nint(halo_r / (ra * latin * deg2rad / rkilo))
     elseif (proj==2) then
       halo_x = nint(halo_r / lonin / rkilo)
