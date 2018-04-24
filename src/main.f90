@@ -2,7 +2,7 @@ program main
   use datetime_module
 
   use types, only: wp
-  use constants, only: ifillval, fillval, &
+  use constants, only: ifillval, fillval, missval, &
                      & steer_nt, nmax, pmax, rkilo, fh_bin, fh_maxloc
   use params, only: get_config_params, copy_config_file,                      &
     & set_lonlat_bounds_auto, dbg,                                            &
@@ -14,7 +14,7 @@ program main
   use nc_io, only: get_dims, get_time, get_coords,                            &
     & get_xy_from_xyzt, get_xy_from_xyt, get_xyz_from_xyzt,                   &
     & get_data_2d
-  use utils, only: apply_mask_2d, make_nc_file_name, write_vortrack, makedirs_p
+  use utils, only: extend_mask_2d, make_nc_file_name, write_vortrack, makedirs_p
 
   implicit none
 
@@ -171,7 +171,7 @@ program main
   u = fillval
   v = fillval
   psea = fillval
-  land_mask = ifillval
+  land_mask = fillval
 
   ! Allocate work arrays
   allocate(vor_smth     (nx1:nx2, ny1:ny2      ))
@@ -205,6 +205,12 @@ program main
   write(nc_file_name, '(A,A,A,A)') trim(datadir), '/', trim(land_name), '.nc'
   call get_data_2d(nc_file_name, land_name, land_mask)
   land_mask = land_mask(:, ny:0:-1)
+  if (halo_r > 0) then
+    call extend_mask_2d(nx, ny, land_mask, lons(0:nx), lats(0:ny),            &
+      &                 proj, halo_r)
+  endif
+
+  ! print*, sum(land_mask)
 
   ! MAIN TIME LOOP ------------------------------------------------------------
   do kt = 1, ntime ! including both start and end dates
@@ -227,8 +233,8 @@ program main
     ! Read vorticity at the specified level
     call get_xy_from_xyzt(nc_file_name, vort_name, lvl_idx, time_idx, vor)
     vor(:, :) = vor(:, ny:0:-1)
-    call apply_mask_2d(vor, nx, ny, land_mask, lons(0:nx), lats(0:ny),        &
-      &                proj, halo_r)
+    ! Apply mask
+    where ( land_mask(:, :) == 1 ) vor(:, :) = missval
 
     ! Read sea level pressure
     call make_nc_file_name(nc_file_name, datadir, prefix_sfc, &

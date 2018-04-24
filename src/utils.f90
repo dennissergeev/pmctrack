@@ -3,7 +3,7 @@ module utils
 use datetime_module
 
 use types, only : wp
-use constants, only : missval, pi, deg2rad, fh_track, ra, rkilo
+use constants, only : pi, deg2rad, fh_track, ra, rkilo
 
 implicit none
 
@@ -51,23 +51,23 @@ contains
   end subroutine write_vortrack 
 
 
-  subroutine apply_mask_2d(var, nx, ny, flag, lon, lat, proj, halo_r)
+  subroutine extend_mask_2d(nx, ny, mask, lon, lat, proj, halo_r)
   
-    integer    , intent (in)    :: nx, ny
-    real   (wp), intent (inout) :: var (0:nx, 0:ny)
-    real   (wp), intent (in)    :: flag(0:nx, 0:ny)
-    real   (wp), intent(in)     :: lon (0:nx      )
-    real   (wp), intent(in)     :: lat (      0:ny)
-    real   (wp), intent(in)     :: halo_r
-    integer    , intent(in)     :: proj
+    integer    , intent(in) :: nx, ny
+    real   (wp), intent(inout) :: mask(0:nx, 0:ny)
+    real   (wp), intent(in) :: lon (0:nx      )
+    real   (wp), intent(in) :: lat (      0:ny)
+    real   (wp), intent(in) :: halo_r
+    integer    , intent(in) :: proj
     
-    integer                     :: i, j
-    integer                     :: ii, jj
-    integer                     :: halo_x
-    integer                     :: halo_y
-    real   (wp)                 :: dist
-    real   (wp)                 :: lonin
-    real   (wp)                 :: latin
+    integer                 :: i, j
+    integer                 :: ii, jj
+    integer                 :: halo_x
+    integer                 :: halo_y
+    real   (wp)             :: dist
+    real   (wp)             :: lonin
+    real   (wp)             :: latin
+    real   (wp)             :: mask_tmp(0:nx, 0:ny)
     
   
     lonin = lon(2) - lon(1)
@@ -81,9 +81,12 @@ contains
       halo_y = nint(halo_r / latin / rkilo)
     endif
 
-    do j = 0, ny
-      do i = 0, nx
-        if (halo_x > 0 .and. halo_y > 0) then
+    ! print*, halo_x, halo_y
+    mask_tmp = mask
+
+    if (halo_x > 0 .or. halo_y > 0) then
+      do j = 0, ny
+        do i = 0, nx
           do jj = max(-halo_y, -j), min(halo_y, ny-j)
             do ii = max(-halo_x, -i), min(halo_x, nx-i)
               if (proj == 1) then
@@ -93,20 +96,17 @@ contains
               endif
 
               if ((dist <= halo_r * rkilo) &
-                & .and. (flag(i+ii, j+jj) == 1.)) then
-                var(i, j) = missval
+                & .and. (mask(i+ii, j+jj) == 1.)) then
+                mask_tmp(i, j) = 1.
               endif
             enddo
           enddo
-        else
-          if (flag(i, j) == 1.) then
-            var(i, j) = missval
-          endif
-        endif
+        enddo
       enddo
-    enddo
+    endif
+    mask = mask_tmp
   
-  end subroutine apply_mask_2d
+  end subroutine extend_mask_2d
   
   
   function integral_p(var, p, nz)
