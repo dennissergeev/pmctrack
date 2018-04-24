@@ -79,6 +79,8 @@ subroutine smth_r(var, nx, ny, lon, lat, var_smth)
     y_smth = nint(r_smth / latin / rkilo) + 2 ! TODO: check why +2
   endif
 
+  ! print*, x_smth, y_smth
+
   var_smth(nx1:nx2, ny1:ny2) = var(nx1:nx2, ny1:ny2)
 
   do j = ny1, ny2

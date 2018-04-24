@@ -3,7 +3,8 @@ module utils
 use datetime_module
 
 use types, only : wp
-use constants, only : missval, pi, deg2rad, fh_track
+use constants, only : missval, pi, deg2rad, fh_track, ra, rkilo
+use params, only : proj, halo_r, nx1, nx2, ny1, ny2
 
 implicit none
 
@@ -51,19 +52,55 @@ contains
   end subroutine write_vortrack 
 
 
-  subroutine apply_mask_2d(var, nx, ny, flag)
+  subroutine apply_mask_2d(var, nx, ny, flag, lon, lat)
   
     integer    , intent (in)    :: nx, ny
     real   (wp), intent (inout) :: var (0:nx, 0:ny)
     real   (wp), intent (in)    :: flag(0:nx, 0:ny)
+    real   (wp), intent(in)     :: lon (0:nx      )
+    real   (wp), intent(in)     :: lat (      0:ny)
     
     integer                     :: i, j
+    integer                     :: ii, jj
+    integer                     :: halo_x
+    integer                     :: halo_y
+    real   (wp)                 :: dist
+    real   (wp)                 :: lonin
+    real   (wp)                 :: latin
+    
   
+    lonin = lon(2) - lon(1)
+    latin = lat(2) - lat(1)
+
+    if (proj==1) then
+      halo_x = nint(halo_r / (ra * lonin * deg2rad * cosd(lat(ny1+ny2/2)) / rkilo))
+      halo_y = nint(halo_r / (ra * latin * deg2rad / rkilo))
+    elseif (proj==2) then
+      halo_x = nint(halo_r / lonin / rkilo)
+      halo_y = nint(halo_r / latin / rkilo)
+    endif
+
     do j = 0, ny
       do i = 0, nx
-        !  print*, i, j, flag(i, j)
-        if (flag(i, j) == 1.) then
-          var(i, j) = missval
+        if (halo_x > 0 .and. halo_y > 0) then
+          do jj = max(-halo_y, -j), min(halo_y, ny-j)
+            do ii = max(-halo_x, -i), min(halo_x, nx-i)
+              if (proj == 1) then
+                dist = great_circle(lon(i), lon(i+ii), lat(j), lat(j+jj), ra)
+              elseif(proj==2)then
+                dist = sqrt((ii * lonin)**2 + (jj * latin)**2)
+              endif
+
+              if ((dist <= halo_r * rkilo) &
+                & .and. (flag(i+ii, j+jj) == 1.)) then
+                var(i, j) = missval
+              endif
+            enddo
+          enddo
+        else
+          if (flag(i, j) == 1.) then
+            var(i, j) = missval
+          endif
         endif
       enddo
     enddo

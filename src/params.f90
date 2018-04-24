@@ -27,6 +27,8 @@ module params
   integer           , protected :: nx1, nx2, ny1, ny2
   !integer          , protected:: nt
   !real(wp)         , protected:: del_t
+  ! parameters for masking land
+  real   (wp)       , protected :: halo_r
   ! parameter for smoothing of vorticity
   integer           , protected :: smth_type
   integer           , protected :: nsmth_x, nsmth_y
@@ -144,6 +146,7 @@ contains
           case('nsmth_x'); read(buffer, *, iostat=ios) nsmth_x; if (dbg) write(*, *) nsmth_x
           case('nsmth_y'); read(buffer, *, iostat=ios) nsmth_y; if (dbg) write(*, *) nsmth_y
           case('r_smth'); read(buffer, *, iostat=ios) r_smth; if (dbg) write(*, *) r_smth
+          case('halo_r'); read(buffer, *, iostat=ios) halo_r; if (dbg) write(*, *) halo_r
           case('zeta_max0'); read(buffer, *, iostat=ios) zeta_max0; if (dbg) write(*, *) zeta_max0
           case('zeta_min0'); read(buffer, *, iostat=ios) zeta_min0; if (dbg) write(*, *) zeta_min0
           case('int_zeta_min0'); read(buffer, *, iostat=ios) int_zeta_min0; if (dbg) write(*, *) int_zeta_min0
@@ -244,8 +247,8 @@ contains
     ny1 = minloc(abs(lats-lat1), 1) - 1
     ny2 = minloc(abs(lats-lat2), 1) - 1
 
-    print*, lon1, lon2, lat1, lat2
-    print*, nx1, nx2, ny1, ny2
+    ! print*, lon1, lon2, lat1, lat2
+    ! print*, nx1, nx2, ny1, ny2
     ! stop
 
   end subroutine set_lonlat_bounds_auto

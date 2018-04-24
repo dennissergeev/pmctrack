@@ -227,7 +227,7 @@ program main
     ! Read vorticity at the specified level
     call get_xy_from_xyzt(nc_file_name, vort_name, lvl_idx, time_idx, vor)
     vor(:, :) = vor(:, ny:0:-1)
-    call apply_mask_2d(vor, nx, ny, land_mask)
+    call apply_mask_2d(vor, nx, ny, land_mask, lons(0:nx), lats(0:ny))
 
     ! Read sea level pressure
     call make_nc_file_name(nc_file_name, datadir, prefix_sfc, &
