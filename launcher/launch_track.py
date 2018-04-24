@@ -2,6 +2,7 @@
 """
 Submit tracking jobs to a PBS cluster queue
 """
+# from datetime import datetime
 import json
 import os
 import subprocess as sb
@@ -12,20 +13,21 @@ aux_dict = dict(
 )
 winter = '2010_2011'
 
-DATADIR = os.path.join(os.getenv('PROJ'), 'reanalysis', '{dataset}')
-OUTDIR = os.path.join(os.getenv('PROJ'), 'pmctrack', 'output', '{dataset}',
-                      '{run}', '{winter}')
+DATADIR = os.path.join(os.getenv('HOME',), 'reanalysis', '{dataset}')
+OUTDIR = os.path.join(os.getenv('HOME'), 'pmctrack', 'output', '{dataset}',
+                      '{datestamp}run{run:03d}', '{winter}')
 STORE_DIR = 'configs'
 datasets = ['era5', 'interim']
 walltimes = ['3:0:0', '0:15:0']
 DEF_CONF_FNAME = os.path.join(STORE_DIR, 'dummy_settings.conf')
-CONF_MASK = os.path.join(STORE_DIR, '{dataset}_{run}_settings.conf')
+CONF_MASK = os.path.join(STORE_DIR, ('{dataset}_{datestamp}run{run:03d}'
+                                     '_settings.conf'))
 
-LOG_DIR = os.path.join(os.getenv('PROJ'), 'pmctrack', 'logs')
+LOG_DIR = os.path.join(os.getenv('HOME'), 'pmctrack', 'logs')
 EXE = os.path.join(os.getenv('HOME'), 'pmctrack', 'track.x')
-# cd $PBS_O_WORKDIR  
+# cd $PBS_O_WORKDIR
 CMD_MASK = ('qsub'
-            ' -N pmctrack_{dataset}_{run}'
+            ' -N pmctrack_{dataset}_{datestamp}run{run:03d}'
             ' -q shared'
             ' -l select=1'
             ' -l walltime={walltime}'
@@ -33,9 +35,12 @@ CMD_MASK = ('qsub'
             ' -e {log_dir}'
             ' -- {exe} {conf}')
 
+# today = datetime.now()
+# datestamp = '{dt:%Y%m%d}_'.format(dt=today)
+datestamp = ''
 
 with open('runs_grid.json', 'r') as jf:
-    runs_dict = json.load(jf)
+    runs_list = json.load(jf)
 
 
 for dataset, walltime in zip(datasets, walltimes):
@@ -46,9 +51,10 @@ for dataset, walltime in zip(datasets, walltimes):
     aux_dict['prefix_lvl'] = '"{dataset}.an.pl."'.format(dataset=dataset)
     aux_dict['prefix_sfc'] = '"{dataset}.an.sfc."'.format(dataset=dataset)
 
-    for run, params_dict in runs_dict.items():
+    for run, params_dict in enumerate(runs_list):
         aux_dict['outdir'] = '"{}"'.format(OUTDIR.format(dataset=dataset,
                                                          run=run,
+                                                         datestamp=datestamp,
                                                          winter=winter))
         target_conf = []
         for line in def_conf:
@@ -63,12 +69,14 @@ for dataset, walltime in zip(datasets, walltimes):
             target_conf.append(new_l)
 
         conf_file = os.path.abspath(CONF_MASK.format(dataset=dataset,
+                                                     datestamp=datestamp,
                                                      run=run))
         with open(conf_file, 'w') as fp:
             for line in target_conf:
                 fp.write(line+'\n')
 
         subp_args = CMD_MASK.format(dataset=dataset, run=run,
+                                    datestamp=datestamp,
                                     walltime=walltime,
                                     log_dir=LOG_DIR, exe=EXE,
                                     conf=conf_file).split()
