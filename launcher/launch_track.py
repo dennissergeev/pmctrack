@@ -11,23 +11,23 @@ aux_dict = dict(
     dt_start='2010_10_01_0000',
     dt_end='2011_04_30_2300'
 )
-winter = '2010_2011'
+winter = aux_dict['dt_start'][:4] + '_' + aux_dict['dt_end'][:4]
 
-DATADIR = os.path.join(os.getenv('HOME',), 'reanalysis', '{dataset}')
-OUTDIR = os.path.join(os.getenv('HOME'), 'pmctrack', 'output', '{dataset}',
+DATADIR = os.path.join(os.getenv('PROJ',), 'reanalysis', '{dataset}')
+OUTDIR = os.path.join(os.getenv('PROJ'), 'pmctrack', 'output', '{dataset}',
                       '{datestamp}run{run:03d}', '{winter}')
 STORE_DIR = 'configs'
 datasets = ['era5', 'interim']
-walltimes = ['3:0:0', '0:15:0']
+walltimes = ['4:0:0', '0:15:0']
 DEF_CONF_FNAME = os.path.join(STORE_DIR, 'dummy_settings.conf')
-CONF_MASK = os.path.join(STORE_DIR, ('{dataset}_{datestamp}run{run:03d}'
+CONF_MASK = os.path.join(STORE_DIR, ('{dataset}_{datestamp}run{run:03d}_{winter}'
                                      '_settings.conf'))
 
-LOG_DIR = os.path.join(os.getenv('HOME'), 'pmctrack', 'logs')
+LOG_DIR = os.path.join(os.getenv('PROJ'), 'pmctrack', 'logs')
 EXE = os.path.join(os.getenv('HOME'), 'pmctrack', 'track.x')
 # cd $PBS_O_WORKDIR
 CMD_MASK = ('qsub'
-            ' -N pmctrack_{dataset}_{datestamp}run{run:03d}'
+            ' -N pmctrack_{dataset}_{datestamp}run{run:03d}_{winter}'
             ' -q shared'
             ' -l select=1'
             ' -l walltime={walltime}'
@@ -70,16 +70,18 @@ for dataset, walltime in zip(datasets, walltimes):
 
         conf_file = os.path.abspath(CONF_MASK.format(dataset=dataset,
                                                      datestamp=datestamp,
+                                                     winter=winter,
                                                      run=run))
         with open(conf_file, 'w') as fp:
             for line in target_conf:
                 fp.write(line+'\n')
 
         subp_args = CMD_MASK.format(dataset=dataset, run=run,
+                                    winter=winter,
                                     datestamp=datestamp,
                                     walltime=walltime,
                                     log_dir=LOG_DIR, exe=EXE,
                                     conf=conf_file).split()
         # ['cp {} {}'.format(conf_file, aux_dict['outdir'])])
-        print(subp_args)
+        print(' '.join(subp_args))
         sb.call(subp_args)
