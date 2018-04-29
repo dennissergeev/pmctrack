@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 PLATFORM=${1:-linux}
+BUILD_TYPE=${2:-Release}
 
 if [ $PLATFORM == "linux" ]; then
     FORTRAN=gfortran
@@ -28,10 +29,13 @@ elif [ $PLATFORM == "archer" ]; then
     netcdf_prefix=/opt/cray/netcdf/4.4.1.1/INTEL/15.0
     INCS=${netcdf_prefix}/include
     LIBS="-L${netcdf_prefix}/lib -lnetcdff -lnetcdf"
+else
+    echo "No options specified for '${PLATFORM}' platform"
+    exit
 fi
 
 mkdir -p build
 cd build
-cmake -DFC=${FORTRAN} -DINCS=${INCS} -DLIBS="${LIBS}" ..
+cmake -DFC=${FORTRAN} -DINCS=${INCS} -DLIBS="${LIBS}" -DCMAKE_BUILD_TYPE=${BUILD_TYPE} ..
 make
 cd ..
