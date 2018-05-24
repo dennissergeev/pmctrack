@@ -21,6 +21,7 @@ module params
   character(len=256), protected :: prefix_sfc
   integer           , protected :: vor_lvl
   integer           , protected :: steer_lvl_btm, steer_lvl_top
+  integer           , protected :: tfreq
   integer           , protected :: proj
   integer           , protected :: vert_grid
   real   (wp)       , protected :: lon1, lon2, lat1, lat2
@@ -101,6 +102,9 @@ contains
     lat1 = fillval
     lat2 = fillval
 
+    ! Default time frequency is one
+    tfreq = 1
+
     call get_config_file_name()
     open (fh_conf, file=trim(config_file), form='formatted', status='old', &
       &   iostat=ios, action='read')
@@ -136,6 +140,7 @@ contains
           case('land_name'); read(buffer, *, iostat=ios) land_name; if (dbg) write(*, *) land_name
           case('prefix_lvl'); read(buffer, *, iostat=ios) prefix_lvl; if (dbg) write(*, *) prefix_lvl
           case('prefix_sfc'); read(buffer, *, iostat=ios) prefix_sfc; if (dbg) write(*, *) prefix_sfc
+          case('tfreq'); read(buffer, *, iostat=ios) tfreq; if (dbg) write(*, *) tfreq
           case('proj'); read(buffer, *, iostat=ios) proj; if (dbg) write(*, *) proj
           case('vert_grid'); read(buffer, *, iostat=ios) vert_grid; if (dbg) write(*, *) vert_grid
           case('lon1'); read(buffer, *, iostat=ios) lon1; if (dbg) write(*, *) lon1
@@ -193,6 +198,9 @@ contains
       stop
     endif
 
+    if (tfreq < 1) then
+      write(*, *) 'ConfigError: tfreq must be a positive integer; given:', tfreq
+    endif
 
     if(proj==2)then
       write (*,*)'Cartesian coordinate'

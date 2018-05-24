@@ -8,7 +8,7 @@ program main
     & set_lonlat_bounds_auto, dbg,                                            &
     & datadir, outdir, prefix_sfc, prefix_lvl, dt_start, dt_end,              &
     & vort_name, u_name, v_name, psea_name, land_name,                        &
-    & vor_lvl, steer_lvl_btm, steer_lvl_top,                                  &
+    & vor_lvl, steer_lvl_btm, steer_lvl_top, tfreq,                           &
     & nx1, nx2, ny1, ny2,                                                     &
     & halo_r, smth_type, proj, steering_type, track_type, vor_out_on
   use nc_io, only: get_dims, get_time, get_coords,                            &
@@ -29,6 +29,7 @@ program main
   real     (wp)                               :: lonin
   real     (wp)                               :: latin
   real     (wp)                               :: del_t
+  real     (wp)                               :: data_del_t
   real     (wp)                               :: time_step_s
   integer                                     :: nt_per_file
   real     (wp)                               :: lon0
@@ -123,7 +124,10 @@ program main
   allocate(time_temp(0:nt_per_file-1))
   call get_time(nc_file_name, REC_NAME, time_temp, time_step_s, cal_start)
 
-  del_t = (time_temp(1) - time_temp(0)) * time_step_s
+  ! Time resolution of the input data
+  data_del_t = (time_temp(1) - time_temp(0)) * time_step_s
+  ! Time step of tracking
+  del_t = data_del_t * tfreq
   ! print*, 'time_temp', time_temp(0)
   ! print*, 'del_t', del_t
   td = dt_end - dt_start
@@ -133,8 +137,9 @@ program main
   td = timedelta(hours=time_temp(0))
   dt_min = cal_start + td
   td = dt_start - dt_min
-  time_idx = int(td%total_seconds() / del_t) + 1 ! time_temp(0) +
+  time_idx = int(td%total_seconds() / data_del_t) + 1 ! time_temp(0) +
   deallocate(time_temp)
+  ! print*, 'time_idx', time_idx
 
   ! Assume space coordinates are the same for all files
   allocate(time(1))
@@ -219,17 +224,23 @@ program main
     call get_dims(nc_file_name, DIM_NAMES, nt_per_file, nlvls, nlats, nlons)
     allocate(time_temp(0:nt_per_file-1))
     call get_time(nc_file_name, REC_NAME, time_temp, time_step_s, cal_start)
-    del_t = (time_temp(1) - time_temp(0)) * time_step_s
+    ! Time resolution of the input data
+    data_del_t = (time_temp(1) - time_temp(0)) * time_step_s
+    ! Time step of tracking
+    del_t = data_del_t * tfreq
     td = timedelta(hours=time_temp(0))
     deallocate(time_temp)
     dt_min = cal_start + td ! Start date time of each file
+    ! print*, '>', dt_min
     td = idt - dt_min
-    time_idx = int(td%total_seconds() / del_t) + 1
+    ! print*, '>', td
+    time_idx = int(td%total_seconds() / data_del_t) + 1
     write(*, *) ''
     write(*, *) '============================================================='
     write(*, *)  'kt=', kt, 'idt=', trim(idt%strftime('%Y-%m-%d %H:%M'))
     write(*, *) '============================================================='
     write(*, *) ''
+    ! print*, '>', time_idx
     ! Read vorticity at the specified level
     call get_xy_from_xyzt(nc_file_name, vort_name, lvl_idx, time_idx, vor)
     vor(:, :) = vor(:, ny:0:-1)
@@ -245,6 +256,7 @@ program main
     ! Read 2 time steps (forward)
     idt_pair(1) = idt
     idt_pair(2) = idt + timedelta(hours=del_t / time_step_s)
+    ! print*, 'idt_pair', idt_pair
     ! if (kt > 1 .and. mod(kt, steer_nt) == 0) then
     if (kt < ntime) then
       ! Read u- and v-winds
@@ -252,14 +264,15 @@ program main
         if (idt_pair(2)%month /= idt_pair(1)%month .and. kt2 == 2) then
           time_idx = 0
         endif
+    ! print*, 'time_idx+kt2-1=', time_idx+(kt2-1) * tfreq
         call make_nc_file_name(nc_file_name, datadir, prefix_lvl, &
                              & idt_pair(kt2)%year, idt_pair(kt2)%month, u_name)
-        call get_xyz_from_xyzt(nc_file_name, u_name, time_idx+kt2-1, &
+        call get_xyz_from_xyzt(nc_file_name, u_name, time_idx+(kt2-1)*tfreq, &
                              & steer_idx_top, nsteer_lvl, u(:, :, :, kt2))
 
         call make_nc_file_name(nc_file_name, datadir, prefix_lvl, &
                              & idt_pair(kt2)%year, idt_pair(kt2)%month, v_name)
-        call get_xyz_from_xyzt(nc_file_name, v_name, time_idx+kt2-1, &
+        call get_xyz_from_xyzt(nc_file_name, v_name, time_idx+(kt2-1)*tfreq, &
                              & steer_idx_top, nsteer_lvl, v(:, :, :, kt2))
       enddo
       u(:, :, :, :) = u(:, ny:0:-1, :, :)
