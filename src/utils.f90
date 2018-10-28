@@ -31,7 +31,7 @@ contains
     character(len=*), intent(in) :: outdir
     integer         , intent(in) :: id1, id2
     type(datetime)  , intent(in) :: idt
-    real(wp)        , intent(in) :: vortex(5)
+    real(wp)        , intent(in) :: vortex(6)
     character(len=256)           :: fname_track
 
 
@@ -40,13 +40,14 @@ contains
                                              & '_', id2, '.txt'
     open(unit=fh_track, file=fname_track, form='formatted',                 &
        & access='append', status='unknown')
-    write(unit=fh_track, fmt='(3f12.5,A15,f15.5,I3)')                         &
+    write(unit=fh_track, fmt='(3f12.5,A15,f15.5,I3,f15.5)')                   &
       & vortex(1),                                                            &
       & vortex(2),                                                            &
       & vortex(3),                                                            &
       & trim(idt%strftime('%Y%m%d%H%M')),                                     &
       & vortex(4),                                                            &
-      & int(vortex(5))
+      & int(vortex(5)),                                                       &
+      & vortex(6)
     close(unit=fh_track)
   end subroutine write_vortrack 
 

@@ -60,7 +60,7 @@ program main
   real     (wp)    , allocatable              :: max_vor(:)
   real     (wp)    , allocatable              :: minlat(:), minlon(:)
   real     (wp)    , allocatable              :: z_min(:)
-  real     (wp)    , allocatable              :: z_min_size(:)
+  integer          , allocatable              :: z_min_size(:)
   real     (wp)    , allocatable              :: s_part(:)
   integer          , allocatable              :: mtype(:)
   real     (wp)    , allocatable              :: u_vor_f(:)
@@ -87,6 +87,7 @@ program main
   integer                                     :: i, j
   integer                                     :: i_max
   integer                                     :: i_vor_num
+  integer                                     :: ix, iy
   ! Time and date variables
   type   (datetime)                           :: cal_start
   type   (datetime)                           :: dt_min ! within a file
@@ -439,7 +440,7 @@ program main
       enddo
     endif
 
-    allocate(vortex     (5, vor_num)); vortex = fillval
+    allocate(vortex     (6, vor_num)); vortex = fillval
 
     do i_vor_num = 1, vor_num
       if (vor_index(i_vor_num) > 0) then
@@ -453,6 +454,14 @@ program main
         vortex(3, i_vor_num) = max_vor(vor_index(i_vor_num)) * rkilo
         vortex(4, i_vor_num) = s_part(vor_index(i_vor_num))
         vortex(5, i_vor_num) = mtype(vor_index(i_vor_num))
+  
+        ! Output SLP at the vortex centre
+        ! TODO: do it within a radius? or use z_min (but some values are 0)
+        ix = minloc(abs(lons-mlon(vor_index(i_vor_num))), 1) - 1
+        iy = minloc(abs(lats-mlat(vor_index(i_vor_num))), 1) - 1
+        ! vortex(6, i_vor_num) = z_min(vor_index(i_vor_num))
+        vortex(6, i_vor_num) = psea(ix, iy)
+
       end if
 
       ! --- check the track ---
