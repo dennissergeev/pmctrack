@@ -35,7 +35,7 @@ contains
     character(len=256)           :: fname_track
 
 
-    write(fname_track, '(A,A,A,I4.4,A,I4.4,A)') trim(outdir), '/',        &
+    write(fname_track, '(A,A,A,I6.6,A,I6.6,A)') trim(outdir), '/',        &
                                              & 'vortrack_', id1,    &
                                              & '_', id2, '.txt'
     open(unit=fh_track, file=fname_track, form='formatted',                 &
