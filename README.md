@@ -14,6 +14,12 @@ conda create -n pmctrack -c conda-forge cmake libgfortran fortran-compiler netcd
 ```
 This should fetch all the necessary libraries which then can be used for compilation.
 
+Then activate the environment
+```bash
+conda activate pmctrack
+```
+and proceed to installation.
+
 ## Installation
 ### Unix
 Run the script
