@@ -4,8 +4,8 @@ BUILD_TYPE=${2:-Release}
 
 if [ $PLATFORM == "linux" ]; then
     FORTRAN=gfortran
-    INCS=/usr/include
-    LIBS="-L/usr/lib -lnetcdff -lnetcdf"
+    INCS=`nc-config --fflags`
+    LIBS="$(nc-config --flibs) -lnetcdff -lnetcdf"
 elif [ $PLATFORM == "monsoon" ]; then
     module swap PrgEnv-cray PrgEnv-gnu
     # module load gcc/4.8.1
