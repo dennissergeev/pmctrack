@@ -3,8 +3,8 @@ subroutine cf_synop_check(vor_in, vor_part, &
                         & lon, lat, mtype_part)
 
   use types, only: wp
-  use constants, only: pi, ra, rkilo, pmax, deg2rad, pi_thirds, pi_ninths
-  use params, only: proj, d_cf_min, size_synop
+  use constants, only: pi, ra, rkilo, pmax, deg2rad
+  use params, only: proj, length_cf, area_ec, theta_cf_min, theta_cf_max, curv_cf, det_coeff_cf
   use utils, only: cosd, sind, great_circle
 
   implicit none
@@ -92,25 +92,25 @@ subroutine cf_synop_check(vor_in, vor_part, &
     theta_d_cf = (lat(j_s) - lat(j_n)) * 1.0e-3 / d_cf
   endif
 
-  if (d_cf >= d_cf_min * rkilo) then
-    if (lon(i_n) > lon(i_s) .and. theta_d_cf <= pi_thirds)then
+  if (d_cf >= length_cf * rkilo) then
+    if (lon(i_n) > lon(i_s) .and. theta_d_cf <= theta_cf_max * deg2rad) then
       call quadric_fit(one(1:one_num, 1:2), one_num, a, b, c, k, r2)
 
-      if(r2 >= 0.8 .and. k <= 0.1) then
+      if(r2 >= det_coeff_cf .and. k <= curv_cf) then
         mtype_part=1
       endif
 
-    elseif (theta_d_cf <= pi_ninths) then
+    elseif (theta_d_cf <= theta_cf_min * deg2rad) then
       call quadric_fit(one(1:one_num, 1:2), one_num, a, b, c, k, r2)
 
-      if(r2 >= 0.8 .and. k<= 0.1) then
+      if(r2 >= det_coeff_cf .and. k<= curv_cf) then
         mtype_part=1
       endif
     endif
   endif
 
 !--------------- Check synoptic low ----------------
-  if (size_vor >= size_synop) then
+  if (size_vor >= area_ec) then
     mtype_part = mtype_part + 2
   endif
 end subroutine cf_synop_check

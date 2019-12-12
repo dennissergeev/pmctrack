@@ -7,7 +7,7 @@ subroutine link_vort_rad(nx, ny, lon, lat, del_t, mtype,                      &
   use types, only: wp
   use constants, only: ra, fillval, ifillval, &
                      & nmax, pmax, rad2deg, deg2rad, rkilo
-  use params, only: proj, del_r, merge_opt !, dbg
+  use params, only: proj, r_link, merge_opt, merge_opt_vort_area !, dbg
   use utils, only: sind, cosd, great_circle
 
   implicit none
@@ -46,7 +46,7 @@ subroutine link_vort_rad(nx, ny, lon, lat, del_t, mtype,                      &
   real   (wp)                :: max_dist ! Search radius for a vortex
 
 
-  max_dist = del_r * rkilo
+  max_dist = r_link * rkilo
 
   r_tmp = 0.0_wp
   e_mv_lon = 0.0_wp
@@ -106,6 +106,7 @@ subroutine link_vort_rad(nx, ny, lon, lat, del_t, mtype,                      &
       !              & e_mlon, e_mlat, mlon(i_max1), mlat(i_max1)
     enddo
 
+    if (merge_opt_vort_area == 1) then
     ! ------ Tracking by part of vortex --------
 
     vor_part_s = 0
@@ -163,6 +164,7 @@ subroutine link_vort_rad(nx, ny, lon, lat, del_t, mtype,                      &
         endif
       enddo ! "while loop"
     endif  ! i_next(i_max) == 0
+    endif ! merge_opt_vort_area == 1
   enddo ! i_max loop
   ! print*, r_next(1:5)
   ! print*, n_max_prev

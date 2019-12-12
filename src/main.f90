@@ -10,7 +10,7 @@ program main
     & vort_name, u_name, v_name, psea_name, land_name,                        &
     & vor_lvl, steer_lvl_btm, steer_lvl_top, tfreq,                           &
     & nx1, nx2, ny1, ny2,                                                     &
-    & halo_r, smth_type, proj, steering_type, track_type, vor_out_on
+    & land_mask_type, halo_r, smth_type, proj, steering_type, track_type, vor_out_on
   use nc_io, only: get_dims, get_time, get_coords,                            &
     & get_xy_from_xyzt, get_xy_from_xyt, get_xyz_from_xyzt,                   &
     & get_data_2d
@@ -18,10 +18,15 @@ program main
 
   implicit none
 
-  character(len=*)                , parameter :: LVL_NAME = "level"
-  character(len=*)                , parameter :: LAT_NAME = "latitude"
-  character(len=*)                , parameter :: LON_NAME = "longitude"
+!  character(len=*)                , parameter :: LVL_NAME = "level"
+!  character(len=*)                , parameter :: LAT_NAME = "latitude"
+!  character(len=*)                , parameter :: LON_NAME = "longitude"
   character(len=*)                , parameter :: REC_NAME = "time"
+
+  character(len=*)                , parameter :: LVL_NAME = "plev"
+  character(len=*)                , parameter :: LAT_NAME = "lat"
+  character(len=*)                , parameter :: LON_NAME = "lon"
+
   character(len=256), dimension(4)            :: DIM_NAMES
   character(len=256)                          :: nc_file_name
   character(len=256)                          :: fname_bin
@@ -98,10 +103,15 @@ program main
 
 
   ! Store dimension names in one array
-  DIM_NAMES(1) = trim(REC_NAME)
-  DIM_NAMES(2) = trim(LVL_NAME)
-  DIM_NAMES(3) = trim(LAT_NAME)
-  DIM_NAMES(4) = trim(LON_NAME)
+!  DIM_NAMES(1) = trim(REC_NAME)
+!  DIM_NAMES(2) = trim(LVL_NAME)
+!  DIM_NAMES(3) = trim(LAT_NAME)
+!  DIM_NAMES(4) = trim(LON_NAME)
+
+  DIM_NAMES(4) = trim(REC_NAME)
+  DIM_NAMES(1) = trim(LVL_NAME)
+  DIM_NAMES(2) = trim(LAT_NAME)
+  DIM_NAMES(3) = trim(LON_NAME)
 
   ! Read configs from settings.conf file
   call get_config_params()
@@ -115,9 +125,12 @@ program main
   ! Get dimensions from the vorticity file using first year and first month
   ! Assume all the other files are organised in the same way
   idt = dt_start
+!  call make_nc_file_name(nc_file_name, datadir, prefix_lvl, &
+!                       & idt%year, idt%month, idt%day, vort_name)
+
   call make_nc_file_name(nc_file_name, datadir, prefix_lvl, &
-                       & idt%year, idt%month, vort_name)
-  call get_dims(nc_file_name, DIM_NAMES, nt_per_file, nlvls, nlats, nlons)
+                       & idt%year, idt%month, idt%day)
+  call get_dims(nc_file_name, DIM_NAMES, nlvls, nlats, nlons, nt_per_file)
   nx = nlons - 1
   ny = nlats - 1
 
@@ -150,10 +163,14 @@ program main
 
   call get_coords(nc_file_name, DIM_NAMES, lons, lats, lvls, &
     & time, 1, 1)
+
   lvl_idx = minloc(abs(lvls - vor_lvl), 1)
   steer_idx_btm = minloc(abs(lvls - steer_lvl_btm), 1)
   steer_idx_top = minloc(abs(lvls - steer_lvl_top), 1)
-  nsteer_lvl = steer_idx_btm - steer_idx_top + 1
+
+!  nsteer_lvl = steer_idx_btm - steer_idx_top + 1
+  nsteer_lvl = steer_idx_top - steer_idx_btm + 1
+
   !lvls = lvls(nlvls:1:-1)
   lats = lats(ny:0:-1)
   ! Calculate grid spacing assuming the grid is uniform
@@ -208,20 +225,26 @@ program main
   vor_num = 0
   vor_merge_num(:) = 1
 
+ if (land_mask_type == 1) then
   write(nc_file_name, '(A,A,A,A)') trim(datadir), '/', trim(land_name), '.nc'
   call get_data_2d(nc_file_name, land_name, land_mask)
   land_mask = land_mask(:, ny:0:-1)
+ !the land mask is set to 1 if it has a value larger than 1, so for lakes, islands, etc
+  where ( land_mask(:, :) > 0 ) land_mask(:, :) = 1
+
   if (halo_r > 0) then
     call extend_mask_2d(nx, ny, land_mask, lons(0:nx), lats(0:ny),            &
       &                 proj, halo_r)
   endif
+ endif
 
   ! print*, sum(land_mask)
-
   ! MAIN TIME LOOP ------------------------------------------------------------
   do kt = 1, ntime ! including both start and end dates
+!    call make_nc_file_name(nc_file_name, datadir, prefix_lvl, &
+!                         & idt%year, idt%month, idt%day, vort_name)
     call make_nc_file_name(nc_file_name, datadir, prefix_lvl, &
-                         & idt%year, idt%month, vort_name)
+                         & idt%year, idt%month, idt%day)
     call get_dims(nc_file_name, DIM_NAMES, nt_per_file, nlvls, nlats, nlons)
     allocate(time_temp(0:nt_per_file-1))
     call get_time(nc_file_name, REC_NAME, time_temp, time_step_s, cal_start)
@@ -243,14 +266,20 @@ program main
     write(*, *) ''
     ! print*, '>', time_idx
     ! Read vorticity at the specified level
+
     call get_xy_from_xyzt(nc_file_name, vort_name, lvl_idx, time_idx, vor)
     vor(:, :) = vor(:, ny:0:-1)
-    ! Apply mask
+
+ if (land_mask_type == 1) then
+    ! Apply land mask
     where ( land_mask(:, :) == 1 ) vor(:, :) = missval
+ endif
 
     ! Read sea level pressure
+!    call make_nc_file_name(nc_file_name, datadir, prefix_sfc, &
+!                         & idt%year, idt%month, idt%day, psea_name)
     call make_nc_file_name(nc_file_name, datadir, prefix_sfc, &
-                         & idt%year, idt%month, psea_name)
+                         & idt%year, idt%month, idt%day)
     call get_xy_from_xyt(nc_file_name, psea_name, time_idx, psea)
     psea(:, :) = 1e-2 * psea(:, ny:0:-1)
 
@@ -259,26 +288,40 @@ program main
     idt_pair(2) = idt + timedelta(hours=del_t / time_step_s)
     ! print*, 'idt_pair', idt_pair
     ! if (kt > 1 .and. mod(kt, steer_nt) == 0) then
+!! print*, 'kt, kt2, ntime, steer_nt', kt, kt2, ntime, steer_nt
     if (kt < ntime) then
       ! Read u- and v-winds
       do kt2 = 1, steer_nt
-        if (idt_pair(2)%month /= idt_pair(1)%month .and. kt2 == 2) then
+!! print*, 'kt2, idt_pair', kt2, idt_pair
+!        if (idt_pair(2)%month /= idt_pair(1)%month .and. kt2 == 2) then
+        if (idt_pair(2)%day /= idt_pair(1)%day .and. kt2 == 2) then
           time_idx = 0
         endif
+!! print*, 'time_idx, time_idx+(kt2-1)*tfreq', time_idx, time_idx+(kt2-1)*tfreq
     ! print*, 'time_idx+kt2-1=', time_idx+(kt2-1) * tfreq
+!        call make_nc_file_name(nc_file_name, datadir, prefix_lvl, &
+!                             & idt_pair(kt2)%year, idt_pair(kt2)%month, idt_pair(kt2)%day, u_name)
         call make_nc_file_name(nc_file_name, datadir, prefix_lvl, &
-                             & idt_pair(kt2)%year, idt_pair(kt2)%month, u_name)
+                             & idt_pair(kt2)%year, idt_pair(kt2)%month, idt_pair(kt2)%day)
+!        call get_xyz_from_xyzt(nc_file_name, u_name, time_idx+(kt2-1)*tfreq, &
+!                             & steer_idx_top, nsteer_lvl, u(:, :, :, kt2))
         call get_xyz_from_xyzt(nc_file_name, u_name, time_idx+(kt2-1)*tfreq, &
-                             & steer_idx_top, nsteer_lvl, u(:, :, :, kt2))
+                             & steer_idx_btm, nsteer_lvl, u(:, :, :, kt2))
 
+!        call make_nc_file_name(nc_file_name, datadir, prefix_lvl, &
+!                             & idt_pair(kt2)%year, idt_pair(kt2)%month, idt_pair(kt2)%day, v_name)
         call make_nc_file_name(nc_file_name, datadir, prefix_lvl, &
-                             & idt_pair(kt2)%year, idt_pair(kt2)%month, v_name)
+                             & idt_pair(kt2)%year, idt_pair(kt2)%month, idt_pair(kt2)%day)
+!        call get_xyz_from_xyzt(nc_file_name, v_name, time_idx+(kt2-1)*tfreq, &
+!                             & steer_idx_top, nsteer_lvl, v(:, :, :, kt2))
         call get_xyz_from_xyzt(nc_file_name, v_name, time_idx+(kt2-1)*tfreq, &
-                             & steer_idx_top, nsteer_lvl, v(:, :, :, kt2))
+                             & steer_idx_btm, nsteer_lvl, v(:, :, :, kt2))
+
       enddo
       u(:, :, :, :) = u(:, ny:0:-1, :, :)
       v(:, :, :, :) = v(:, ny:0:-1, :, :)
     endif
+! print*, 'shp', shape(u)
     ! END OF INPUT
     
     if (smth_type == 1) then

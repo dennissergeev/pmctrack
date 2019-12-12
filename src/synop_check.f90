@@ -2,7 +2,7 @@ subroutine synop_check(mlon, mlat, n_max, minlon, minlat, n_min, mtype)
 
   use types, only: wp
   use constants, only: pi, ra, rkilo
-  use params, only: proj, distance_ec
+  use params, only: proj, r_ec
   use utils, only: great_circle
 
   implicit none
@@ -35,7 +35,7 @@ subroutine synop_check(mlon, mlat, n_max, minlon, minlat, n_min, mtype)
                    & +(mlat(i_max) - minlat(i_min))**2)
         endif
 
-        if (dist < distance_ec * rkilo) flag_synop(i_max) = .true.
+        if (dist < r_ec * rkilo) flag_synop(i_max) = .true.
       enddo
 
       if (mtype(i_max) >= 2 .and. .not. flag_synop(i_max)) then
