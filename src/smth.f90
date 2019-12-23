@@ -1,7 +1,7 @@
 subroutine smth(var, nx, ny, var_smth)
 
   use types, only : wp
-  use params, only : nsmth_x, nsmth_y, nx1, nx2, ny1, ny2
+  use params, only : n_smth_x, n_smth_y, nx1, nx2, ny1, ny2
 
   implicit none
 
@@ -23,15 +23,15 @@ subroutine smth(var, nx, ny, var_smth)
       nc = 0
       tmp(i, j) = 0.
       if (var(i, j) > var_thresh) then
-        do jj = max(-nsmth_y, -j), min(nsmth_y, ny-j)
-          do ii = max(-nsmth_x, -i), min(nsmth_x, nx-i)
+        do jj = max(-n_smth_y, -j), min(n_smth_y, ny-j)
+          do ii = max(-n_smth_x, -i), min(n_smth_x, nx-i)
             if (var(i+ii, j+jj) > var_thresh) then
               tmp(i, j) = tmp(i, j) + var(i+ii, j+jj)
               nc = nc + 1
             endif
           enddo
         enddo
-        tmp(i, j) = tmp(i, j) / ((2 * nsmth_x + 1) * (2 * nsmth_y + 1))
+        tmp(i, j) = tmp(i, j) / ((2 * n_smth_x + 1) * (2 * n_smth_y + 1))
         var_smth(i, j) = tmp(i, j)
       endif
     enddo
