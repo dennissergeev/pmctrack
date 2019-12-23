@@ -9,20 +9,42 @@ implicit none
 
 contains
 
-  subroutine make_nc_file_name(nc_file_name, datadir, prefix, y, m, var_name)
+!  subroutine make_nc_file_name(nc_file_name, datadir, prefix, y, m, d, var_name)
+!
+!    character(len=*)              , intent(inout) :: nc_file_name!
+!    character(len=*)              , intent(in)    :: datadir
+!    character(len=*)              , intent(in)    :: prefix
+!    character(len=*)              , intent(in)    :: var_name
+!    integer                       , intent(in)    :: y
+!    integer                       , intent(in)    :: m
+!! added the day
+!    integer                       , intent(in)    :: d
+!    
+!    write(nc_file_name, '(A,A,A,I4.4,A,I2.2,A,I2.2,A,A,A)') trim(datadir), '/',      &
+!                                                   & trim(prefix),            &
+!                                                   & y, '_',                  &
+!                                                   & m, '_',                  &
+!                                                   & d, '_',                  &
+!                                                   & trim(var_name), '.nc'
+!  end subroutine make_nc_file_name
+
+
+  subroutine make_nc_file_name(nc_file_name, datadir, prefix, y, m, d)
 
     character(len=*)              , intent(inout) :: nc_file_name
     character(len=*)              , intent(in)    :: datadir
     character(len=*)              , intent(in)    :: prefix
-    character(len=*)              , intent(in)    :: var_name
+!    character(len=*)              , intent(in)    :: var_name
     integer                       , intent(in)    :: y
     integer                       , intent(in)    :: m
+! added the day
+    integer                       , intent(in)    :: d
     
-    write(nc_file_name, '(A,A,A,I4.4,A,I2.2,A,A,A)') trim(datadir), '/',      &
+    write(nc_file_name, '(A,A,A,I4.4,A,I2.2,A,I2.2,A,A,A)') trim(datadir), '/',      &
                                                    & trim(prefix),            &
-                                                   & y, '.',                  &
-                                                   & m, '.',                  &
-                                                   & trim(var_name), '.nc'
+                                                   & y, '_',                  &
+                                                   & m, '_',                  &
+                                                   & d, '.nc'
   end subroutine make_nc_file_name
 
 

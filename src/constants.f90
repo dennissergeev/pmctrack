@@ -19,8 +19,6 @@ integer, parameter :: my(8) = (/0, 1, 1,  1,  0, -1, -1, -1/)
 
 ! Physical constants
 real(wp), parameter :: pi = 4.0 * atan(1.0_wp)
-real(wp), parameter :: pi_thirds = pi / 3.
-real(wp), parameter :: pi_ninths = pi / 9.
 real(wp), parameter :: deg2rad = pi / 180.
 real(wp), parameter :: rad2deg = 1. / deg2rad
 real(wp), parameter :: ra = 6378.0e3_wp

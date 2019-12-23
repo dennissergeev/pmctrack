@@ -29,25 +29,26 @@ module params
   !integer          , protected:: nt
   !real(wp)         , protected:: del_t
   ! parameters for masking land
+  integer           , protected :: land_mask_type
   real   (wp)       , protected :: halo_r
   ! parameter for smoothing of vorticity
   integer           , protected :: smth_type
-  integer           , protected :: nsmth_x, nsmth_y
+  integer           , protected :: n_smth_x, n_smth_y
   real   (wp)       , protected :: r_smth
   ! parameter for detecting vortex
   real   (wp)       , protected :: zeta_max0, zeta_min0
   real   (wp)       , protected :: int_zeta_min0, gamma
   ! parameter for excluding the synoptic scale disturbances
-  real   (wp)       , protected :: d_cf_min, size_synop
-  real   (wp)       , protected :: del_psea_min, distance_ec
+  real   (wp)       , protected :: del_psea_min, r_ec, area_ec
+  real   (wp)       , protected :: length_cf, theta_cf_min, theta_cf_max, curv_cf, det_coeff_cf
   ! parameter for calculating steering winds
   integer           , protected :: steering_type
   integer           , protected :: n_steering_x, n_steering_y
   real   (wp)       , protected :: r_steering
   ! parameter for linking vortex
   integer           , protected :: track_type
-  real   (wp)       , protected :: del_lon, del_lat, del_r
-  integer           , protected :: merge_opt
+  real   (wp)       , protected :: lon_link, lat_link, r_link
+  integer           , protected :: merge_opt, merge_opt_vort_area
   ! Output flags
   integer           , protected :: vor_out_on
   ! Debug flag
@@ -148,27 +149,32 @@ contains
           case('lat1'); read(buffer, *, iostat=ios) lat1; if (dbg) write(*, *) lat1
           case('lat2'); read(buffer, *, iostat=ios) lat2; if (dbg) write(*, *) lat2
           case('smth_type'); read(buffer, *, iostat=ios) smth_type; if (dbg) write(*, *) smth_type
-          case('nsmth_x'); read(buffer, *, iostat=ios) nsmth_x; if (dbg) write(*, *) nsmth_x
-          case('nsmth_y'); read(buffer, *, iostat=ios) nsmth_y; if (dbg) write(*, *) nsmth_y
+          case('n_smth_x'); read(buffer, *, iostat=ios) n_smth_x; if (dbg) write(*, *) n_smth_x
+          case('n_smth_y'); read(buffer, *, iostat=ios) n_smth_y; if (dbg) write(*, *) n_smth_y
           case('r_smth'); read(buffer, *, iostat=ios) r_smth; if (dbg) write(*, *) r_smth
           case('halo_r'); read(buffer, *, iostat=ios) halo_r; if (dbg) write(*, *) halo_r
           case('zeta_max0'); read(buffer, *, iostat=ios) zeta_max0; if (dbg) write(*, *) zeta_max0
           case('zeta_min0'); read(buffer, *, iostat=ios) zeta_min0; if (dbg) write(*, *) zeta_min0
           case('int_zeta_min0'); read(buffer, *, iostat=ios) int_zeta_min0; if (dbg) write(*, *) int_zeta_min0
           case('gamma'); read(buffer, *, iostat=ios) gamma; if (dbg) write(*, *) gamma
-          case('d_cf_min'); read(buffer, *, iostat=ios) d_cf_min; if (dbg) write(*, *) d_cf_min
-          case('size_synop'); read(buffer, *, iostat=ios) size_synop; if (dbg) write(*, *) size_synop
-          case('distance_ec'); read(buffer, *, iostat=ios) distance_ec; if (dbg) write(*, *) distance_ec
+          case('area_ec'); read(buffer, *, iostat=ios) area_ec; if (dbg) write(*, *) area_ec
+          case('r_ec'); read(buffer, *, iostat=ios) r_ec; if (dbg) write(*, *) r_ec
           case('del_psea_min'); read(buffer, *, iostat=ios) del_psea_min; if (dbg) write(*, *) del_psea_min
+          case('length_cf'); read(buffer, *, iostat=ios) length_cf; if (dbg) write(*, *) length_cf
+          case('theta_cf_min'); read(buffer, *, iostat=ios) theta_cf_min; if (dbg) write(*, *) theta_cf_min
+          case('theta_cf_max'); read(buffer, *, iostat=ios) theta_cf_max; if (dbg) write(*, *) theta_cf_max
+          case('curv_cf'); read(buffer, *, iostat=ios) curv_cf; if (dbg) write(*, *) curv_cf
+          case('det_coeff_cf'); read(buffer, *, iostat=ios) det_coeff_cf; if (dbg) write(*, *) det_coeff_cf
           case('steering_type'); read(buffer, *, iostat=ios) steering_type; if (dbg) write(*, *) steering_type
           case('n_steering_x'); read(buffer, *, iostat=ios) n_steering_x; if (dbg) write(*, *) n_steering_x
           case('n_steering_y'); read(buffer, *, iostat=ios) n_steering_y; if (dbg) write(*, *) n_steering_y
           case('r_steering'); read(buffer, *, iostat=ios) r_steering; if (dbg) write(*, *) r_steering
           case('track_type'); read(buffer, *, iostat=ios) track_type; if (dbg) write(*, *) track_type
-          case('del_lon'); read(buffer, *, iostat=ios) del_lon; if (dbg) write(*, *) del_lon
-          case('del_lat'); read(buffer, *, iostat=ios) del_lat; if (dbg) write(*, *) del_lat
-          case('del_r'); read(buffer, *, iostat=ios) del_r; if (dbg) write(*, *) del_r
+          case('lon_link'); read(buffer, *, iostat=ios) lon_link; if (dbg) write(*, *) lon_link
+          case('lat_link'); read(buffer, *, iostat=ios) lat_link; if (dbg) write(*, *) lat_link
+          case('r_link'); read(buffer, *, iostat=ios) r_link; if (dbg) write(*, *) r_link
           case('merge_opt'); read(buffer, *, iostat=ios) merge_opt; if (dbg) write(*, *) merge_opt
+          case('merge_opt_vort_area'); read(buffer, *, iostat=ios) merge_opt_vort_area; if (dbg) write(*, *) merge_opt_vort_area
           case('vor_out_on'); read(buffer, *, iostat=ios) vor_out_on; if (dbg) write(*, *) vor_out_on
           case default
             if (index (trim(label), "#") /= 1) then
@@ -231,7 +237,7 @@ contains
     end if
 
     if(track_type==1)then
-      write (*,*)'Use del_lon and del_lat to connect vortices'
+      write (*,*)'Use lon_link and lat_link to connect vortices'
 
     elseif(track_type==2)then
       write (*,*)'Use radius to connect vortices'
