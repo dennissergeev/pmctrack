@@ -2,26 +2,29 @@ program main
   use datetime_module
 
   use types, only: wp
-  use constants, only: ifillval, fillval, missval, &
-                     & steer_nt, nmax, pmax, rkilo, fh_bin, fh_maxloc
-  use params, only: get_config_params, copy_config_file,                      &
-    & set_lonlat_bounds_auto, dbg,                                            &
-    & datadir, outdir, fname_sfc, fname_lvl, dt_start, dt_end,                &
-    & t_dim,                                                                  &
-    & vort_name, u_name, v_name, psea_name, land_name,                        &
-    & vor_lvl, steer_lvl_btm, steer_lvl_top, tfreq,                           &
-    & nx1, nx2, ny1, ny2,                                                     &
-    & land_mask_type, halo_r, smth_type, proj, steering_type, track_type, vor_out_on
-  use nc_io, only: get_dims, get_time, get_coords,                            &
-    & get_xy_from_xyzt, get_xy_from_xyt, get_xyz_from_xyzt,                   &
-    & get_data_2d
-  use utils, only: extend_mask_2d, make_nc_file_name, write_vortrack, makedirs_p
+  use constants, only: ifillval, fillval, missval,                             &
+    & steer_nt, nmax, pmax, rkilo, fh_bin, fh_maxloc
+  use params, only: get_config_params, copy_config_file,                       &
+    & set_lonlat_bounds_auto, dbg,                                             &
+    & datadir, outdir, fname_sfc, fname_lvl, dt_start, dt_end,                 &
+    & t_dim,                                                                   &
+    & vort_name, u_name, v_name, psea_name, land_name,                         &
+    & vor_lvl, steer_lvl_btm, steer_lvl_top, tfreq,                            &
+    & nx1, nx2, ny1, ny2,                                                      &
+    & land_mask_type, halo_r, smth_type, proj, steering_type, track_type,      &
+    & vor_out_on
+  use nc_io, only: get_dims, get_time, get_coords,                             &
+    & get_xy_from_xyzt, get_xy_from_xyt, get_xyz_from_xyzt,                    &
+    & get_data_2d, get_units
+  use utils, only: extend_mask_2d, make_nc_file_name, write_vortrack,          &
+    & makedirs_p, lower
 
   implicit none
 
   character(len=256)                          :: nc_file_name
   character(len=256)                          :: fname_bin
   character(len=256)                          :: fname_vormaxloc
+  character(len=256)                          :: psea_units
   real     (wp)                               :: lonin
   real     (wp)                               :: latin
   real     (wp)                               :: del_t
@@ -70,6 +73,7 @@ program main
   integer          , allocatable              :: vor_merge_num(:)
 
   ! Local scalars
+  real                                        :: factor
   ! work
   integer                                     :: n_min
   integer                                     :: n_max
@@ -198,7 +202,7 @@ program main
   vor_merge_num(:) = 1
 
  if (land_mask_type == 1) then
-  write(nc_file_name, '(A,A,A,A)') trim(datadir), '/', trim(land_name), '.nc'
+  nc_file_name = trim(datadir) // '/' // trim(land_name) // '.nc'
   call get_data_2d(nc_file_name, land_name, land_mask)
   land_mask = land_mask(:, ny:0:-1)
  !the land mask is set to 1 if it has a value larger than 1, so for lakes, islands, etc
@@ -244,7 +248,14 @@ program main
     call make_nc_file_name(nc_file_name, datadir, fname_sfc, &
                          & idt%year, idt%month, idt%day, psea_name)
     call get_xy_from_xyt(nc_file_name, psea_name, time_idx, psea)
-    psea(:, :) = 1e-2 * psea(:, ny:0:-1)
+    psea_units = get_units(nc_file_name, psea_name)
+    if (lower(psea_units) == 'pa') then
+      ! Convert to hPa
+      factor = 1e-2
+    else
+      factor = 1.0
+    endif
+    psea(:, :) = factor * psea(:, ny:0:-1)
 
     ! Read 2 time steps (forward)
     idt_pair(1) = idt
@@ -272,7 +283,7 @@ program main
       v(:, :, :, :) = v(:, ny:0:-1, :, :)
     endif
     ! END OF INPUT
-    
+
     if (smth_type == 1) then
       call smth(vor(0:nx, 0:ny), nx, ny, vor_smth(nx1:nx2, ny1:ny2))
     elseif (smth_type == 2) then
@@ -445,7 +456,7 @@ program main
         vortex(3, i_vor_num) = max_vor(vor_index(i_vor_num)) * rkilo
         vortex(4, i_vor_num) = s_part(vor_index(i_vor_num))
         vortex(5, i_vor_num) = mtype(vor_index(i_vor_num))
-  
+
         ! Output SLP at the vortex centre
         ! TODO: do it within a radius? or use z_min (but some values are 0)
         ix = minloc(abs(lons-mlon(vor_index(i_vor_num))), 1) - 1

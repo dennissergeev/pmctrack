@@ -31,6 +31,38 @@ contains
   end function replace_text
 
 
+  function upper(s) result(new)
+    character(len=*)     , intent(inout) :: s
+    character(len=len(s))                :: new
+    integer                              :: i
+    integer              ,    parameter  :: dc = ichar('a') - ichar('A')
+ 
+    new = s
+    do i = 1, len(s)
+      select case(s(i:i))
+        case("a":"z")
+          new(i:i) = achar(iachar(s(i:i)) - dc)
+      end select
+    end do 
+  end function upper
+
+
+  function lower(s) result(new)
+    character(len=*)     , intent(inout) :: s
+    character(len=len(s))                :: new
+    integer                              :: i
+    integer              ,    parameter  :: dc = ichar('a') - ichar('A')
+ 
+    new = s
+    do i = 1, len(s)
+      select case(s(i:i))
+        case("A":"Z")
+          new(i:i) = char(ichar(s(i:i)) + dc)
+      end select
+    end do 
+  end function lower
+
+
   subroutine make_nc_file_name(fname, datadir, fname_mask, y, m, d, var_name)
 
     character(len=*), intent(inout)                        :: fname
@@ -111,7 +143,6 @@ contains
       halo_y = nint(halo_r / latin / rkilo)
     endif
 
-    ! print*, halo_x, halo_y
     mask_tmp = mask
 
     if (halo_x > 0 .or. halo_y > 0) then
