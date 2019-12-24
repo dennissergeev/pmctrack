@@ -139,6 +139,7 @@ contains
           case('v_name'); read(buffer, *, iostat=ios) v_name; if (dbg) write(*, *) v_name
           case('psea_name'); read(buffer, *, iostat=ios) psea_name; if (dbg) write(*, *) psea_name
           case('land_name'); read(buffer, *, iostat=ios) land_name; if (dbg) write(*, *) land_name
+          case('land_mask_type'); read(buffer, *, iostat=ios) land_mask_type; if (dbg) write(*, *) land_mask_type
           case('prefix_lvl'); read(buffer, *, iostat=ios) prefix_lvl; if (dbg) write(*, *) prefix_lvl
           case('prefix_sfc'); read(buffer, *, iostat=ios) prefix_sfc; if (dbg) write(*, *) prefix_sfc
           case('tfreq'); read(buffer, *, iostat=ios) tfreq; if (dbg) write(*, *) tfreq
