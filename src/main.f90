@@ -6,8 +6,8 @@ program main
                      & steer_nt, nmax, pmax, rkilo, fh_bin, fh_maxloc
   use params, only: get_config_params, copy_config_file,                      &
     & set_lonlat_bounds_auto, dbg,                                            &
-    & datadir, outdir, prefix_sfc, prefix_lvl, dt_start, dt_end,              &
-    & t_dim, z_dim, y_dim, x_dim,                                             &
+    & datadir, outdir, fname_sfc, fname_lvl, dt_start, dt_end,                &
+    & t_dim,                                                                  &
     & vort_name, u_name, v_name, psea_name, land_name,                        &
     & vor_lvl, steer_lvl_btm, steer_lvl_top, tfreq,                           &
     & nx1, nx2, ny1, ny2,                                                     &
@@ -106,11 +106,9 @@ program main
   ! Get dimensions from the vorticity file using first year and first month
   ! Assume all the other files are organised in the same way
   idt = dt_start
-!  call make_nc_file_name(nc_file_name, datadir, prefix_lvl, &
-!                       & idt%year, idt%month, idt%day, vort_name)
+  call make_nc_file_name(nc_file_name, datadir, fname_lvl, &
+                       & idt%year, idt%month, idt%day, vort_name)
 
-  call make_nc_file_name(nc_file_name, datadir, prefix_lvl, &
-                       & idt%year, idt%month, idt%day)
   call get_dims(nc_file_name, nt_per_file, nlvls, nlats, nlons)
   nx = nlons - 1
   ny = nlats - 1
@@ -220,10 +218,8 @@ program main
 
   ! MAIN TIME LOOP ------------------------------------------------------------
   do kt = 1, ntime ! including both start and end dates
-!    call make_nc_file_name(nc_file_name, datadir, prefix_lvl, &
-!                         & idt%year, idt%month, idt%day, vort_name)
-    call make_nc_file_name(nc_file_name, datadir, prefix_lvl, &
-                         & idt%year, idt%month, idt%day)
+    call make_nc_file_name(nc_file_name, datadir, fname_lvl, &
+                         & idt%year, idt%month, idt%day, vort_name)
     call get_dims(nc_file_name, nt_per_file, nlvls, nlats, nlons)
     allocate(time_temp(0:nt_per_file-1))
     call get_time(nc_file_name, t_dim, time_temp, time_step_s, cal_start)
@@ -251,10 +247,8 @@ program main
  endif
 
     ! Read sea level pressure
-!    call make_nc_file_name(nc_file_name, datadir, prefix_sfc, &
-!                         & idt%year, idt%month, idt%day, psea_name)
-    call make_nc_file_name(nc_file_name, datadir, prefix_sfc, &
-                         & idt%year, idt%month, idt%day)
+    call make_nc_file_name(nc_file_name, datadir, fname_sfc, &
+                         & idt%year, idt%month, idt%day, psea_name)
     call get_xy_from_xyt(nc_file_name, psea_name, time_idx, psea)
     psea(:, :) = 1e-2 * psea(:, ny:0:-1)
 
@@ -269,19 +263,15 @@ program main
         if (idt_pair(2)%day /= idt_pair(1)%day .and. kt2 == 2) then
           time_idx = 0
         endif
-!        call make_nc_file_name(nc_file_name, datadir, prefix_lvl, &
-!                             & idt_pair(kt2)%year, idt_pair(kt2)%month, idt_pair(kt2)%day, u_name)
-        call make_nc_file_name(nc_file_name, datadir, prefix_lvl, &
-                             & idt_pair(kt2)%year, idt_pair(kt2)%month, idt_pair(kt2)%day)
+        call make_nc_file_name(nc_file_name, datadir, fname_lvl, &
+                             & idt_pair(kt2)%year, idt_pair(kt2)%month, idt_pair(kt2)%day, u_name)
 !        call get_xyz_from_xyzt(nc_file_name, u_name, time_idx+(kt2-1)*tfreq, &
 !                             & steer_idx_top, nsteer_lvl, u(:, :, :, kt2))
         call get_xyz_from_xyzt(nc_file_name, u_name, time_idx+(kt2-1)*tfreq, &
                              & steer_idx_btm, nsteer_lvl, u(:, :, :, kt2))
 
-!        call make_nc_file_name(nc_file_name, datadir, prefix_lvl, &
-!                             & idt_pair(kt2)%year, idt_pair(kt2)%month, idt_pair(kt2)%day, v_name)
-        call make_nc_file_name(nc_file_name, datadir, prefix_lvl, &
-                             & idt_pair(kt2)%year, idt_pair(kt2)%month, idt_pair(kt2)%day)
+        call make_nc_file_name(nc_file_name, datadir, fname_lvl, &
+                             & idt_pair(kt2)%year, idt_pair(kt2)%month, idt_pair(kt2)%day, v_name)
 !        call get_xyz_from_xyzt(nc_file_name, v_name, time_idx+(kt2-1)*tfreq, &
 !                             & steer_idx_top, nsteer_lvl, v(:, :, :, kt2))
         call get_xyz_from_xyzt(nc_file_name, v_name, time_idx+(kt2-1)*tfreq, &

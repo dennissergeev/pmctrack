@@ -9,42 +9,49 @@ implicit none
 
 contains
 
-!  subroutine make_nc_file_name(nc_file_name, datadir, prefix, y, m, d, var_name)
-!
-!    character(len=*)              , intent(inout) :: nc_file_name!
-!    character(len=*)              , intent(in)    :: datadir
-!    character(len=*)              , intent(in)    :: prefix
-!    character(len=*)              , intent(in)    :: var_name
-!    integer                       , intent(in)    :: y
-!    integer                       , intent(in)    :: m
-!! added the day
-!    integer                       , intent(in)    :: d
-!    
-!    write(nc_file_name, '(A,A,A,I4.4,A,I2.2,A,I2.2,A,A,A)') trim(datadir), '/',      &
-!                                                   & trim(prefix),            &
-!                                                   & y, '_',                  &
-!                                                   & m, '_',                  &
-!                                                   & d, '_',                  &
-!                                                   & trim(var_name), '.nc'
-!  end subroutine make_nc_file_name
+  function replace_text(s, old, new) result(new_s)
+    character(len=*)                       , intent(in) :: s
+    character(len=*)                       , intent(in) :: old
+    character(len=*)                       , intent(in) :: new
+    character(len=len(s)-len(old)+len(new))             :: new_s
+    ! Local indices
+    integer             :: i
+    integer             :: l_old
+    integer             :: l_new
+
+    i = -1
+    new_s = s
+    l_old = len_trim(old)
+    l_new = len_trim(new)
+    do
+      i = index(new_s, old(:l_old))
+      if (i == 0) exit
+      new_s = new_s(:i-1) // new(:l_new) // new_s(i+l_old:)
+    end do
+  end function replace_text
 
 
-  subroutine make_nc_file_name(nc_file_name, datadir, prefix, y, m, d)
+  subroutine make_nc_file_name(fname, datadir, fname_mask, y, m, d, var_name)
 
-    character(len=*)              , intent(inout) :: nc_file_name
-    character(len=*)              , intent(in)    :: datadir
-    character(len=*)              , intent(in)    :: prefix
-!    character(len=*)              , intent(in)    :: var_name
-    integer                       , intent(in)    :: y
-    integer                       , intent(in)    :: m
-! added the day
-    integer                       , intent(in)    :: d
+    character(len=*), intent(inout)                        :: fname
+    character(len=*), intent(in)                           :: datadir
+    character(len=*), intent(in)                           :: fname_mask
+    integer         , intent(in)                           :: y
+    integer         , intent(in)                           :: m
+    integer         , intent(in)                           :: d
+    character(len=*), intent(in)                           :: var_name
+    ! Local
+    character(len=4)                                       :: cdummy
     
-    write(nc_file_name, '(A,A,A,I4.4,A,I2.2,A,I2.2,A,A,A)') trim(datadir), '/',      &
-                                                   & trim(prefix),            &
-                                                   & y, '_',                  &
-                                                   & m, '_',                  &
-                                                   & d, '.nc'
+    fname = replace_text(fname_mask, '%VAR', trim(var_name))
+    write(cdummy, '(I4.4)') y
+    fname = replace_text(fname, '%YYYY', trim(cdummy))
+    write(cdummy, '(I2.2)') m
+    fname = replace_text(fname, '%MM', trim(cdummy))
+    write(cdummy, '(I2.2)') d
+    fname = replace_text(fname, '%DD', trim(cdummy))
+    fname = trim(datadir) // '/' // trim(fname)
+    
   end subroutine make_nc_file_name
 
 

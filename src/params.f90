@@ -21,8 +21,8 @@ module params
   character(len=256), protected :: v_name
   character(len=256), protected :: psea_name
   character(len=256), protected :: land_name
-  character(len=256), protected :: prefix_lvl
-  character(len=256), protected :: prefix_sfc
+  character(len=256), protected :: fname_lvl
+  character(len=256), protected :: fname_sfc
   integer           , protected :: vor_lvl
   integer           , protected :: steer_lvl_btm, steer_lvl_top
   integer           , protected :: tfreq
@@ -148,8 +148,8 @@ contains
           case('psea_name'); read(buffer, *, iostat=ios) psea_name; if (dbg) write(*, *) psea_name
           case('land_name'); read(buffer, *, iostat=ios) land_name; if (dbg) write(*, *) land_name
           case('land_mask_type'); read(buffer, *, iostat=ios) land_mask_type; if (dbg) write(*, *) land_mask_type
-          case('prefix_lvl'); read(buffer, *, iostat=ios) prefix_lvl; if (dbg) write(*, *) prefix_lvl
-          case('prefix_sfc'); read(buffer, *, iostat=ios) prefix_sfc; if (dbg) write(*, *) prefix_sfc
+          case('fname_lvl'); read(buffer, *, iostat=ios) fname_lvl; if (dbg) write(*, *) fname_lvl
+          case('fname_sfc'); read(buffer, *, iostat=ios) fname_sfc; if (dbg) write(*, *) fname_sfc
           case('tfreq'); read(buffer, *, iostat=ios) tfreq; if (dbg) write(*, *) tfreq
           case('proj'); read(buffer, *, iostat=ios) proj; if (dbg) write(*, *) proj
           case('vert_grid'); read(buffer, *, iostat=ios) vert_grid; if (dbg) write(*, *) vert_grid
