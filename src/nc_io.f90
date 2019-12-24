@@ -55,7 +55,6 @@ contains
     integer                                       :: i
 
     write(msg, '(A)') "get_time( "//trim(nc_file_name)//", ... )"
-    print*, shape(time)
 
     call check( nf90_open(nc_file_name, nf90_nowrite, ncid), msg )
 
@@ -256,13 +255,13 @@ contains
 
   function getattr(ncid, var_id, attr_name, default_val) result(attr_val)
 
-    integer                       , intent(in) :: ncid
-    integer                       , intent(in) :: var_id
-    real(wp)            , optional, intent(in) :: default_val
-    character(len=*)              , intent(in) :: attr_name
-    real(wp)                                   :: attr_val
+    integer         , intent(in) :: ncid
+    integer         , intent(in) :: var_id
+    real(wp)        , intent(in) :: default_val
+    character(len=*), intent(in) :: attr_name
+    real(wp)                     :: attr_val
     ! Local variables
-    integer  :: stat
+    integer :: stat
 
     stat = nf90_get_att(ncid, var_id, attr_name, attr_val)
     if (stat /= nf90_noerr) then

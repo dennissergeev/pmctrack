@@ -85,6 +85,7 @@ program main
   integer                                     :: n_max_prev
   integer                                     :: vor_num
   ! Indices
+  integer                                     :: idummy
   integer                                     :: lvl_idx
   integer                                     :: steer_idx_btm, steer_idx_top
   integer                                     :: nsteer_lvl
@@ -142,18 +143,14 @@ program main
   data_del_t = (time_temp(1) - time_temp(0)) * time_step_s
   ! Time step of tracking
   del_t = data_del_t * tfreq
-  ! print*, 'time_temp', time_temp(0)
-  ! print*, 'del_t', del_t
   td = dt_end - dt_start
   ntime = int(td%total_seconds() / del_t) + 1
-  ! print*, 'ntime=', ntime
 
   td = timedelta(hours=time_temp(0))
   dt_min = cal_start + td
   td = dt_start - dt_min
-  time_idx = int(td%total_seconds() / data_del_t) + 1 ! time_temp(0) +
+  time_idx = int(td%total_seconds() / data_del_t) + 1
   deallocate(time_temp)
-  ! print*, 'time_idx', time_idx
 
   ! Assume space coordinates are the same for all files
   allocate(time(1))
@@ -161,18 +158,21 @@ program main
   allocate(lats(0:ny))
   allocate(lons(0:nx))
 
-  print*, shape(lons), shape(lats), shape(lvls), shape(time)
   call get_coords(nc_file_name, DIM_NAMES, lons, lats, lvls, &
     & time, 1, 1)
+  deallocate(time)  ! time array is not needed and is handled by get_time() instead
 
   lvl_idx = minloc(abs(lvls - vor_lvl), 1)
   steer_idx_btm = minloc(abs(lvls - steer_lvl_btm), 1)
   steer_idx_top = minloc(abs(lvls - steer_lvl_top), 1)
-
-!  nsteer_lvl = steer_idx_btm - steer_idx_top + 1
+  if (steer_idx_top < steer_idx_btm) then
+    ! Ensure steer_idx_top is greater than _btm
+    idummy = steer_idx_top
+    steer_idx_top = steer_idx_btm
+    steer_idx_btm = idummy
+  endif
   nsteer_lvl = steer_idx_top - steer_idx_btm + 1
 
-  !lvls = lvls(nlvls:1:-1)
   lats = lats(ny:0:-1)
   ! Calculate grid spacing assuming the grid is uniform
   lon0 = lons(0)
@@ -239,7 +239,6 @@ program main
   endif
  endif
 
-  ! print*, sum(land_mask)
   ! MAIN TIME LOOP ------------------------------------------------------------
   do kt = 1, ntime ! including both start and end dates
 !    call make_nc_file_name(nc_file_name, datadir, prefix_lvl, &
@@ -256,16 +255,13 @@ program main
     td = timedelta(hours=time_temp(0))
     deallocate(time_temp)
     dt_min = cal_start + td ! Start date time of each file
-    ! print*, '>', dt_min
     td = idt - dt_min
-    ! print*, '>', td
     time_idx = int(td%total_seconds() / data_del_t) + 1
     write(*, *) ''
     write(*, *) '============================================================='
     write(*, *)  'kt=', kt, 'idt=', trim(idt%strftime('%Y-%m-%d %H:%M'))
     write(*, *) '============================================================='
     write(*, *) ''
-    ! print*, '>', time_idx
     ! Read vorticity at the specified level
 
     call get_xy_from_xyzt(nc_file_name, vort_name, lvl_idx, time_idx, vor)
@@ -287,19 +283,14 @@ program main
     ! Read 2 time steps (forward)
     idt_pair(1) = idt
     idt_pair(2) = idt + timedelta(hours=del_t / time_step_s)
-    ! print*, 'idt_pair', idt_pair
     ! if (kt > 1 .and. mod(kt, steer_nt) == 0) then
-!! print*, 'kt, kt2, ntime, steer_nt', kt, kt2, ntime, steer_nt
     if (kt < ntime) then
       ! Read u- and v-winds
       do kt2 = 1, steer_nt
-!! print*, 'kt2, idt_pair', kt2, idt_pair
 !        if (idt_pair(2)%month /= idt_pair(1)%month .and. kt2 == 2) then
         if (idt_pair(2)%day /= idt_pair(1)%day .and. kt2 == 2) then
           time_idx = 0
         endif
-!! print*, 'time_idx, time_idx+(kt2-1)*tfreq', time_idx, time_idx+(kt2-1)*tfreq
-    ! print*, 'time_idx+kt2-1=', time_idx+(kt2-1) * tfreq
 !        call make_nc_file_name(nc_file_name, datadir, prefix_lvl, &
 !                             & idt_pair(kt2)%year, idt_pair(kt2)%month, idt_pair(kt2)%day, u_name)
         call make_nc_file_name(nc_file_name, datadir, prefix_lvl, &
@@ -322,7 +313,6 @@ program main
       u(:, :, :, :) = u(:, ny:0:-1, :, :)
       v(:, :, :, :) = v(:, ny:0:-1, :, :)
     endif
-! print*, 'shp', shape(u)
     ! END OF INPUT
     
     if (smth_type == 1) then
@@ -359,7 +349,6 @@ program main
     else
       n_min = 0
     endif
-    ! ! print*, 'N_MIN=', n_min
 
     if (maxval(mtype(:)) >= 1) then
       call synop_check(mlon(:), mlat(:), n_max,                               &
@@ -517,8 +506,6 @@ program main
     !------------ vortrack out put ----------------------
     do i_vor_num = 1, vor_num
       if (vor_index(i_vor_num) > 0) then! .and. merged_count(i_vor_num) /= 1) then
-        ! print*,'main: i_vor_num', i_vor_num
-        ! print*, '      vor_merge', vor_merge(i_vor_num)
         if (vor_merge(i_vor_num) > 0) then
           if (merged_count(i_vor_num) /= 1) then
             vor_merge_num(vor_merge(i_vor_num)) = &
@@ -549,7 +536,6 @@ program main
     ! idt_pair(2) = idt
   enddo ! MAIN TIME LOOP ------------------------------------------------------
 
-  deallocate(time)
   deallocate(lvls)
   deallocate(lats)
   deallocate(lons)
