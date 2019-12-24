@@ -1,16 +1,15 @@
 name: pmctrack-tools
 channels:
-- conda-forge
+  - dennissergeev
+  - conda-forge
 dependencies:
-- cartopy
-- iris
-- matplotlib
-- metpy
-- numpy
-- pandas
-- path.py
-- python=3.6
-- pytest
-- tqdm
-- pip:
-  - daiquiri
+  - python>=3.7
+  - dask
+  - matplotlib
+  - numpy
+  - octant
+  - pandas
+  - pip
+  - xarray
+  - pip:
+    - daiquiri
