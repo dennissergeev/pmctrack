@@ -12,6 +12,10 @@ module params
   type(datetime)    , protected :: dt_end
   character(len=256), protected :: datadir
   character(len=256), protected :: outdir
+  character(len=256), protected :: t_dim
+  character(len=256), protected :: z_dim
+  character(len=256), protected :: y_dim
+  character(len=256), protected :: x_dim
   character(len=256), protected :: vort_name
   character(len=256), protected :: u_name
   character(len=256), protected :: v_name
@@ -134,6 +138,10 @@ contains
           case('steer_lvl_top'); read(buffer, *, iostat=ios) steer_lvl_top; if (dbg) write(*, *) steer_lvl_top
           case('datadir'); read(buffer, *, iostat=ios) datadir; if (dbg) write(*, *) datadir
           case('outdir'); read(buffer, *, iostat=ios) outdir; if (dbg) write(*, *) outdir
+          case('t_dim'); read(buffer, *, iostat=ios) t_dim; if (dbg) write(*, *) t_dim
+          case('z_dim'); read(buffer, *, iostat=ios) z_dim; if (dbg) write(*, *) z_dim
+          case('y_dim'); read(buffer, *, iostat=ios) y_dim; if (dbg) write(*, *) y_dim
+          case('x_dim'); read(buffer, *, iostat=ios) x_dim; if (dbg) write(*, *) x_dim
           case('vort_name'); read(buffer, *, iostat=ios) vort_name; if (dbg) write(*, *) vort_name
           case('u_name'); read(buffer, *, iostat=ios) u_name; if (dbg) write(*, *) u_name
           case('v_name'); read(buffer, *, iostat=ios) v_name; if (dbg) write(*, *) v_name
@@ -261,10 +269,6 @@ contains
     nx2 = minloc(abs(lons-lon2), 1) - 1
     ny1 = minloc(abs(lats-lat1), 1) - 1
     ny2 = minloc(abs(lats-lat2), 1) - 1
-
-    ! print*, lon1, lon2, lat1, lat2
-    ! print*, nx1, nx2, ny1, ny2
-    ! stop
 
   end subroutine set_lonlat_bounds_auto
 end module params

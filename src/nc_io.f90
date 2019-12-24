@@ -1,17 +1,17 @@
 module nc_io
 
-  use netcdf
   use datetime_module
+  use netcdf
+  use params, only : t_dim, z_dim, y_dim, x_dim
   use types, only : wp
 
   implicit none
   character(len=256) :: msg
 
 contains
-  subroutine get_dims(nc_file_name, dim_names, ntime, nlvls, nlats, nlons)
+  subroutine get_dims(nc_file_name, ntime, nlvls, nlats, nlons)
 
     character(len=*)              , intent(in)    :: nc_file_name
-    character(len=*), dimension(4), intent(in)    :: dim_names
     integer                       , intent(inout) :: ntime 
     integer                       , intent(inout) :: nlvls 
     integer                       , intent(inout) :: nlats 
@@ -19,21 +19,19 @@ contains
     ! Local variables
     integer                                       :: ncid
     integer                                       :: dimid
-    integer                       , dimension(4)  :: dims
-    integer                                       :: i
 
     write(msg, '(A)') "get_dims( "//trim(nc_file_name)//", ... )"
 
     call check( nf90_open(nc_file_name, nf90_nowrite, ncid), msg )
 
-    do i = 1, size(dim_names)
-      call check( nf90_inq_dimid(ncid, dim_names(i), dimid), msg )
-      call check( nf90_inquire_dimension(ncid, dimid, len=dims(i)), msg )
-    end do
-    ntime = dims(4)
-    nlvls = dims(1)
-    nlats = dims(2)
-    nlons = dims(3)
+    call check( nf90_inq_dimid(ncid, t_dim, dimid), msg )
+    call check( nf90_inquire_dimension(ncid, dimid, len=ntime), msg )
+    call check( nf90_inq_dimid(ncid, z_dim, dimid), msg )
+    call check( nf90_inquire_dimension(ncid, dimid, len=nlvls), msg )
+    call check( nf90_inq_dimid(ncid, y_dim, dimid), msg )
+    call check( nf90_inquire_dimension(ncid, dimid, len=nlats), msg )
+    call check( nf90_inq_dimid(ncid, x_dim, dimid), msg )
+    call check( nf90_inquire_dimension(ncid, dimid, len=nlons), msg )
 
     call check( nf90_close(ncid), msg )
   end subroutine get_dims
@@ -95,11 +93,9 @@ contains
   end subroutine get_time
 
 
-  subroutine get_coords(nc_file_name, dim_names, lons, lats, lvls, &
-    & time, time_idx, nt)
+  subroutine get_coords(nc_file_name, time, lvls, lats, lons, time_idx, nt)
 
     character(len=*)              , intent(in)    :: nc_file_name
-    character(len=*), dimension(4), intent(in)    :: dim_names
     integer                       , intent(inout) :: time(:) 
     real(wp)                      , intent(inout) :: lvls(:) 
     real(wp)                      , intent(inout) :: lats(:) 
@@ -114,15 +110,15 @@ contains
 
     call check( nf90_open(nc_file_name, nf90_nowrite, ncid), msg )
 
-    call check( nf90_inq_varid(ncid, dim_names(4), var_id), msg )
+    call check( nf90_inq_varid(ncid, t_dim, var_id), msg )
     call check( nf90_get_var(ncid, var_id, time,  &
                              start=(/time_idx/), &
                              count=(/      nt/)), msg )
-    call check( nf90_inq_varid(ncid, dim_names(1), var_id), msg )
+    call check( nf90_inq_varid(ncid, z_dim, var_id), msg )
     call check( nf90_get_var(ncid, var_id, lvls), msg )
-    call check( nf90_inq_varid(ncid, dim_names(2), var_id), msg )
+    call check( nf90_inq_varid(ncid, y_dim, var_id), msg )
     call check( nf90_get_var(ncid, var_id, lats), msg )
-    call check( nf90_inq_varid(ncid, dim_names(3), var_id), msg )
+    call check( nf90_inq_varid(ncid, x_dim, var_id), msg )
     call check( nf90_get_var(ncid, var_id, lons), msg )
 
     call check( nf90_close(ncid), msg )

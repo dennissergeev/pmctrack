@@ -7,6 +7,7 @@ program main
   use params, only: get_config_params, copy_config_file,                      &
     & set_lonlat_bounds_auto, dbg,                                            &
     & datadir, outdir, prefix_sfc, prefix_lvl, dt_start, dt_end,              &
+    & t_dim, z_dim, y_dim, x_dim,                                             &
     & vort_name, u_name, v_name, psea_name, land_name,                        &
     & vor_lvl, steer_lvl_btm, steer_lvl_top, tfreq,                           &
     & nx1, nx2, ny1, ny2,                                                     &
@@ -18,16 +19,6 @@ program main
 
   implicit none
 
-!  character(len=*)                , parameter :: LVL_NAME = "level"
-!  character(len=*)                , parameter :: LAT_NAME = "latitude"
-!  character(len=*)                , parameter :: LON_NAME = "longitude"
-  character(len=*)                , parameter :: REC_NAME = "time"
-
-  character(len=*)                , parameter :: LVL_NAME = "plev"
-  character(len=*)                , parameter :: LAT_NAME = "lat"
-  character(len=*)                , parameter :: LON_NAME = "lon"
-
-  character(len=256), dimension(4)            :: DIM_NAMES
   character(len=256)                          :: nc_file_name
   character(len=256)                          :: fname_bin
   character(len=256)                          :: fname_vormaxloc
@@ -103,17 +94,6 @@ program main
   type   (datetime)                           :: idt_pair(steer_nt)
 
 
-  ! Store dimension names in one array
-!  DIM_NAMES(1) = trim(REC_NAME)
-!  DIM_NAMES(2) = trim(LVL_NAME)
-!  DIM_NAMES(3) = trim(LAT_NAME)
-!  DIM_NAMES(4) = trim(LON_NAME)
-
-  DIM_NAMES(4) = trim(REC_NAME)
-  DIM_NAMES(1) = trim(LVL_NAME)
-  DIM_NAMES(2) = trim(LAT_NAME)
-  DIM_NAMES(3) = trim(LON_NAME)
-
   ! Read configs from settings.conf file
   call get_config_params()
 
@@ -131,13 +111,13 @@ program main
 
   call make_nc_file_name(nc_file_name, datadir, prefix_lvl, &
                        & idt%year, idt%month, idt%day)
-  call get_dims(nc_file_name, DIM_NAMES, nt_per_file, nlvls, nlats, nlons)
+  call get_dims(nc_file_name, nt_per_file, nlvls, nlats, nlons)
   nx = nlons - 1
   ny = nlats - 1
 
   ! Time & calendar
   allocate(time_temp(0:nt_per_file-1))
-  call get_time(nc_file_name, REC_NAME, time_temp, time_step_s, cal_start)
+  call get_time(nc_file_name, t_dim, time_temp, time_step_s, cal_start)
 
   ! Time resolution of the input data
   data_del_t = (time_temp(1) - time_temp(0)) * time_step_s
@@ -158,8 +138,7 @@ program main
   allocate(lats(0:ny))
   allocate(lons(0:nx))
 
-  call get_coords(nc_file_name, DIM_NAMES, lons, lats, lvls, &
-    & time, 1, 1)
+  call get_coords(nc_file_name, time, lvls, lats, lons, 1, 1)
   deallocate(time)  ! time array is not needed and is handled by get_time() instead
 
   lvl_idx = minloc(abs(lvls - vor_lvl), 1)
@@ -245,9 +224,9 @@ program main
 !                         & idt%year, idt%month, idt%day, vort_name)
     call make_nc_file_name(nc_file_name, datadir, prefix_lvl, &
                          & idt%year, idt%month, idt%day)
-    call get_dims(nc_file_name, DIM_NAMES, nt_per_file, nlvls, nlats, nlons)
+    call get_dims(nc_file_name, nt_per_file, nlvls, nlats, nlons)
     allocate(time_temp(0:nt_per_file-1))
-    call get_time(nc_file_name, REC_NAME, time_temp, time_step_s, cal_start)
+    call get_time(nc_file_name, t_dim, time_temp, time_step_s, cal_start)
     ! Time resolution of the input data
     data_del_t = (time_temp(1) - time_temp(0)) * time_step_s
     ! Time step of tracking
@@ -259,9 +238,8 @@ program main
     time_idx = int(td%total_seconds() / data_del_t) + 1
     write(*, *) ''
     write(*, *) '============================================================='
-    write(*, *)  'kt=', kt, 'idt=', trim(idt%strftime('%Y-%m-%d %H:%M'))
+    write(*, *) 'kt=', kt, 'idt=', trim(idt%strftime('%Y-%m-%d %H:%M'))
     write(*, *) '============================================================='
-    write(*, *) ''
     ! Read vorticity at the specified level
 
     call get_xy_from_xyzt(nc_file_name, vort_name, lvl_idx, time_idx, vor)
