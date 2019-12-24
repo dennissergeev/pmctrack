@@ -76,7 +76,6 @@ program main
   integer                                     :: n_max_prev
   integer                                     :: vor_num
   ! Indices
-  integer                                     :: idummy
   integer                                     :: lvl_idx
   integer                                     :: steer_idx_btm, steer_idx_top
   integer                                     :: nsteer_lvl
@@ -142,13 +141,8 @@ program main
   lvl_idx = minloc(abs(lvls - vor_lvl), 1)
   steer_idx_btm = minloc(abs(lvls - steer_lvl_btm), 1)
   steer_idx_top = minloc(abs(lvls - steer_lvl_top), 1)
-  if (steer_idx_top < steer_idx_btm) then
-    ! Ensure steer_idx_top is greater than _btm
-    idummy = steer_idx_top
-    steer_idx_top = steer_idx_btm
-    steer_idx_btm = idummy
-  endif
-  nsteer_lvl = steer_idx_top - steer_idx_btm + 1
+  nsteer_lvl = abs(steer_idx_top - steer_idx_btm) + 1
+  steer_idx_btm = min(steer_idx_btm, steer_idx_top) ! steer_idx_top is not used below
 
   lats = lats(ny:0:-1)
   ! Calculate grid spacing assuming the grid is uniform
@@ -241,10 +235,10 @@ program main
     call get_xy_from_xyzt(nc_file_name, vort_name, lvl_idx, time_idx, vor)
     vor(:, :) = vor(:, ny:0:-1)
 
- if (land_mask_type == 1) then
-    ! Apply land mask
-    where ( land_mask(:, :) == 1 ) vor(:, :) = missval
- endif
+    if (land_mask_type == 1) then
+      ! Apply land mask
+      where ( land_mask(:, :) == 1 ) vor(:, :) = missval
+    endif
 
     ! Read sea level pressure
     call make_nc_file_name(nc_file_name, datadir, fname_sfc, &
@@ -265,15 +259,11 @@ program main
         endif
         call make_nc_file_name(nc_file_name, datadir, fname_lvl, &
                              & idt_pair(kt2)%year, idt_pair(kt2)%month, idt_pair(kt2)%day, u_name)
-!        call get_xyz_from_xyzt(nc_file_name, u_name, time_idx+(kt2-1)*tfreq, &
-!                             & steer_idx_top, nsteer_lvl, u(:, :, :, kt2))
         call get_xyz_from_xyzt(nc_file_name, u_name, time_idx+(kt2-1)*tfreq, &
                              & steer_idx_btm, nsteer_lvl, u(:, :, :, kt2))
 
         call make_nc_file_name(nc_file_name, datadir, fname_lvl, &
                              & idt_pair(kt2)%year, idt_pair(kt2)%month, idt_pair(kt2)%day, v_name)
-!        call get_xyz_from_xyzt(nc_file_name, v_name, time_idx+(kt2-1)*tfreq, &
-!                             & steer_idx_top, nsteer_lvl, v(:, :, :, kt2))
         call get_xyz_from_xyzt(nc_file_name, v_name, time_idx+(kt2-1)*tfreq, &
                              & steer_idx_btm, nsteer_lvl, v(:, :, :, kt2))
 
