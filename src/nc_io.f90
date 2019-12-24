@@ -30,10 +30,10 @@ contains
       call check( nf90_inq_dimid(ncid, dim_names(i), dimid), msg )
       call check( nf90_inquire_dimension(ncid, dimid, len=dims(i)), msg )
     end do
-    ntime = dims(1)
-    nlvls = dims(2)
-    nlats = dims(3)
-    nlons = dims(4)
+    ntime = dims(4)
+    nlvls = dims(1)
+    nlats = dims(2)
+    nlons = dims(3)
 
     call check( nf90_close(ncid), msg )
   end subroutine get_dims
@@ -55,6 +55,7 @@ contains
     integer                                       :: i
 
     write(msg, '(A)') "get_time( "//trim(nc_file_name)//", ... )"
+    print*, shape(time)
 
     call check( nf90_open(nc_file_name, nf90_nowrite, ncid), msg )
 
@@ -114,15 +115,15 @@ contains
 
     call check( nf90_open(nc_file_name, nf90_nowrite, ncid), msg )
 
-    call check( nf90_inq_varid(ncid, dim_names(1), var_id), msg )
+    call check( nf90_inq_varid(ncid, dim_names(4), var_id), msg )
     call check( nf90_get_var(ncid, var_id, time,  &
                              start=(/time_idx/), &
                              count=(/      nt/)), msg )
-    call check( nf90_inq_varid(ncid, dim_names(2), var_id), msg )
+    call check( nf90_inq_varid(ncid, dim_names(1), var_id), msg )
     call check( nf90_get_var(ncid, var_id, lvls), msg )
-    call check( nf90_inq_varid(ncid, dim_names(3), var_id), msg )
+    call check( nf90_inq_varid(ncid, dim_names(2), var_id), msg )
     call check( nf90_get_var(ncid, var_id, lats), msg )
-    call check( nf90_inq_varid(ncid, dim_names(4), var_id), msg )
+    call check( nf90_inq_varid(ncid, dim_names(3), var_id), msg )
     call check( nf90_get_var(ncid, var_id, lons), msg )
 
     call check( nf90_close(ncid), msg )
@@ -155,8 +156,8 @@ contains
                              count=(/shp(1), shp(2),      nz,        1/)), &
                 msg )
 
-    call check( nf90_get_att(ncid, var_id, "scale_factor", scale_factor), msg )
-    call check( nf90_get_att(ncid, var_id, "add_offset", add_offset), msg )
+    scale_factor = getattr(ncid, var_id, "scale_factor", 1.0)
+    add_offset = getattr(ncid, var_id, "add_offset", 0.0)
   
     var_data = scale_factor * var_data + add_offset
 
@@ -188,8 +189,8 @@ contains
     call check( nf90_get_var(ncid, var_id, var_data,  &
                              start=(/     1,      1, lvl_idx, time_idx/), &
                              count=(/shp(1), shp(2),       1,       1/)), msg )
-    call check( nf90_get_att(ncid, var_id, "scale_factor", scale_factor), msg )
-    call check( nf90_get_att(ncid, var_id, "add_offset", add_offset), msg )
+    scale_factor = getattr(ncid, var_id, "scale_factor", 1.0)
+    add_offset = getattr(ncid, var_id, "add_offset", 0.0)
   
     var_data = scale_factor * var_data + add_offset
 
@@ -219,8 +220,8 @@ contains
     call check( nf90_get_var(ncid, var_id, var_data,  &
                              start=(/     1,      1, time_idx/), &
                              count=(/shp(1), shp(2),       1/)), msg )
-    call check( nf90_get_att(ncid, var_id, "scale_factor", scale_factor), msg )
-    call check( nf90_get_att(ncid, var_id, "add_offset", add_offset), msg )
+    scale_factor = getattr(ncid, var_id, "scale_factor", 1.0)
+    add_offset = getattr(ncid, var_id, "add_offset", 0.0)
   
     var_data = scale_factor * var_data + add_offset
 
@@ -244,13 +245,31 @@ contains
 
     call check( nf90_inq_varid(ncid, var_name, var_id), msg )
     call check( nf90_get_var(ncid, var_id, var_data), msg )
-    call check( nf90_get_att(ncid, var_id, "scale_factor", scale_factor), msg )
-    call check( nf90_get_att(ncid, var_id, "add_offset", add_offset), msg )
+    scale_factor = getattr(ncid, var_id, "scale_factor", 1.0)
+    add_offset = getattr(ncid, var_id, "add_offset", 0.0)
     
     var_data = scale_factor * var_data + add_offset
 
     call check( nf90_close(ncid), msg )
   end subroutine get_data_2d
+
+
+  function getattr(ncid, var_id, attr_name, default_val) result(attr_val)
+
+    integer                       , intent(in) :: ncid
+    integer                       , intent(in) :: var_id
+    real(wp)            , optional, intent(in) :: default_val
+    character(len=*)              , intent(in) :: attr_name
+    real(wp)                                   :: attr_val
+    ! Local variables
+    integer  :: stat
+
+    stat = nf90_get_att(ncid, var_id, attr_name, attr_val)
+    if (stat /= nf90_noerr) then
+      ! Assume attribute not found
+      attr_val = default_val
+    endif
+  end function getattr
 
 
   subroutine check(stat, trace_msg)
@@ -267,7 +286,7 @@ contains
       write(*, '(A,A,I5,A)') "    "//trim(nf90_strerror(stat)), " (code ", stat, ")"
       write(*, *) "Terminating the program"
       stop
-    end if
+    endif
   end subroutine check  
 
 end module nc_io

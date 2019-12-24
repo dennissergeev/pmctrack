@@ -130,7 +130,7 @@ program main
 
   call make_nc_file_name(nc_file_name, datadir, prefix_lvl, &
                        & idt%year, idt%month, idt%day)
-  call get_dims(nc_file_name, DIM_NAMES, nlvls, nlats, nlons, nt_per_file)
+  call get_dims(nc_file_name, DIM_NAMES, nt_per_file, nlvls, nlats, nlons)
   nx = nlons - 1
   ny = nlats - 1
 
@@ -161,6 +161,7 @@ program main
   allocate(lats(0:ny))
   allocate(lons(0:nx))
 
+  print*, shape(lons), shape(lats), shape(lvls), shape(time)
   call get_coords(nc_file_name, DIM_NAMES, lons, lats, lvls, &
     & time, 1, 1)
 
